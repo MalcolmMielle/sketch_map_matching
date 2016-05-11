@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 #include <opencv2/opencv.hpp>
-#include "GlobalMatch.hpp"
+#include "sketchAlgorithm/MapComparator/GlobalMatch.hpp"
 
 //INTERFACE 
 

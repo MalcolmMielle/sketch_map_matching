@@ -1,9 +1,9 @@
 #ifndef JUNCTIONANDDEADENDS_MAP
 #define JUNCTIONANDDEADENDS_MAP
 
-#include "GlobalMatch.hpp"
+#include "MapComparator/GlobalMatch.hpp"
 #include "Keypoint.hpp"
-#include "Place.hpp"
+#include "MapComparator/Place.hpp"
 
 namespace AASS{
 	namespace graphmatch{

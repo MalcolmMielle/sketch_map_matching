@@ -1,9 +1,9 @@
 #ifndef ROOMANDCORNER_MAP
 #define ROOMANDCORNER_MAP
 
-#include "GlobalMatch.hpp"
+#include "MapComparator/GlobalMatch.hpp"
 #include "Keypoint.hpp"
-#include "Place.hpp"
+#include "MapComparator/Place.hpp"
 
 
 namespace AASS{

@@ -2,7 +2,7 @@
 #define UTILSTOPOLO_MALCOLM_GRAPH
 
 #include "GraphPlace.hpp"
-#include "GraphLine.hpp"
+#include "TopologicalMap/GraphLine.hpp"
 #include "GlobalMatch.hpp"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
