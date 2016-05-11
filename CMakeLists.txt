@@ -265,7 +265,7 @@ add_subdirectory(Test/SLAM)
 add_subdirectory(Test/Simulation)
 
 
-INSTALL(FILES sketchAlgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
+INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
 INSTALL(TARGETS Comparatorlib DESTINATION lib/sketchAlgorithm)
 INSTALL(TARGETS Probabilitieslib DESTINATION lib/sketchAlgorithm)
 INSTALL(TARGETS VFLib DESTINATION lib/sketchAlgorithm)
