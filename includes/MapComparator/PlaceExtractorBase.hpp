@@ -4,7 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include "boost/graph/copy.hpp"
 #include "GraphPlace.hpp"
-#include "GraphLine.hpp"
+#include "TopologicalMap/GraphLine.hpp"
 #include "vodigrex/linefollower/SimpleNode.hpp"
 #include <stdexcept>
 

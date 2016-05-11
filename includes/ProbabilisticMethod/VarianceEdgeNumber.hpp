@@ -1,11 +1,9 @@
 #ifndef VARIANCEEDGENUMBERPROBABILISTICEDITDISTANCE_MAP
 #define VARIANCEEDGENUMBERPROBABILISTICEDITDISTANCE_MAP
 
-
 //Put this into the graph nodes !! 
 
-
-#include "GraphPlace.hpp"
+#include "MapComparator/GraphPlace.hpp"
 
 #ifdef UNIT_TEST
 

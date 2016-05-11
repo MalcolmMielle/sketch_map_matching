@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include "GraphPlace.hpp"
+#include "MapComparator/GraphPlace.hpp"
 #include "ConversionVFL.hpp"
 
 namespace AASS{

@@ -3,7 +3,7 @@
 
 #include "vodigrex/linefollower/SimpleNode.hpp"
 
-#include "Keypoint.hpp"
+#include "Keypoints/Keypoint.hpp"
 #include <opencv2/opencv.hpp>
 
 namespace AASS{

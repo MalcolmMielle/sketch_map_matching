@@ -1,8 +1,8 @@
 #ifndef PROBABILITIES_GRAPHPROBA_MAP
 #define PROBABILITIES_GRAPHPROBA_MAP
 
-#include "GraphPlace.hpp"
-#include "Match.hpp"
+#include "MapComparator/GraphPlace.hpp"
+#include "MapComparator/Match.hpp"
 
 namespace AASS{
 	namespace probabilisticmatching{

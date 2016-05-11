@@ -2,12 +2,12 @@
 #define VFLPRINT_GRAPH
 
 #include <stdlib.h>     /* srand, rand */
-#include "argraph.h"
-#include "argedit.h"
-#include "argloader.h"
+#include "VFLib/include/argraph.h"
+#include "VFLib/include/argedit.h"
+#include "VFLib/include/argloader.h"
 #include <iostream>
 #include <stdio.h>
-#include "Place.hpp"
+#include "MapComparator/Place.hpp"
 
 namespace AASS{
 

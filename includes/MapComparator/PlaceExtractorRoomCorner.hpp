@@ -5,7 +5,7 @@
 #include "PlaceExtractorBase.hpp"
 #include "Init.hpp"
 #include "MatchingFunctions.hpp"
-#include "RoomAndCorner.hpp"
+#include "Keypoints/RoomAndCorner.hpp"
 #include "vodigrex/voronoidiagram/ThinkerVoronoi.hpp"
 
 namespace AASS{

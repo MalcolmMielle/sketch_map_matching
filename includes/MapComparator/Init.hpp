@@ -1,9 +1,9 @@
 #ifndef INITINITINIT_MAP
 #define INITINITINIT_MAP
 
-#include "Keypoint.hpp"
-#include "JunctionAndDeadEnds.hpp"
-#include "RoomAndCorner.hpp"
+#include "Keypoints/Keypoint.hpp"
+#include "Keypoints/JunctionAndDeadEnds.hpp"
+#include "Keypoints/RoomAndCorner.hpp"
 
 
 //TODO MAKE THIS ACLASS TO AVOID MEMORY LEAKS

@@ -2,7 +2,7 @@
 #define UTILSPROBA_MALCOLM_GRAPH
 
 #include "GraphProbaEdge.hpp"
-#include "GraphMatcherNeighbor.hpp"
+#include "MapComparator/GraphMatcherNeighbor.hpp"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
 #include <iomanip>

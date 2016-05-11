@@ -2,9 +2,9 @@
 #define PROBABILISTICEDITDISTANCE_MAP
 
 #include "GraphProbaEdge.hpp"
-#include "GraphPlace.hpp"
-#include "Hypothese.hpp"
-#include "GraphMatcherAnchor.hpp"
+#include "MapComparator/GraphPlace.hpp"
+#include "MapComparator/Hypothese.hpp"
+#include "MapComparator/GraphMatcherAnchor.hpp"
 #include "ProbabilisticMethod/Util.hpp"
 #include "MapComparator/Util.hpp"
 

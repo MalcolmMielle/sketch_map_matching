@@ -2,8 +2,8 @@
 #define PROBABILITIES_PFFUUEDGENUMBER_MAP
 
 #include "BaseProba.hpp"
-#include "Match.hpp"
-#include "GraphPlace.hpp"
+#include "MapComparator/Match.hpp"
+#include "MapComparator/GraphPlace.hpp"
 #include "VarianceEdgeNumber.hpp"
 
 #include <boost/math/distributions/normal.hpp>

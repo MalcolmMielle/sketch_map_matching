@@ -1,7 +1,7 @@
 #for debug : cmake -DCMAKE_BUILD_TYPE=Debug /path/to/source
 
 cmake_minimum_required(VERSION 2.6)
-project(sketch_algorithms)
+project(sketchAlgorithms)
 
 
 SET(CMAKE_CXX_FLAGS "-Wall")
@@ -45,7 +45,7 @@ endif()
 # install(TARGETS editdistance RUNTIME DESTINATION bin)
 
 
-include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR}  
+include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR} ${vodigrex_INCLUDE_DIRS}  
 	includes
 	includes/TopologicalMap/ 
 	includes/MapComparator/ 
@@ -244,9 +244,18 @@ target_link_libraries(scale_space ${OpenCV_LIBS} ${vodigrex_LIBRARIES})
 # add_subdirectory(includes/boost/algorithm/sequence/)
 
 
+
+# uninstall target
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+
 add_subdirectory(includes)
-# add_subdirectory(includes/TopologicalMap)
-# add_subdirectory(includes/MapComparator)
 
 add_subdirectory(Test/BaseTest)
 add_subdirectory(Test/Probabilities)
@@ -254,3 +263,14 @@ add_subdirectory(Test/GraphDB)
 add_subdirectory(Test/GraphDB/VFLcomp)
 add_subdirectory(Test/SLAM)
 add_subdirectory(Test/Simulation)
+
+
+INSTALL(FILES sketchAlgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
+INSTALL(TARGETS Comparatorlib DESTINATION lib/sketchAlgorithm)
+INSTALL(TARGETS Probabilitieslib DESTINATION lib/sketchAlgorithm)
+INSTALL(TARGETS VFLib DESTINATION lib/sketchAlgorithm)
+
+install(TARGETS simulation_kth RUNTIME DESTINATION bin)
+install(TARGETS simulation_taurob RUNTIME DESTINATION bin)
+
+

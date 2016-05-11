@@ -4,10 +4,10 @@
 #include "GraphPlace.hpp"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
-#include "Place.hpp"
-#include "argraph.h"
-#include "argedit.h"
-#include "argloader.h"
+#include "MapComparator/Place.hpp"
+#include "VFLib/include/argraph.h"
+#include "VFLib/include/argedit.h"
+#include "VFLib/include/argloader.h"
 #include <iostream>
 #include <stdio.h>
 #include "VFLwrapper.hpp"
