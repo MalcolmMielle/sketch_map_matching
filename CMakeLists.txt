@@ -220,6 +220,9 @@ add_library(VFLib
 
 add_executable(simulation_kth Test/GraphDB/simulation_kth.cpp)
 target_link_libraries(simulation_kth ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
+
+add_executable(sketchvssketch Test/GraphDB/sketchVSsketch.cpp)
+target_link_libraries(sketchvssketch ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
 # 
 # add_executable(simulation_easy Test/GraphDB/simulation_easy.cpp)
 # target_link_libraries(simulation_easy ${OpenCV_LIBS} VFLib Probabilitieslib Maplib Comparatorlib -lboost_filesystem -lboost_system)
