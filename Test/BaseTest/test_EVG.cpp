@@ -8,8 +8,9 @@
 #include <fstream>
 #include <ctime> 
 
-#include "SketchMap.hpp"
-#include "Thinker_EVG.hpp"
+#include "GraphLine.hpp"
+#include "vodigrex/voronoidiagram/ThinkerEVG.hpp"
+#include "vodigrex/voronoidiagram/ThinkerVoronoi.hpp"
 #include "vodigrex/linefollower/MultipleLineFollower.hpp"
 
 
@@ -18,16 +19,18 @@ BOOST_AUTO_TEST_CASE(trying)
 {
 	
 	std::cout << "SECOND TEST WITH GIMP IMAGE ******************************* /" << std::endl;
-	AASS::Thinker_EVG tv;
-	cv::Mat mm = cv::imread("../Test/BaseTest/ObstacleMapBug.png");
+	AASS::vodigrex::ThinkerEVG tv;
+	AASS::vodigrex::ThinkerVoronoi voro;
+	cv::Mat mm = cv::imread("../Test/BaseTest/fullll.png");
+	cv::Mat invSrc =  cv::Scalar::all(255) - mm;
 	tv.setPruning(false);
-	tv.think(mm);
-	
+	tv.think(invSrc);
 
 	
 // 	std::cout << "Number of nodes" << gl.getNumVertices() << std::endl;
 // 	
 	cv::imshow("graph", tv.getResult());
+	cv::imshow("origin", mm);
 	cv::waitKey(0);
 	
 	AASS::vodigrex::MultipleLineFollower<AASS::topologicalmap::NodeLine, AASS::vodigrex::SimpleEdge> mlf;
@@ -43,6 +46,13 @@ BOOST_AUTO_TEST_CASE(trying)
 	gl_real.draw(fin);
 	cv::imshow("final graph", fin);
 	cv::waitKey(0);
+	
+	
+	voro.think(mm);
+	cv::imshow("graph voro", voro.getResult());
+	cv::imshow("origin", mm);
+	cv::waitKey(0);
+	
 	
 	
 }

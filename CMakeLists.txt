@@ -139,8 +139,8 @@ add_library(VFLib
 # target_link_libraries(test_real_comparaison ${OpenCV_LIBS} Comparatorlib -lboost_unit_test_framework)
 # # 
 # # 
-# add_executable(test_evg Test/BaseTest/test_EVG.cpp)
-# target_link_libraries(test_evg ${OpenCV_LIBS} ${vodigrex_LIBRARIES} Comparatorlib -lboost_unit_test_framework EVGthin)
+add_executable(test_evg Test/BaseTest/test_EVG.cpp)
+target_link_libraries(test_evg ${OpenCV_LIBS} ${vodigrex_LIBRARIES} Comparatorlib -lboost_unit_test_framework)
 # # 
 # add_executable(test_virtual Test/BaseTest/test_virtualenv.cpp)
 # target_link_libraries(test_virtual ${OpenCV_LIBS} Comparatorlib -lboost_unit_test_framework)
