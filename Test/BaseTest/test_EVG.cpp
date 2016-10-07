@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(trying)
 	std::cout << "SECOND TEST WITH GIMP IMAGE ******************************* /" << std::endl;
 	AASS::vodigrex::ThinkerEVG tv;
 	AASS::vodigrex::ThinkerVoronoi voro;
-	cv::Mat mm = cv::imread("../Test/BaseTest/fullll.png");
+	cv::Mat mm = cv::imread("../Test/BaseTest/map_ssrr.png");
 	cv::Mat invSrc =  cv::Scalar::all(255) - mm;
 	tv.setPruning(false);
 	tv.think(invSrc);
