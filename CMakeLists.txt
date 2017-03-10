@@ -18,10 +18,12 @@ find_package( Boost REQUIRED )
 find_package( editdistance REQUIRED )
 find_package( vodigrex REQUIRED )
 find_package( bettergraph REQUIRED )
+
 if ( NOT vodigrex_FOUND )
   message(STATUS "This project requires the VODIGREX library, and will not be compiled.")
   return()  
 endif()
+
 
 get_cmake_property(_variableNames VARIABLES)
 foreach (_variableName ${_variableNames})
@@ -45,7 +47,7 @@ endif()
 # install(TARGETS editdistance RUNTIME DESTINATION bin)
 
 
-include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR} ${vodigrex_INCLUDE_DIRS}  
+include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR} ${vodigrex_INCLUDE_DIRS}
 	includes
 	includes/TopologicalMap/ 
 	includes/MapComparator/ 
@@ -54,6 +56,7 @@ include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR} ${vodigr
 	includes/ProbabilisticMethod
 	includes/VFLib/include/
 	includes/VFLConversion/
+	includes/Conversion/
 )
 
 # add_library(EVGthin
