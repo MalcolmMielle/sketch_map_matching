@@ -9,8 +9,6 @@
 namespace AASS{
 	
 	namespace graphmatch{
-		
-
 		/**
 		* @brief Vertex stored in GraphPlace
 		* 
@@ -62,11 +60,14 @@ namespace AASS{
 			 * @param[in] k : new Keypoint type pointer. Need to be created from new.
 			 */
 			void setKeypoint(Keypoint* k){deleteKeypoint(); _kp = k;}
+			Keypoint* getKeypoint() const {return _kp;}
 			void deleteKeypoint(){delete _kp;}
 			
 			void setVariance(const double v){_variance_edge_number = v;}
 			double getVariance(){return _variance_edge_number;}
 			const double getVariance() const {return _variance_edge_number;}
+			
+			
 			
 			///@brief return the one char representing the keypoint
 			std::string getID() const {return _kp->getID();}
@@ -118,6 +119,10 @@ namespace AASS{
 				}
 				return *this;
 			}	
+			
+			bool compare(const Place p) const {
+				return _kp->compareKeypoints(p.getKeypoint());
+			}
 			
 		};
 		
@@ -188,6 +193,13 @@ namespace AASS{
 			return in;
 			
 		}
+		
+		inline bool comparePlace(const Place& p, const Place& p2){
+			return p.compare(p2);
+		}
+		
+		
+		
 	}
 }
 #endif

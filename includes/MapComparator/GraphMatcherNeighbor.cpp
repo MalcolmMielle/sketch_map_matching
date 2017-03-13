@@ -17,7 +17,13 @@ int AASS::graphmatch::GraphMatcherNeighbor::initPlanar(const AASS::graphmatch::M
 			/*
 			 * Calculate the edit distance between every string out of the first pair and string
 			 */
-			int dist_temp = gp.editDistance(the_pair.getFirst(), string, all_edge, out, operation);
+			
+			std::deque< Place> out_places;
+			gp_model.getAllVertexAttrCounterClockWise(the_pair.getSecond(), out_places);
+
+			int dist_temp = gp.editDistance(the_pair.getFirst(), out_places, all_edge, out, operation);
+			
+// 			int dist_temp = gp.editDistance(the_pair.getFirst(), string, all_edge, out, operation);
 // 			std::cout << "Result : " << operation << std::endl;
 			//Add new substitution (ie which node is comaprable to which node in the other graph, ie all new good match) occuring to Q
 			for(size_t i = 0 ; i < out.size() ; i++){

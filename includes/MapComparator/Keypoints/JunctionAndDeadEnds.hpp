@@ -21,6 +21,13 @@ namespace AASS{
 				return false;
 			};
 			
+			virtual bool compareKeypoints(Keypoint* k) const{
+				if(k->getID() == getID()){
+					return true;
+				} 
+				return false;
+			}
+			
 			virtual cv::Scalar getColor(int channel) const{
 				
 				if(channel == 1){
@@ -74,6 +81,13 @@ namespace AASS{
 				}
 				return false;
 			};
+			
+			virtual bool compareKeypoints(Keypoint* k) const{
+				if(k->getID() == getID()){
+					return true;
+				} 
+				return false;
+			}
 			
 			virtual cv::Scalar getColor(int channel) const{
 				

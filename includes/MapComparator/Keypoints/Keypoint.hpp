@@ -47,6 +47,12 @@ namespace AASS{
 				return NULL;
 			}
 			
+			///@brief return a pointer to an element on this class if the vertex is determine to be of this class.
+			virtual bool compareKeypoints(Keypoint* k) const{
+				throw std::runtime_error("Trying to use a Keypoint base class to get a comparison to another keypoints.");
+				return NULL;
+			}
+			
 			virtual Keypoint* makePointer() const {
 				std::cout << "MAKING A BASE POINTER NOT GOOOOD" << std::endl;
 				Keypoint* d = new Keypoint();

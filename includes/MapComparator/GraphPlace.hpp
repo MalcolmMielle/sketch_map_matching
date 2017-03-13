@@ -6,6 +6,7 @@
 #include <fstream>
 #include <assert.h>
 #include <stdexcept>
+#include <functional>
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/topological_sort.hpp"
 
@@ -96,7 +97,7 @@ namespace AASS{
 			* 
 			* @return edit distance
 			*/
-			int editDistance(const VertexPlace& v, const std::string& other_graph_neighbor, const std::deque< std::pair< EdgePlace, VertexPlace > >& all_edge_other_graph, std::deque< graphmatch::Match >& out, std::string& operation_out) const;
+			int editDistance(const AASS::graphmatch::VertexPlace& v, const std::deque< AASS::graphmatch::Place >& other_graph_neighbor, const std::deque< std::pair< AASS::graphmatch::EdgePlace, AASS::graphmatch::VertexPlace > >& all_edge_other_graph, std::deque< AASS::graphmatch::Match >& out, std::__cxx11::string& operation_out) const;
 			
 			/**
 			 * @brief Return all the EdgePlace and VertexPlace of a neighborhood counterclockwise
@@ -105,6 +106,18 @@ namespace AASS{
 			 * @param[in] all_edge : deque of EdgePlace and VertexPlace returned.
 			 */
 			virtual void getAllEdgeLinkedCounterClockWise(const VertexPlace& v, std::deque< std::pair< EdgePlace, VertexPlace > >& all_edge) const;
+			
+			
+			virtual void getAllVertexAttrCounterClockWise(const VertexPlace& v, std::deque< Place>& out) const {
+				std::deque< std::pair< EdgePlace, VertexPlace > > all_edge;
+				out.clear();
+				
+				getAllEdgeLinkedCounterClockWise(v, all_edge);
+				
+				for(auto it = all_edge.begin() ; it != all_edge.end() ; ++it){
+					out.push_back( (*this)[it->second] );
+				}	
+			}
 			
 	// 		virtual void reduce(const std::deque< VertexPlace >& h);
 			
@@ -455,38 +468,54 @@ namespace AASS{
 		}
 
 
-		inline int GraphPlace::editDistance(const VertexPlace& v, const std::string& other_graph_neighbor, const std::deque< std::pair< EdgePlace, VertexPlace > >& all_edge_other_graph, std::deque< graphmatch::Match >& out, std::string& operation_out) const
+		inline int GraphPlace::editDistance(const VertexPlace& v, const std::deque< Place>& other_graph_neighbor, const std::deque< std::pair< EdgePlace, VertexPlace > >& all_edge_other_graph, std::deque< graphmatch::Match >& out, std::string& operation_out) const
 		{
 			
 			std::deque< std::pair< EdgePlace, VertexPlace > > all_edge;
 			int best_dist = -1;
 			
 			getAllEdgeLinkedCounterClockWise(v, all_edge);
+			std::deque< Place> all_places;
+			
+			for(auto it = all_edge.begin() ; it != all_edge.end() ; ++it){
+				all_places.push_back( (*this)[it->second] );
+			}
+			
+// 			getAllVertexAttrCounterClockWise(v, all_places);
 
 			//Make a string out of the order of vertex.	
-			std::string string = makeString(all_edge);
+// 			std::string string = makeString(all_edge);
 			std::string operation;
 			std::string original;
 			int starting_point = -1;
 			
 			//compare every possibility.	
-			for(size_t i = 0 ; i < string.size() ; i++){
+			for(size_t i = 0 ; i < all_places.size() ; i++){
 				size_t y = i;
-				std::deque<VertexPlace> list;
+// 				std::deque<VertexPlace> list;
 				
-				std::string new_test;
+				
+				std::deque< Place> new_test;
+				
+// 				std::string new_test;
 				//Get all string combination
-				for(size_t j = 0 ; j < string.size() ; j++){
-					new_test = new_test + string.at(y);
+				for(size_t j = 0 ; j < all_places.size() ; j++){
+					new_test.push_back(all_places[y]);
 					y++;
-					list.push_back(all_edge[y].second);
-					if(y == string.size()){
+// 					list.push_back(all_edge[y].second);
+					if(y == all_places.size()){
 						y = 0;
 					}
 				}
 				
 				std::string out_string;
-				double edistance = AASS::editdistance::normalizedEditDistance(new_test, other_graph_neighbor, out_string);
+				
+				std::function<bool(Place, Place)> compareFunction = graphmatch::comparePlace;
+				
+				
+// 				(const std::deque<ModifyTypeElement>& string_to_modify, const std::deque<UnchangedTypeElement>& unchanged, std::function<bool(ModifyTypeElement, UnchangedTypeElement)> compareFunction, std::string& out)
+				
+				double edistance = AASS::editdistance::normalizedEditDistance<Place, Place>(new_test, other_graph_neighbor, compareFunction, out_string);
 				
 // 				std::cout << "the out string " << out_string << " for " << new_test <<" and " <<other(*this)_neighbor <<std::endl;
 	// 			std::cout << "case : " << new_test;
@@ -495,8 +524,8 @@ namespace AASS{
 					best_dist = edistance;
 					operation = out_string;
 					//TODO Useless
-					original = new_test;
-					starting_point = y;
+// 					original = new_test;
+					starting_point = y; 
 				
 				}
 				

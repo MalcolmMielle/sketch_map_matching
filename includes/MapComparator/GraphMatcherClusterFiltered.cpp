@@ -55,13 +55,16 @@ bool AASS::graphmatch::GraphMatcherClusterFiltered::planarEditDistanceAlgorithm(
 			//Match neighborhoods
 			std::deque< std::pair< EdgePlace, VertexPlace > > all_edge;
 			gp_model.getAllEdgeLinkedCounterClockWise(the_pair.getSecond(), all_edge);
+			
+			std::deque< Place> out_places;
+			gp_model.getAllVertexAttrCounterClockWise(the_pair.getSecond(), out_places);
 
 			//Make a string out of the order of vertex.	
 			std::string string = gp_model.makeString(all_edge);
 			
 			std::deque< graphmatch::Match > out;
 			std::string operation;
-			int dist_temp = gp.editDistance(the_pair.getFirst(), string, all_edge, out, operation);
+			int dist_temp = gp.editDistance(the_pair.getFirst(), out_places, all_edge, out, operation);
 			dist = dist + dist_temp;
 			
 // 			drawHypo(gp, gp_model, hypothesis.getMatches(), "hypo");

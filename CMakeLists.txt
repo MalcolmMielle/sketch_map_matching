@@ -3,6 +3,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(sketchAlgorithms)
 
+add_definitions(-std=c++11)
 
 SET(CMAKE_CXX_FLAGS "-Wall")
 
@@ -142,8 +143,8 @@ add_library(VFLib
 # target_link_libraries(test_real_comparaison ${OpenCV_LIBS} Comparatorlib -lboost_unit_test_framework)
 # # 
 # # 
-add_executable(test_evg Test/BaseTest/test_EVG.cpp)
-target_link_libraries(test_evg ${OpenCV_LIBS} ${vodigrex_LIBRARIES} Comparatorlib -lboost_unit_test_framework)
+# add_executable(test_evg Test/BaseTest/test_EVG.cpp)
+# target_link_libraries(test_evg ${OpenCV_LIBS} ${vodigrex_LIBRARIES} Comparatorlib -lboost_unit_test_framework)
 # # 
 # add_executable(test_virtual Test/BaseTest/test_virtualenv.cpp)
 # target_link_libraries(test_virtual ${OpenCV_LIBS} Comparatorlib -lboost_unit_test_framework)
@@ -224,8 +225,8 @@ target_link_libraries(test_evg ${OpenCV_LIBS} ${vodigrex_LIBRARIES} Comparatorli
 add_executable(simulation_kth Test/GraphDB/simulation_kth.cpp)
 target_link_libraries(simulation_kth ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
 
-add_executable(sketchvssketch Test/GraphDB/sketchVSsketch.cpp)
-target_link_libraries(sketchvssketch ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
+# add_executable(sketchvssketch Test/GraphDB/sketchVSsketch.cpp)
+# target_link_libraries(sketchvssketch ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
 # 
 # add_executable(simulation_easy Test/GraphDB/simulation_easy.cpp)
 # target_link_libraries(simulation_easy ${OpenCV_LIBS} VFLib Probabilitieslib Maplib Comparatorlib -lboost_filesystem -lboost_system)
@@ -243,8 +244,8 @@ add_executable(simulation_taurob Test/GraphDB/simulation_taurob.cpp)
 target_link_libraries(simulation_taurob ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
 
 
-add_executable(scale_space Test/BaseTest/test_scale_space.cpp)
-target_link_libraries(scale_space ${OpenCV_LIBS} ${vodigrex_LIBRARIES})
+# add_executable(scale_space Test/BaseTest/test_scale_space.cpp)
+# target_link_libraries(scale_space ${OpenCV_LIBS} ${vodigrex_LIBRARIES})
 # # 
 
 # add_subdirectory(includes/boost/algorithm/sequence/)
@@ -271,13 +272,13 @@ add_subdirectory(Test/GraphDB/VFLcomp)
 add_subdirectory(Test/SLAM)
 add_subdirectory(Test/Simulation)
 
-
-INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
-INSTALL(TARGETS Comparatorlib DESTINATION lib/sketchAlgorithm)
-INSTALL(TARGETS Probabilitieslib DESTINATION lib/sketchAlgorithm)
-INSTALL(TARGETS VFLib DESTINATION lib/sketchAlgorithm)
-
-install(TARGETS simulation_kth RUNTIME DESTINATION bin)
-install(TARGETS simulation_taurob RUNTIME DESTINATION bin)
+# 
+# INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
+# INSTALL(TARGETS Comparatorlib DESTINATION lib/sketchAlgorithm)
+# INSTALL(TARGETS Probabilitieslib DESTINATION lib/sketchAlgorithm)
+# INSTALL(TARGETS VFLib DESTINATION lib/sketchAlgorithm)
+# 
+# install(TARGETS simulation_kth RUNTIME DESTINATION bin)
+# install(TARGETS simulation_taurob RUNTIME DESTINATION bin)
 
 
