@@ -52,7 +52,7 @@ namespace AASS{
 			 *The template is just here for compatibility with the upper probabilistic algorithm 
 			 * 
 			 * */
-			bool anchorMatching(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors, bool draw);
+			bool anchorMatching(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors, bool draw, cv::Size size = cv::Size(300,300) );
 			bool anchorMatching(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors){
 				return anchorMatching(gp, gp_model, anchors , 0);
 			}
@@ -102,12 +102,12 @@ namespace AASS{
 			* 
 			* @return true if match_to_compare cost is less than match_original and match_maybe, false otherwise.
 			*/
-			bool checkAndReplace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare); 
+			bool checkAndReplace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare, cv::Size size = cv::Size(300,300)); 
 			
 			bool replace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare); 
 			
 			
-			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final, bool draw);
+			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size = cv::Size(300,300));
 			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final){
 				match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, 0);
 			}
@@ -116,19 +116,33 @@ namespace AASS{
 		};
 		
 		
-		inline bool AASS::graphmatch::GraphMatcherAnchor::anchorMatching(graphmatch::GraphPlace& gp, graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors, bool draw)
+		inline bool AASS::graphmatch::GraphMatcherAnchor::anchorMatching(graphmatch::GraphPlace& gp, graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors, bool draw, cv::Size size)
 		{
 			_draw = draw;
 			cv::Mat mat_in;
 			if(_draw == 1) {
-				mat_in = cv::imread("../Test/Sequences/missingmap.png");
+				mat_in = cv::Mat::zeros(size, CV_8U);
 			}		
 // 			std::cout << "ANCHORS Here :" << anchors.size() << std::endl;
+			
+			cv::Mat m2 = cv::Mat::zeros(size, CV_8U);
+			gp.draw(m2);
+			cv::imshow("gp input", m2);
+			cv::Mat m22 = cv::Mat::zeros(size, CV_8U);
+			gp_model.draw(m22);
+			cv::imshow("gp model", m22);
+			cv::waitKey(0);
+			
+			
+			
 			
 			//Get all doors
 			if(anchors.size() > 0){
 				for(size_t i = 0 ; i < anchors.size() ; i++){
 				//Put all doors combination as seeds
+					
+					std::cout << "Pushing an anchor " << anchors[i] << std::endl;
+					
 					graphmatch::Hypothese starting_seeds;
 					starting_seeds.push_back(anchors[i]);
 					_gm_neighbor.clear();
@@ -158,6 +172,25 @@ namespace AASS{
 				
 				Hypothese final_hyp = _allhypothese_from_each_anchor[0];
 				
+				gp.print();
+				
+				for(size_t i = 0 ; i != final_hyp.size() ; ++i){
+					std::pair<graphmatch::VertexIteratorPlace, graphmatch::VertexIteratorPlace> vp;
+					//vertices access all the vertices
+					bool exist = false;
+					for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
+						graphmatch::VertexPlace v = *vp.first;
+						if(v == final_hyp[i].getFirst()){
+							exist = true;
+							std::cout << "Found" << std::endl;
+						}
+					}
+					std::cout <<"checked " << final_hyp[i].getFirst() << " at " << gp[final_hyp[i].getFirst()].mass_center << "linked to " << gp_model[final_hyp[i].getSecond()].mass_center << std::endl;
+					assert(exist == true);
+				}
+				
+				
+				
 				_from_which_hypo.clear();
 				_studied_index_to_fuse = 0;
 				for(size_t i = 0 ; i < final_hyp.size() ; i++){
@@ -173,10 +206,11 @@ namespace AASS{
 					//For every match,
 					//Check if any of the vertices already exist. If not add.
 					if(_draw == true){
-						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final before", 2);
-						to_fuse.drawHypo(gp, gp_model, mat_in, mat_in, "to fuse", 2);
+						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final before", 1);
+						to_fuse.drawHypo(gp, gp_model, mat_in, mat_in, "to fuse", 1);
 // 						anchors.drawHypo(gp, gp_model, mat_in, mat_in, "Anchor for fuse", 2);
 						cv::waitKey(0);
+// 						exit(0);
 					}
 					
 // 					
@@ -212,7 +246,7 @@ namespace AASS{
 						
 #else
 // 						std::cout << "IN MATCH ONE NOT TIMED" << std::endl;
-						match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, draw);
+						match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, draw, size);
 // 						std::cout << "OUT OF MATCH ONE" << std::endl;
 #endif
 						
@@ -291,6 +325,8 @@ namespace AASS{
 					
 					for(size_t k = 0 ; k < size_fuse ; k++){
 						
+						std::cout << "FUSE...." << std::endl;
+						
 						is_in_final = false;
 						
 #ifdef TIMED
@@ -301,7 +337,7 @@ namespace AASS{
 						
 #else
 // 						std::cout << "IN MATCH ONE NOT TIMED" << std::endl;
-						match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, draw);
+						match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, draw, size);
 // 						std::cout << "OUT OF MATCH ONE" << std::endl;
 #endif
 						//If it is not part of the hypo then fuse
@@ -316,7 +352,7 @@ namespace AASS{
 								_from_which_hypo.push_back(_studied_index_to_fuse);
 								
 // 								std::cout << std::endl << "NEWNEWNEW " << std::endl << std::endl;
-								dm.drawHypo(gp, gp_model, mat_in, mat_in, "NEW ONE", 2);
+								dm.drawHypo(gp, gp_model, mat_in, mat_in, "NEW ONE", 1);
 								cv::waitKey(0);
 							}
 						
@@ -384,39 +420,42 @@ namespace AASS{
 		
 		
 		
-		inline void GraphMatcherAnchor::match_one_hypo(GraphPlace& gp, GraphPlace& gp_model, Hypothese& final_hyp, size_t& size_final, Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final, bool draw)
+		inline void GraphMatcherAnchor::match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size)
 		{
+			assert(size_final == final_hyp.size());
+			assert(size_fuse == to_fuse.size());
 			
-			cv::Mat mat_in = cv::imread("../Test/Sequences/missingmap.png");
+			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);
 			if(draw == true) {
-				mat_in = cv::imread("../Test/Sequences/missingmap.png");
+				mat_in = cv::Mat::zeros(size, CV_8U);
 			}			
 			
 #ifdef TIMED
 			double time = 0 ;
 #endif
-// 			std::cout << "NEW MATCH TO TESt is seen : " << is_in_final << std::endl;
+			std::cout << "NEW MATCH TO TESt is seen : " << is_in_final << std::endl;
 			for(size_t j = 0 ; j < size_final ; j++){
 				std::cout << " all the number size_final " << size_final << " j " << j << " size to_fuse " << size_fuse << " k " << k << std::endl;
 				Hypothese dm;
 					
 				dm.push_back(final_hyp[j]);
 				
-				dm.drawHypo(gp, gp_model, mat_in, mat_in, "the too fuse we are looking at :D", 2);
+				dm.drawHypo(gp, gp_model, mat_in, mat_in, "the too fuse we are looking at :D", 1);
 				dm.clear();
+				
 				dm.push_back(to_fuse[k]);
-				dm.drawHypo(gp, gp_model, mat_in, mat_in, "2the too fuse we are looking at :D 2", 2);
-				if(draw == true){
-					std::deque < Match> dm;
-					
-					dm.push_back(final_hyp[j]);
-					dm.push_back(to_fuse[k]);
-					std::cout << "New one" << std::endl;
-// 					dm.drawHypo(gp, gp_model, mat_in, mat_in, "the too fuse we are looking at :D", 2);
-					cv::waitKey(0);
-					
-					
-				}
+				dm.drawHypo(gp, gp_model, mat_in, mat_in, "2the too fuse we are looking at :D 2", 1);
+// 				if(draw == true){
+// 					std::deque < Match> dm;
+// 					
+// 					dm.push_back(final_hyp[j]);
+// 					dm.push_back(to_fuse[k]);
+// 					std::cout << "New one" << std::endl;
+// // 					dm.drawHypo(gp, gp_model, mat_in, mat_in, "the too fuse we are looking at :D", 2);
+// 					cv::waitKey(0);
+// 					
+// 					
+// 				}
 							
 							
 				/****************TEST to rmeove later***************/
@@ -444,8 +483,9 @@ namespace AASS{
 				//Test if it's an anchor
 				
 				//Test the first part of the pair
+				std::cout << "TEST " << std::endl;
 				if(final_hyp[j].getFirst() == to_fuse[k].getFirst()){
-// 					std::cout << "SEEN" << std::endl;
+					std::cout << "SEEN" << std::endl;
 					is_in_final = true;
 					//Both match to compare
 					Match match = final_hyp[j];
@@ -461,12 +501,12 @@ namespace AASS{
 					for(size_t f = 0 ; f < final_hyp.size() ; f++){
 						//Look if the second vertex is the same AND if the match is not the already selected match
 						if(to_fuse[k].getSecond() == final_hyp[f].getSecond() && f != j ){
-// 										std::cout << "Found at " << f << std::endl;
+							std::cout << "Found at " << f << std::endl;
 							other = final_hyp[f];
 							index_other = f;
 						}
 					}
-// 								std::cout << "Index other "<< index_other << std::endl;
+					std::cout << "Index other "<< index_other << std::endl;
 					//Check if good and then replace.
 					if(draw == true){
 						Hypothese dm;
@@ -477,19 +517,19 @@ namespace AASS{
 						dm.push_back(match);
 						dm3.push_back(other);
 						dm2.push_back(match_to_compare);
-						dmweird.push_back(final_hyp[9]);
+// 						dmweird.push_back(final_hyp[9]);
 						if(match == other ){
 							std::cout << "SAME at " <<k << " " <<j << std::endl;
 						}
 						else{
 							std::cout << "Not the same at " <<k << " " <<j << std::endl;
 						}
-						dm.drawHypo(gp, gp_model, mat_in, mat_in, "match", 2);
-						dm3.drawHypo(gp, gp_model, mat_in, mat_in, "match2", 2);
-						dm2.drawHypo(gp, gp_model, mat_in, mat_in, "match to compare", 2);
+						dm.drawHypo(gp, gp_model, mat_in, mat_in, "match", 1);
+						dm3.drawHypo(gp, gp_model, mat_in, mat_in, "match2", 1);
+						dm2.drawHypo(gp, gp_model, mat_in, mat_in, "match to compare", 1);
 // 						this->drawHypo(gp, gp_model, mat_in, mat_in, dmweird, "weirdo", 2);
 			
-						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final just before", 2);
+						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final just before", 1);
 						
 					}
 					
@@ -517,7 +557,7 @@ namespace AASS{
 						
 
 					std::clock_t a = std::clock();
-					bool replaced = checkAndReplace(gp, gp_model, final_hyp, to_fuse, match, j, other, index_other, match_to_compare, k);	
+					bool replaced = checkAndReplace(gp, gp_model, final_hyp, to_fuse, match, j, other, index_other, match_to_compare, k, size);	
 					std::clock_t b = std::clock();	
 
 					time = time + ( ((float)(b - a))/CLOCKS_PER_SEC);
@@ -527,11 +567,12 @@ namespace AASS{
 					
 
 #else
-					bool replaced = checkAndReplace(gp, gp_model, final_hyp, to_fuse, match, j, other, index_other, match_to_compare, k);	
+					bool replaced = checkAndReplace(gp, gp_model, final_hyp, to_fuse, match, j, other, index_other, match_to_compare, k, size);	
 #endif
 					if(draw == true){
-						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "updated final", 2);
-						_allhypothese_from_each_anchor[0].drawHypo(gp, gp_model, mat_in, mat_in, "final that should not change", 2);
+						std::cout << "THIS DRAW" << std::endl;
+						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "updated final", 1);
+						_allhypothese_from_each_anchor[0].drawHypo(gp, gp_model, mat_in, mat_in, "final that should not change", 1);
 						cv::waitKey(0);
 					}
 					//If it was replaced, we update the value of the for loop
@@ -555,7 +596,7 @@ namespace AASS{
 				
 				//Test the second part
 				else if(final_hyp[j].getSecond() == to_fuse[k].getSecond()){
-// 					std::cout << "SEEN2" << std::endl;
+					std::cout << "SEEN2" << std::endl;
 					is_in_final = true;
 					//Both match to compare
 					Match match = final_hyp[j];
@@ -584,26 +625,27 @@ namespace AASS{
 						dm.push_back(match);
 						dm3.push_back(other);
 						dm2.push_back(match_to_compare);
-						dmweird.push_back(final_hyp[9]);
+// 						dmweird.push_back(final_hyp[9]);
 						if(match == other ){
 							std::cout << "SAME at " <<k << " " <<j << std::endl;
 						}
 						else{
 							std::cout << "Not the same at " <<k << " " <<j << std::endl;
 						}
-						dm.drawHypo(gp, gp_model, mat_in, mat_in, "match", 2);
-						dm3.drawHypo(gp, gp_model, mat_in, mat_in, "match2", 2);
-						dm2.drawHypo(gp, gp_model, mat_in, mat_in, "match to compare", 2);
-						dmweird.drawHypo(gp, gp_model, mat_in, mat_in, "weirdo", 2);
+						std::cout << "that here " << std::endl;
+						dm.drawHypo(gp, gp_model, mat_in, mat_in, "match", 1);
+						dm3.drawHypo(gp, gp_model, mat_in, mat_in, "match2", 1);
+						dm2.drawHypo(gp, gp_model, mat_in, mat_in, "match to compare", 1);
+// 						dmweird.drawHypo(gp, gp_model, mat_in, mat_in, "weirdo", 1);
 			
-						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final just before", 2);
+						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final just before", 1);
 						
 					}
 					
-					bool replaced = checkAndReplace(gp, gp_model, final_hyp, to_fuse, match, j, other, index_other, match_to_compare, k);	
+					bool replaced = checkAndReplace(gp, gp_model, final_hyp, to_fuse, match, j, other, index_other, match_to_compare, k, size);	
 		
 					if(draw == true){
-						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "updated final", 2);
+						final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "updated final", 1);
 						cv::waitKey(0);
 					}
 					

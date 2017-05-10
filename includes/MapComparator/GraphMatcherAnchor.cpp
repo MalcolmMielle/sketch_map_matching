@@ -22,7 +22,7 @@ bool AASS::graphmatch::GraphMatcherAnchor::bestMatch(const AASS::graphmatch::Mat
 	return better;
 }
 
-bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare)
+bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare, cv::Size size)
 {
 	std::cout << "Les couts " << match_original.getCost() << " " << match_to_compare.getCost() << "Les other ? " << index_match_maybe << " " << match_maybe.getCost() << std::endl;
 	
@@ -79,12 +79,12 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 		catch(std::exception &e){
 			
 			std::cout << "DRAWINF ZONE size of first and update" << _allhypothese_from_each_anchor[which].size() << " " << final.size() << " at " << index_match_original << std::endl;
-			cv::Mat mat_in = cv::imread("../Test/Sequences/missingmap.png");
+			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);;
 			Hypothese dm;
 			dm.push_back(match_original);
-			dm.drawHypo(gp, gp_model, mat_in, mat_in, "DM", 2);
-			_allhypothese_from_each_anchor[which].drawHypo(gp, gp_model, mat_in, mat_in, "Hyp", 2);
-			final.drawHypo(gp, gp_model, mat_in, mat_in, "Hyp real", 2);
+			dm.drawHypo(gp, gp_model, mat_in, mat_in, "DM", 1);
+			_allhypothese_from_each_anchor[which].drawHypo(gp, gp_model, mat_in, mat_in, "Hyp", 1);
+			final.drawHypo(gp, gp_model, mat_in, mat_in, "Hyp real", 1);
 			cv::waitKey(0);
 			
 		}
@@ -96,8 +96,8 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 #ifdef DEBUG
 		}
 		catch(std::exception &e){
-			std::cout << "DRAWINF ZONE to fuse size of first and update" << _allhypothese_from_each_anchor[_studied_index_to_fuse].size() << " " << to_fuse.size() << " at " << index_match_to_compare <<  std::endl;
-			cv::Mat mat_in = cv::imread("../Test/Sequences/missingmap.png");
+			std::cout << "DRAWINF ZONE to fuse size of first and update1" << _allhypothese_from_each_anchor[_studied_index_to_fuse].size() << " " << to_fuse.size() << " at " << index_match_to_compare <<  std::endl;
+			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);;
 			Hypothese dm;
 			dm.push_back(match_to_compare);
 			dm.drawHypo(gp, gp_model, mat_in, mat_in, "DM", 2);
@@ -120,9 +120,9 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 		
 		if(_draw == true){
 			std::cout << "DRAWINF ZONE" << std::endl;
-			cv::Mat mat_in = cv::imread("../Test/Sequences/missingmap.png");
-			zone.drawHypo(gp, gp_model, mat_in, mat_in, "zone", 2);
-			zone2.drawHypo(gp, gp_model, mat_in, mat_in, "zone2", 2);
+			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);;
+			zone.drawHypo(gp, gp_model, mat_in, mat_in, "zone", 1);
+			zone2.drawHypo(gp, gp_model, mat_in, mat_in, "zone2", 1);
 			cv::waitKey(0);
 		}	
 		else{

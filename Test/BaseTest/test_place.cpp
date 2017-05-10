@@ -27,18 +27,18 @@ BOOST_AUTO_TEST_CASE(trying)
 	
 // 	AASS::graphmatch::AllKeypoints ak;
 	
-	AASS::vodigrex::ThinkerVoronoi t;
-	AASS::graphmatch::PlaceExtractorList2Place p;
-	
-	AASS::SketchMap sk(t, p);
-	
-	cv::Mat mat_in = cv::imread("../Test/Simulation/FromVirtual/Gael/ObstacleMap.png");
-	
-	sk.setObstacleMat(mat_in);
-	
-	sk.think();
-	sk.think();
-	sk.think();
+// 	AASS::vodigrex::ThinkerVoronoi t;
+// 	AASS::graphmatch::PlaceExtractorList2Place p;
+// 	
+// 	AASS::SketchMap sk(t, p);
+// 	
+// 	cv::Mat mat_in = cv::imread("../Test/Simulation/FromVirtual/Gael/ObstacleMap.png");
+// 	
+// 	sk.setObstacleMat(mat_in);
+// 	
+// 	sk.think();
+// 	sk.think();
+// 	sk.think();
 	
 	AASS::graphmatch::GraphPlace gp;
 	AASS::graphmatch::GraphPlace gp_cop;

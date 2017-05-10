@@ -1,0 +1,2 @@
+add_executable(test_placevirtual test_place.cpp)
+target_link_libraries(test_placevirtual ${OpenCV_LIBS} Comparatorlib -lboost_unit_test_framework)

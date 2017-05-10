@@ -17,7 +17,7 @@ namespace AASS{
 		class  Place{
 			
 		protected:
-			Keypoint* _kp;
+			std::shared_ptr<Keypoint> _kp;
 			
 			//PROBABILITIES :
 			double _variance_edge_number;
@@ -34,13 +34,14 @@ namespace AASS{
 // 			Place() : label(false){};
 			Place() :  _variance_edge_number(-1), label(false){
 				Keypoint* kp = new Keypoint();
-				_kp = kp;
+				std::shared_ptr<Keypoint> kp_tmp(kp);
+				_kp = kp_tmp;
 			};
-			Place(const Place& cSource) : _kp(cSource.makePointer()){
+			Place(const Place& cSource) /*: _kp(cSource.makePointer())*/{
 				//<thisd is not init yet
 // 				delete _kp;
 // 				_kp = cSource.makePointer();
-				
+				_kp = cSource.getKeypoint();
 				place = cSource.place;
 				landmarks = cSource.landmarks;
 				junctions = cSource.junctions;
@@ -51,7 +52,7 @@ namespace AASS{
 				
 			}
 			virtual ~Place(){
-				delete _kp;
+// 				delete _kp;
 			}
 			
 			/**
@@ -59,9 +60,10 @@ namespace AASS{
 			 * 
 			 * @param[in] k : new Keypoint type pointer. Need to be created from new.
 			 */
-			void setKeypoint(Keypoint* k){deleteKeypoint(); _kp = k;}
-			Keypoint* getKeypoint() const {return _kp;}
-			void deleteKeypoint(){delete _kp;}
+			void setKeypoint(std::shared_ptr<Keypoint> k){/*deleteKeypoint();*/ _kp = k;}
+			
+			const std::shared_ptr<Keypoint>& getKeypoint() const {return _kp;}
+// 			void deleteKeypoint(){delete _kp;}
 			
 			void setVariance(const double v){_variance_edge_number = v;}
 			double getVariance(){return _variance_edge_number;}
@@ -72,7 +74,7 @@ namespace AASS{
 			///@brief return the one char representing the keypoint
 			std::string getID() const {return _kp->getID();}
 			std::string getType() const {return _kp->getType();}
-			Keypoint* makePointer() const {return _kp->makePointer();}
+			std::shared_ptr<Keypoint> makePointer() const {return _kp->makePointer();}
 			///@brief return the color associated with the keypoint. If the keypoint is not init, then it's black.
 			cv::Scalar getColor(int channel) const {
 				
@@ -106,9 +108,10 @@ namespace AASS{
 			Place& operator=(const Place& cSource){
 // 				std::cout << "Copying a place" << std::endl;
 				if(this != &cSource){
-					delete _kp;
-					_kp = cSource.makePointer();
+// 					delete _kp;
+// 					_kp = cSource.makePointer();
 					
+					_kp = cSource.getKeypoint();
 					place = cSource.place;
 					landmarks = cSource.landmarks;
 					junctions = cSource.junctions;

@@ -21,7 +21,7 @@ namespace AASS{
 				return false;
 			};
 			
-			virtual bool compareKeypoints(const Keypoint* k) const{
+			virtual bool compareKeypoints(const std::shared_ptr<Keypoint> k) const{
 				if(k->getID() == getID()){
 					return true;
 				} 
@@ -51,17 +51,18 @@ namespace AASS{
 				}
 			}
 			
-			virtual Keypoint* compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
+			virtual std::shared_ptr<Keypoint> compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
 				if(boost::out_degree(v, gp) > 1 ){
-					Keypoint* kp =  makePointer();
+					auto kp =  makePointer();
 					return kp;
 				}
 				return NULL;
 			}
 			
-			virtual Keypoint* makePointer() const {
+			virtual std::shared_ptr<Keypoint> makePointer() const {
 				Junction* d = new Junction();
-				Keypoint* re = static_cast<Junction*>(d);
+				Keypoint* re2 = static_cast<Junction*>(d);
+				std::shared_ptr<Keypoint> re(re2);
 				return re;
 			}
 			
@@ -82,7 +83,7 @@ namespace AASS{
 				return false;
 			};
 			
-			virtual bool compareKeypoints(const Keypoint* k) const{
+			virtual bool compareKeypoints(const std::shared_ptr<Keypoint> k) const{
 				if(k->getID() == getID()){
 					return true;
 				} 
@@ -112,16 +113,17 @@ namespace AASS{
 				}
 			}
 			
-			virtual Keypoint* compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
+			virtual std::shared_ptr<Keypoint> compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
 				if(boost::out_degree(v, gp) == 1 ){
 					return makePointer();
 				}
 				return NULL;
 			}
 			
-			virtual Keypoint* makePointer() const {
+			virtual std::shared_ptr<Keypoint> makePointer() const {
 				DeadEnd* d = new DeadEnd();
-				Keypoint* re = static_cast<DeadEnd*>(d);
+				Keypoint* re2 = static_cast<DeadEnd*>(d);
+				std::shared_ptr<Keypoint> re(re2);
 				return re;
 			}
 			
@@ -167,15 +169,16 @@ namespace AASS{
 			}
 			
 			
-			virtual Keypoint* compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
+			virtual std::shared_ptr<Keypoint> compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
 				std::cout << "trying to find a door" << std::endl;
 				throw std::runtime_error("No good comparison for a door in place.");
 				return NULL;
 			}
 			
-			virtual Keypoint* makePointer() const {
+			virtual std::shared_ptr<Keypoint> makePointer() const {
 				Door* d = new Door();
-				Keypoint* re = static_cast<Door*>(d);
+				Keypoint* re2 = static_cast<Door*>(d);
+				std::shared_ptr<Keypoint> re(re2);
 				return re;
 			}
 			

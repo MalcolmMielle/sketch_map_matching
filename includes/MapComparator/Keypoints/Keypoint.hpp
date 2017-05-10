@@ -46,21 +46,22 @@ namespace AASS{
 			 * @param[in] v : vertex in graphmatch
 			 * @param[in] gp : graph to which the vertex belong
 			 */
-			virtual Keypoint* compare(const VertexPlace& v, const GraphType& gp) const{
+			virtual std::shared_ptr<Keypoint> compare(const VertexPlace& v, const GraphType& gp) const{
 				throw std::runtime_error("Trying to use a Keypoint base class to get type.");
 				return NULL;
 			}
 			
 			///@brief return true if k and this are of the "same".
-			virtual bool compareKeypoints( const Keypoint* k) const{
+			virtual bool compareKeypoints( const std::shared_ptr<Keypoint> k) const{
 				throw std::runtime_error("Trying to use a Keypoint base class to get a comparison to another keypoints.");
 				return NULL;
 			}
 			
-			virtual Keypoint* makePointer() const {
+			virtual std::shared_ptr<Keypoint> makePointer() const {
 				std::cout << "MAKING A BASE POINTER NOT GOOOOD" << std::endl;
 				Keypoint* d = new Keypoint();
-				return d;
+				std::shared_ptr<Keypoint> skey(d);
+				return skey;
 			}
 			
 			virtual cv::Scalar getColor(int channel) const{

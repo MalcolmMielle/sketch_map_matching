@@ -46,18 +46,19 @@ namespace AASS{
 				}
 			}
 			
-			virtual Keypoint* compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
+			virtual std::shared_ptr<Keypoint> compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
 				if(boost::out_degree(v, gp) != 2 || gp[v].landmarks.size() != 1 ){
 					std::cout << "CREATING Room" << std::endl;
-					Keypoint* kp =  makePointer();
+					auto kp =  makePointer();
 					return kp;
 				}
 				return NULL;
 			}
 			
-			virtual Keypoint* makePointer() const {
+			virtual std::shared_ptr<Keypoint> makePointer() const {
 				Room* d = new Room();
-				Keypoint* re = static_cast<Room*>(d);
+				Keypoint* re2 = static_cast<Room*>(d);
+				std::shared_ptr<Keypoint> re(re2);
 				return re;
 			}
 			
@@ -101,18 +102,19 @@ namespace AASS{
 				}
 			}
 			
-			virtual Keypoint* compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
+			virtual std::shared_ptr<Keypoint> compare(const graphmatch::VertexPlace& v, const GraphType& gp) const{
 				if(boost::out_degree(v, gp) == 2 && gp[v].landmarks.size() == 1){
 					std::cout << "CREATING Corner" << std::endl;
-					Keypoint* kp =  makePointer();
+					auto kp =  makePointer();
 					return kp;
 				}
 				return NULL;
 			}
 			
-			virtual Keypoint* makePointer() const {
+			virtual std::shared_ptr<Keypoint> makePointer() const {
 				Corner* d = new Corner();
-				Keypoint* re = static_cast<Corner*>(d);
+				Keypoint* re2 = static_cast<Corner*>(d);
+				std::shared_ptr<Keypoint> re(re2);
 				return re;
 			}
 			

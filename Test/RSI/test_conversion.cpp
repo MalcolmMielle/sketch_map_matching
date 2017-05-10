@@ -127,7 +127,8 @@ BOOST_AUTO_TEST_CASE(trying)
 	
 	AASS::graphmatch::GraphPlace gp;
 	
-	AASS::graphmatch::graphZoneToGraphPlace(graph_slam, gp);
+	AASS::graphmatch::RSIGraphConverter converter;
+	converter.graphZoneToGraphPlace(graph_slam, gp);
 	
 	cv::Mat m = cv::Mat::zeros(slam1.size(), CV_8U);
 	gp.draw(m);
