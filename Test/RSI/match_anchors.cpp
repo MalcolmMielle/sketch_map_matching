@@ -15,19 +15,106 @@
 #include "RSIConversion.hpp"
 #include "GraphMatcherAnchor.hpp"
 
-
-void makeGraph(const std::string& file, AASS::RSI::GraphZone& graph_slam){
+void draw(AASS::RSI::GraphZone& gp_real, AASS::RSI::GraphZone& gp_model, const cv::Mat& obstacle, const cv::Mat& obstacle_model, std::vector< AASS::RSI::ZoneCompared > matches){
 	
+	cv::Mat obst_copy;
+	obstacle.copyTo(obst_copy);
 	
-	cv::Mat slam = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+	cv::imshow("OBSOBS", obst_copy);
+	
+	cv::Mat obst_model_copy;
+	obstacle_model.copyTo(obst_model_copy);
+	
+// 	cv::Mat draw_links = cv::Mat::zeros(obst_model_copy.size(), CV_8UC3);
+// 	cv::Mat draw_graph = cv::Mat::zeros(obst_copy.size(), CV_8UC3);
+// 	cv::Mat draw_graph_model = cv::Mat::zeros(obst_model_copy.size(), CV_8UC3);
+	
+	int cols_max = obst_model_copy.size().width;
+	if(cols_max < obst_copy.size().width){
+		cols_max = obst_copy.size().width;
+	}
+	
+	cv::Size size(cols_max, obst_model_copy.size().height + obst_copy.size().height);
+	cv::Mat all = cv::Mat::zeros(size, CV_8UC1);
+// 	cv::Mat only_linked = cv::Mat::zeros(size, CV_8UC3);
+	cv::Mat all_maps = cv::Mat::zeros(size, CV_8UC3);
+	
+	cv::Mat roi = all(cv::Rect(0,0,obst_copy.size().width,obst_copy.size().height));
+// 	cv::Mat roi_linked = only_linked(cv::Rect(0,0,obst_copy.size().width,obst_copy.size().height));
+	cv::Mat roi_model = all(cv::Rect(0 ,obst_copy.size().height, obst_model_copy.size().width,obst_model_copy.size().height));
+	
+// 	cv::Mat roi_maps = all_maps(cv::Rect(0,0,obst_copy.size().width,obst_copy.size().height));
+// 	cv::Mat roi_model_maps = all_maps(cv::Rect(0 ,obst_copy.size().height, obst_model_copy.size().width,obst_model_copy.size().height));
+	
+// 	gp_real.draw(roi);
+// 	gp_model.draw(roi_model);
+	
+	obst_copy.copyTo(roi);
+	obst_model_copy.copyTo(roi_model);
+	
+	cv::Scalar color;
+	cv::RNG rrng(12345);
+		
+	if(all.channels() == 1){
+		color = rrng.uniform(50, 255);
+	}
+	
+	else if(all.channels() == 3){
+		color[1] = rrng.uniform(50, 255);
+		color[3] = rrng.uniform(50, 255);
+		color[2] = rrng.uniform(50, 255);
+	}
 // 	
-// 	cv::imshow("input", slam);
+// 	cv::Scalar color_model;
+// 
+// 	
+	auto it = matches.begin();
+	
+	for( ; it != matches.end() ; ++it){
+		std::cout << "DRAW LINE " << std::endl;
+		
+		auto point = gp_model[it->target].getCentroid();
+		point.y = point.y + obst_copy.size().height;
+		
+		cv::line(all, gp_real[it->source].getCentroid(), point, color, 5);
+	}
+	
+	cv::imshow("all links", all);
+	
+}
+
+void makeGraphSLAM(const std::string& file, AASS::RSI::GraphZone& graph_slam){
+	
+	cv::Mat slam_tmp = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+// 	
+// 	cv::imshow("input", slam_tmp);
 // 	cv::waitKey(0);
 	
-	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY);
-	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY_INV);
+	cv::threshold(slam_tmp, slam_tmp, 20, 255, cv::THRESH_BINARY);
+	cv::threshold(slam_tmp, slam_tmp, 20, 255, cv::THRESH_BINARY_INV);
 	
+// 	cv::imshow("input", slam_tmp);
+// 	cv::waitKey(0);
 	std::cout << "/************ FUZZY OPENING*************/ \n";
+	
+	cv::blur(slam_tmp, slam_tmp, cv::Size(15,15));
+	
+// 	cv::imshow("input", slam_tmp);
+// 	cv::waitKey(0);
+	
+	cv::threshold(slam_tmp, slam_tmp, 200, 255, cv::THRESH_BINARY);
+	cv::threshold(slam_tmp, slam_tmp, 20, 0, cv::THRESH_TOZERO);
+	
+// 	cv::Mat invSrc =  cv::Scalar::all(255) - slam_tmp;
+	
+	cv::imshow("input", slam_tmp);
+	cv::waitKey(0);
+	
+	cv::Mat slam;		
+	AASS::RSI::Kmeans kmeans;
+	kmeans.setK(4);
+	kmeans.kmeansColor(slam_tmp, slam);
+	
 	AASS::RSI::FuzzyOpening fuzzy_slam;
 	fuzzy_slam.fast(false);
 	
@@ -71,6 +158,71 @@ void makeGraph(const std::string& file, AASS::RSI::GraphZone& graph_slam){
 	
 	cv::Mat graphmat2 = cv::Mat::zeros(out_tmp_slam.size(), CV_8U);
 	graph_slam.draw(graphmat2);
+	std::string s = "Blob";
+	cv::imshow(s, graphmat2);
+	cv::waitKey(0);
+}
+
+
+void makeGraph(const std::string& file, AASS::RSI::GraphZone& graph_slam){
+	
+	
+	cv::Mat slam = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+// 	
+	cv::imshow("input", slam);
+	cv::waitKey(0);
+	
+	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY);
+	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY_INV);
+	
+	std::cout << "/************ FUZZY OPENING*************/ \n";
+	AASS::RSI::FuzzyOpening fuzzy_slam;
+	fuzzy_slam.fast(false);
+	
+	cv::Mat out_slam;
+	cv::imshow("SLAM", slam);
+	cv::waitKey(0);
+	fuzzy_slam.fuzzyOpening(slam, out_slam, 500);
+	std::cout << "Done opening " << std::endl;
+	out_slam.convertTo(out_slam, CV_8U);
+	
+// 	std::cout << out << std::endl;
+	
+	std::cout << "/************ REDUCING THE SPACE OF VALUES *****************/\n";
+	cv::Mat out_tmp_slam;
+	AASS::RSI::reduceZone(out_slam, out_tmp_slam);
+	cv::imshow("REDUCED", out_tmp_slam);
+	cv::waitKey(0);
+	
+	AASS::RSI::ZoneExtractor zone_maker;
+	std::cout << "WHATERSHED SLAM" << std::endl;
+	zone_maker.extract(out_tmp_slam);
+	
+	std::cout << "Got the ZONES" << std::endl;
+
+	// 	std::cout << "Getting the graph" << std::endl;
+	cv::imshow("trimming", out_tmp_slam);
+	cv::waitKey(0);
+	std::cout << "/*********** MAKING AND TRIMMING THE GRAPH ***************/\n";
+	graph_slam = zone_maker.getGraph();
+	graph_slam.removeVertexValue(0);
+
+	std::cout << "Number of nodes" << graph_slam.getNumVertices() << std::endl;
+	
+	cv::imshow("watersherd", out_tmp_slam);
+	cv::waitKey(0);
+	//Watershed Algorithm
+	graph_slam.watershed(0.25);
+	
+	int size_to_remove = 100;
+	
+	graph_slam.removeVertexUnderSize(size_to_remove, true);
+	graph_slam.removeLonelyVertices();
+	if(graph_slam.lonelyVertices())
+		throw std::runtime_error("Fuck you lonelyness");	
+	
+	cv::Mat graphmat2 = cv::Mat::zeros(out_tmp_slam.size(), CV_8U);
+	graph_slam.draw(graphmat2);
 	cv::imshow("end", graphmat2);
 }
 
@@ -87,15 +239,16 @@ BOOST_AUTO_TEST_CASE(trying)
 // 	int argc = boost::unit_test::framework::master_test_suite().argc;
 // 	char** argv = boost::unit_test::framework::master_test_suite().argv;
 	std::string file;
-	file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/00.png";
+	file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/12.png";
 	cv::Mat slam1 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
 
 	AASS::RSI::GraphZone graph_slam;
+// 	makeGraphSLAM(file, graph_slam);
 	makeGraph(file, graph_slam);
 	
 	std::string file2;
-	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
-	cv::Mat slam2 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/13.png";
+	cv::Mat slam2 = cv::imread(file2, CV_LOAD_IMAGE_GRAYSCALE);
 
 	AASS::RSI::GraphZone graph_slam2;
 	makeGraph(file2, graph_slam2);
@@ -106,8 +259,10 @@ BOOST_AUTO_TEST_CASE(trying)
 // 	graph_slam.updatePCA();
 // 	graph_slam.removeRiplesv2();
 // 	graph_slam.updateContours();
-	graph_slam.update();
+	std::cout << "Updating graph 1" << std::endl;
+	graph_slam.update(); //<- MAYBE BUG HERE WHEN USING THE SLAM MAP
 	
+	std::cout << "Updating graph 2" << std::endl;
 	graph_slam2.update();
 	
 	std::cout << "Size of graph" << graph_slam.getNumVertices() << std::endl;
@@ -173,6 +328,10 @@ BOOST_AUTO_TEST_CASE(trying)
 	cv::Mat m2 = cv::Mat::zeros(slam2.size(), CV_8U);
 	gp2.draw(m2);
 	cv::imshow("graph2 m", m);
+	cv::waitKey(0);
+	
+	cv::imshow("TEST", slam1);
+	draw(graph_slam, graph_slam2, slam1, slam2, match);
 	cv::waitKey(0);
 	
 	
