@@ -16,6 +16,8 @@ find_package( OpenCV REQUIRED)
 
 find_package( Boost REQUIRED )
 
+find_package(RSI REQUIRED)
+
 find_package( editdistance REQUIRED )
 find_package( vodigrex REQUIRED )
 find_package( bettergraph REQUIRED )
@@ -48,7 +50,7 @@ endif()
 # install(TARGETS editdistance RUNTIME DESTINATION bin)
 
 
-include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR} ${vodigrex_INCLUDE_DIRS}
+include_directories("${PROJECT_BINARY_DIR}" ${CMAKE_CURRENT_BINARY_DIR} ${vodigrex_INCLUDE_DIRS} ${RSI_INCLUDE_DIRS}
 	includes
 	includes/TopologicalMap/ 
 	includes/MapComparator/ 
@@ -271,6 +273,7 @@ add_subdirectory(Test/GraphDB)
 add_subdirectory(Test/GraphDB/VFLcomp)
 add_subdirectory(Test/SLAM)
 add_subdirectory(Test/Simulation)
+add_subdirectory(Test/RSI)
 
 # 
 # INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)

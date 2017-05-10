@@ -21,7 +21,7 @@ namespace AASS{
 				return false;
 			};
 			
-			virtual bool compareKeypoints(Keypoint* k) const{
+			virtual bool compareKeypoints(const Keypoint* k) const{
 				if(k->getID() == getID()){
 					return true;
 				} 
@@ -82,7 +82,7 @@ namespace AASS{
 				return false;
 			};
 			
-			virtual bool compareKeypoints(Keypoint* k) const{
+			virtual bool compareKeypoints(const Keypoint* k) const{
 				if(k->getID() == getID()){
 					return true;
 				} 

@@ -35,20 +35,24 @@ namespace AASS{
 				return "";	
 			}
 			
-			///@brief return true if the GraphPlace::VertexPlace is of *this type
+			///@brief return true if the GraphPlace::VertexPlace is of *this type. The simple version just compare IDs but I should do better
 			virtual bool isOfType(const VertexPlace& v){
 				throw std::runtime_error("Trying to use a Keypoint base class to get type."); 
 				return false;
 			}
 			
-			///@brief return a pointer to an element on this class if the vertex is determine to be of this class.
+			/**
+			 * @brief return a pointer to an element on this class if the vertex is determine to be of this class. Used for creating new instances of the keypoint if the vertex is of the keypoint type. This method is very important
+			 * @param[in] v : vertex in graphmatch
+			 * @param[in] gp : graph to which the vertex belong
+			 */
 			virtual Keypoint* compare(const VertexPlace& v, const GraphType& gp) const{
 				throw std::runtime_error("Trying to use a Keypoint base class to get type.");
 				return NULL;
 			}
 			
-			///@brief return a pointer to an element on this class if the vertex is determine to be of this class.
-			virtual bool compareKeypoints(Keypoint* k) const{
+			///@brief return true if k and this are of the "same".
+			virtual bool compareKeypoints( const Keypoint* k) const{
 				throw std::runtime_error("Trying to use a Keypoint base class to get a comparison to another keypoints.");
 				return NULL;
 			}
