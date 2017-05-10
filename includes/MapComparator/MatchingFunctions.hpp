@@ -22,6 +22,11 @@ namespace AASS{
 		void getString(size_t start, size_t end, const std::deque< std::pair< graphmatch::EdgePlace, graphmatch::VertexPlace > >& all_edge, const graphmatch::GraphPlace& gp, std::string& all_strings);
 		
 		/**
+		 * @brief return all nodes between start and end
+		 */
+		void getNeighborBetween2(size_t start, size_t end, const std::deque< std::pair< graphmatch::EdgePlace, graphmatch::VertexPlace > >& all_edge, const graphmatch::GraphPlace& gp, std::deque<graphmatch::VertexPlace>& neighbor, std::deque<Place>& places);
+		
+		/**
 		* @brief Create the string while taking in account the previous match
 		*/
 		double makeMatching(const graphmatch::VertexPlace& v, const graphmatch::VertexPlace& v_model, const AASS::graphmatch::GraphPlace& gp, const AASS::graphmatch::GraphPlace& gp_model, const std::deque< graphmatch::Match >& matched_previously, std::deque< graphmatch::Match >& out_match);
@@ -62,16 +67,25 @@ namespace AASS{
 			
 			//ATTENTION : I feel like this could mix
 			//Got to first match vertex :
+			//All vertex in the neighborhood that were already matched
 			std::deque< std::pair < int, int > > pair_matched;
+			
+			//For all node in neighbor
 			for(size_t i = 0 ; i < all_edge.size() ; i++){
+				
+				//For all node matched before
 				for(size_t w = 0 ; w < matched_previously.size() ;  w++){
-					//Get all match that are in the neighbor
+					
+					//If the node has been matched
 					if(all_edge[i].second == matched_previously[w].getFirst()){
 						
+						//For all node around node in model
 						for(size_t j = 0 ; j < all_edge_model.size() ; j ++){
+							
+							//If the node as been matched to the other side of the same matching from before
 							if(all_edge_model[j].second == matched_previously[w].getSecond()){
 								
-								//Get all pair of match
+								//Get in because it was alreayd matched
 								pair_matched.push_back(std::pair<int, int>(i, j));
 								
 							}
@@ -82,34 +96,71 @@ namespace AASS{
 			}
 			
 	// 		std::cout << "found first match and there is  " << pair_matched.size() << std::endl;
+			
+			//Edit distance of the neighbor
 			double edit_distance = 0;
+			
+			//If more than one match
 			if(pair_matched.size() > 1){
 	// 			std::cout << "IF MORE THAN ONE : " << std::endl;
+				
+				//Get all circular combinaison with the lock position of the neighbor thanks the already matched nodes
 				for(size_t i = 0 ; i < pair_matched.size() - 1 ; i++){
-					std::string all_strings_first;
-					std::string all_strings_model;
-					getString(pair_matched[i].first, pair_matched[i+1].first, all_edge, gp, all_strings_first);
-					getString(pair_matched[i].second, pair_matched[i+1].second, all_edge_model, gp_model, all_strings_model);
+// 					std::string all_strings_first;
+// 					std::string all_strings_model;
+// 					
+// 					getString(pair_matched[i].first, pair_matched[i+1].first, all_edge, gp, all_strings_first);
+					std::deque<graphmatch::VertexPlace> first_neigh;
+					std::deque<Place> f_neigh_place;
+					getNeighborBetween2(pair_matched[i].first, pair_matched[i+1].first, all_edge, gp, first_neigh, f_neigh_place);				
+					
+// 					getString(pair_matched[i].second, pair_matched[i+1].second, all_edge_model, gp_model, all_strings_model);
+					std::deque<graphmatch::VertexPlace> first_neigh_model;
+					std::deque<Place> f_neigh_place_model;
+					getNeighborBetween2(pair_matched[i].second, pair_matched[i+1].second, all_edge_model, gp_model, first_neigh_model,f_neigh_place_model);
 					
 	// 				std::cout << "String result size " << all_strings_first.size() << std::endl;
 					
 					//Match every string correspondance
 					std::string out;
-					edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
+				
+					std::function<bool(Place, Place)> compareFunction = graphmatch::comparePlace;
+					edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance<Place, Place>(f_neigh_place, f_neigh_place_model, compareFunction, out);
+					
+// 					edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
+					
 					//Create Match
 					createMatch(out, all_edge, all_edge_model, pair_matched[i], out_match);
 				}
 				//Last loop
-				std::string all_strings_first;
-				std::string all_strings_model;
-				getString(pair_matched[pair_matched.size()-1].first, pair_matched[0].first, all_edge, gp, all_strings_first);
-				getString(pair_matched[pair_matched.size()-1].second, pair_matched[0].second, all_edge_model, gp_model, all_strings_model);
+// 				std::string all_strings_first;
+// 				std::string all_strings_model;
+// 				getString(pair_matched[pair_matched.size()-1].first, pair_matched[0].first, all_edge, gp, all_strings_first);
+// 				getString(pair_matched[pair_matched.size()-1].second, pair_matched[0].second, all_edge_model, gp_model, all_strings_model);
+				
+				std::deque<graphmatch::VertexPlace> first_neigh;
+				std::deque<Place> f_neigh_place;
+				getNeighborBetween2(pair_matched[pair_matched.size()-1].first, pair_matched[0].first, all_edge, gp, first_neigh, f_neigh_place);				
+				
+				std::deque<graphmatch::VertexPlace> first_neigh_model;
+				std::deque<Place> f_neigh_place_model;
+				getNeighborBetween2(pair_matched[pair_matched.size()-1].second, pair_matched[0].second, all_edge_model, gp_model, first_neigh_model,f_neigh_place_model);
+				
+// 				std::cout << "String result size " << all_strings_first.size() << std::endl;
+				
+				//Match every string correspondance
+				std::string out;
+			
+				std::function<bool(Place, Place)> compareFunction = graphmatch::comparePlace;
+				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance<Place, Place>(f_neigh_place, f_neigh_place_model, compareFunction, out);
 				
 	// 			std::cout << "String result size " << all_strings_first.size() << std::endl;
 				
 				//Match every string correspondance
-				std::string out;
-				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
+// 				std::string out;
+// 				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
+				std::cout << "NOT GOOD " << std::endl;
+				
 				//Create Match
 				createMatch(out, all_edge, all_edge_model, pair_matched[pair_matched.size()-1], out_match);
 				
@@ -118,10 +169,27 @@ namespace AASS{
 			else if(pair_matched.size() == 1){
 				
 	// 			std::cout << "IF just one we do this : " << std::endl;
-				std::string all_strings_first;
-				std::string all_strings_model;
-				getString(pair_matched[0].first, pair_matched[0].first, all_edge, gp, all_strings_first);
-				getString(pair_matched[0].second, pair_matched[0].second, all_edge_model, gp_model, all_strings_model);
+// 				std::string all_strings_first;
+// 				std::string all_strings_model;
+// 				getString(pair_matched[0].first, pair_matched[0].first, all_edge, gp, all_strings_first);
+// 				getString(pair_matched[0].second, pair_matched[0].second, all_edge_model, gp_model, all_strings_model);
+				
+				std::deque<graphmatch::VertexPlace> first_neigh;
+				std::deque<Place> f_neigh_place;
+				getNeighborBetween2(pair_matched[0].first, pair_matched[0].first, all_edge, gp, first_neigh, f_neigh_place);				
+				
+				std::deque<graphmatch::VertexPlace> first_neigh_model;
+				std::deque<Place> f_neigh_place_model;
+				getNeighborBetween2(pair_matched[0].second, pair_matched[0].second, all_edge_model, gp_model, first_neigh_model,f_neigh_place_model);
+				
+// 				std::cout << "String result size " << all_strings_first.size() << std::endl;
+				
+				//Match every string correspondance
+				std::string out;
+			
+				std::function<bool(Place, Place)> compareFunction = graphmatch::comparePlace;
+				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance<Place, Place>(f_neigh_place, f_neigh_place_model, compareFunction, out);
+				
 				
 	// 			std::cout << "the linked" << std::endl;
 	// 			for(size_t test = 0 ; test < all_edge.size() ; test++){
@@ -136,9 +204,9 @@ namespace AASS{
 	// 			std::cout << "String result model :" << all_strings_model << std::endl;
 				
 				//Match every string correspondance
-				std::string out;
+// 				std::string out;
 // 				std::cout << "Normalized edit dist" << std::endl;
-				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
+// 				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
 // 				std::cout << "End edit dist" << std::endl;
 // 				std::cout << "Distance : " << edit_distance << " with " << out << " for " << all_strings_first << " and " << all_strings_model <<   std::endl;
 				//Create Match
@@ -149,7 +217,7 @@ namespace AASS{
 				
 			}
 			else if(pair_matched.size() == 0){
-				std::cout << "NOTHING AND THIS IS A BUG IN TOPOLOGICALMAPUTILS IN MAKEMATCHING " << std::endl;
+				std::cout << "NOTHING WAS ALREADY MATCHED AND THIS IS A BUG IN TOPOLOGICALMAPUTILS IN MAKEMATCHING " << std::endl;
 				
 			}
 			
@@ -157,6 +225,24 @@ namespace AASS{
 			return edit_distance;
 			
 		}
+		
+		inline void getNeighborBetween2(size_t start, size_t end, const std::deque< std::pair< AASS::graphmatch::EdgePlace, AASS::graphmatch::VertexPlace > >& all_edge, const AASS::graphmatch::GraphPlace& gp, std::deque< AASS::graphmatch::VertexPlace >& neighbor, std::deque< AASS::graphmatch::Place >& places)
+		{
+			neighbor.clear();
+			places.clear();
+			while(start != end){
+				neighbor.push_back(all_edge[start].second);
+				places.push_back(gp[all_edge[start].second]);
+				//Move forward
+				start++;
+				if(start == all_edge.size()){
+	// 				std::cout << "INIT TO 0 " << std::endl;
+					start = 0 ;
+				}
+			}
+
+		}
+
 		
 		inline void getString(size_t start, size_t end, 
 						const std::deque< std::pair< graphmatch::EdgePlace, graphmatch::VertexPlace > >& all_edge,
@@ -346,7 +432,7 @@ namespace AASS{
 // 						gp.print(v);
 // 						std:: cout << allkey[i]->getID() << std::endl;
 					
-					Keypoint* kp = allkey[i]->compare(v, gp.getGraph());
+					auto kp = allkey[i]->compare(v, gp.getGraph());
 					std::string type = gp[v].getType();
 // 						std::cout << "TYPE : " << type << std::endl;
 					if( kp != NULL &&  type == "notype"){

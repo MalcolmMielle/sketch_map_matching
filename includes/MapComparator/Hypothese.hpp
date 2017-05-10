@@ -380,6 +380,8 @@ namespace AASS{
 		inline void AASS::graphmatch::Hypothese::drawHypo(AASS::graphmatch::GraphPlace& gp_real, AASS::graphmatch::GraphPlace& gp_model, const cv::Mat& obstacle, const cv::Mat& obstacle_model, const std::string& name, double scale, cv::Mat& mat_out) const 
 		{
 			
+			std::cout << "Draw hypo" << std::endl;
+			
 			cv::Mat obst_copy;
 			obstacle.copyTo(obst_copy);
 			
@@ -463,8 +465,8 @@ namespace AASS{
 			gp_real.scale(scale);
 			gp_model.scale(scale);
 			
-			gp_real.drawSpecial(roi);
-			gp_model.drawSpecial(roi_model);
+			gp_real.draw(roi);
+			gp_model.draw(roi_model);
 			
 			for(size_t i = 0 ; i < _hypothesis.size() ; i++ ){
 				
@@ -514,8 +516,8 @@ namespace AASS{
 			}
 			
 			
-			gp_real.drawSpecial(draw_graph);
-			gp_model.drawSpecial(draw_graph_model);
+			gp_real.draw(draw_graph);
+			gp_model.draw(draw_graph_model);
 			
 			gp_real.scale(1/scale);
 			gp_model.scale(1/scale);
