@@ -37,15 +37,28 @@ int AASS::graphmatch::Hypothese::updateDistance(AASS::graphmatch::GraphPlace& gp
 // 		bool isR = gp.isRoom(_hypothesis[i].getFirst());
 // 		bool isR_model = gp_model.isRoom(_hypothesis[i].getSecond());
 		
-		std::string str = gp[_hypothesis[i].getFirst()].getID();
-		std::string str2 = gp_model[_hypothesis[i].getSecond()].getID();
+// 		std::string str = gp[_hypothesis[i].getFirst()].getID();
+// 		std::string str2 = gp_model[_hypothesis[i].getSecond()].getID();
 		
-// 		std::cout << "types " << str << " " << str2 << std::endl;
+		bool same = gp[_hypothesis[i].getFirst()].compare(gp_model[_hypothesis[i].getSecond()]);
 		
+// 		std::cout << "types " << str << " " << str2 << " and same is " << same << std::endl;
+		
+// 		if(str == str2){
+// 			assert(same == true);
+// 		}
+// 		else{
+// 			assert(same == false);
+// 		}
 		//Add difference of type
-		if(str != str2){
-			sub++;
+		if(same == true){
+			std::cout << "sub+ " ;
+			
 		}
+// 		if(str == str2){
+// 			sub++;
+// 			std::cout << "sub+" << std::endl;
+// 		}
 		
 	}
 	

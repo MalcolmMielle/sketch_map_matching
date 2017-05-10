@@ -20,7 +20,7 @@ namespace AASS{
 			AASS::RSI::Zone& getZone(){return zone;}
 			const AASS::RSI::Zone& getZone() const {return zone;}
 			
-			virtual std::string getID() const {return "z";};
+			virtual std::string getID() const {std::cout << "JUST TO MAKE SURE NEVER USE THAT " << std::endl; exit(0); return "z";};
 			
 			virtual bool isOfType(const graphmatch::VertexPlace& v, const GraphType& gp) const{
 				std::string str = type;

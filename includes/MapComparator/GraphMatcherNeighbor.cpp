@@ -9,7 +9,7 @@ int AASS::graphmatch::GraphMatcherNeighbor::initPlanar(const AASS::graphmatch::M
 			gp_model.getAllEdgeLinkedCounterClockWise(the_pair.getSecond(), all_edge);
 			
 			//Make a string out of the order of vertex.	
-			std::string string = gp_model.makeString(all_edge);
+// 			std::string string = gp_model.makeString(all_edge);
 // 			std::cout << "result : "<< string;
 			std::deque< graphmatch::Match > out;
 			std::string operation;
@@ -66,7 +66,7 @@ bool AASS::graphmatch::GraphMatcherNeighbor::planarEditDistanceAlgorithm(graphma
 	graphmatch::Hypothese seen_before;
 	graphmatch::Hypothese Q;
 	graphmatch::Hypothese hypothesis;
-// 	std::cout << "Size of pair wise " << starting_seeds.size() << std::endl;
+	std::cout << "Size of pair wise " << starting_seeds.size() << std::endl;
 	
 	//ATTENTION : Suppressed this for to cluster because it become really slow.
 	for(size_t i = 0 ; i < starting_seeds.size() ; i++){
