@@ -107,9 +107,9 @@ namespace AASS{
 			bool replace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare); 
 			
 			
-			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size = cv::Size(300,300));
-			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final){
-				match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, 0);
+			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size = cv::Size(300,300));
+			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, size_t& k, bool& is_in_final){
+				match_one_hypo(gp, gp_model, final_hyp, to_fuse, k, is_in_final, 0);
 			}
 			
 			
@@ -241,24 +241,24 @@ namespace AASS{
 #ifdef TIMED
 						std::ostringstream str_test;
 						str_test <<  "match one hyp, line" << __LINE__ << " in file " << __FILE__;
-						timed(str_test.str(), boost::bind( &GraphMatcherAnchor::match_one_hypo, this, boost::ref(gp), boost::ref(gp_model), boost::ref(final_hyp), boost::ref(size_final), boost::ref(to_fuse), boost::ref(size_fuse), boost::ref(k), boost::ref(is_in_final), draw ) );
+						timed(str_test.str(), boost::bind( &GraphMatcherAnchor::match_one_hypo, this, boost::ref(gp), boost::ref(gp_model), boost::ref(final_hyp), boost::ref(to_fuse), boost::ref(k), boost::ref(is_in_final), draw ) );
 						std::cout << "OUT OF MATCH TIMED" << std::endl;
 						
 #else
 // 						std::cout << "IN MATCH ONE NOT TIMED" << std::endl;
-						match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, draw, size);
+						match_one_hypo(gp, gp_model, final_hyp, to_fuse, k, is_in_final, draw, size);
 // 						std::cout << "OUT OF MATCH ONE" << std::endl;
 #endif
 						
 						if(is_in_final == false){
 							std::cout << "NEW ONE" << std::endl;
 							final_hyp.push_back(to_fuse[k]);
+							_from_which_hypo.push_back(_studied_index_to_fuse);
 							++size_final;
 							
 							if(_draw == true){
 								Hypothese dm;				
 								dm.push_back(to_fuse[k]);
-								_from_which_hypo.push_back(_studied_index_to_fuse);
 // 								std::cout << std::endl << "NEWNEWNEW " << std::endl << std::endl;
 								dm.drawHypo(gp, gp_model, mat_in, mat_in, "NEW ONE", 2);
 								cv::waitKey(0);
@@ -332,24 +332,23 @@ namespace AASS{
 #ifdef TIMED
 						std::ostringstream str_test;
 // 						str_test <<  "match one hyp, line" << __LINE__ << " in file " << __FILE__;
-						timed(str_test.str(), boost::bind( &GraphMatcherAnchor::match_one_hypo, this, boost::ref(gp), boost::ref(gp_model), boost::ref(final_hyp), boost::ref(size_final), boost::ref(to_fuse), boost::ref(size_fuse), boost::ref(k), boost::ref(is_in_final), draw ) );
+						timed(str_test.str(), boost::bind( &GraphMatcherAnchor::match_one_hypo, this, boost::ref(gp), boost::ref(gp_model), boost::ref(final_hyp), boost::ref(size_final), boost::ref(to_fuse), boost::ref(k), boost::ref(is_in_final), draw ) );
 // 						std::cout << "OUT OF MATCH TIMED" << std::endl;
 						
 #else
 // 						std::cout << "IN MATCH ONE NOT TIMED" << std::endl;
-						match_one_hypo(gp, gp_model, final_hyp, size_final, to_fuse, size_fuse, k, is_in_final, draw, size);
+						match_one_hypo(gp, gp_model, final_hyp, to_fuse, k, is_in_final, draw, size);
 // 						std::cout << "OUT OF MATCH ONE" << std::endl;
 #endif
 						//If it is not part of the hypo then fuse
 						if(is_in_final == false){
 							std::cout << "NEW ONE" << std::endl;
 							final_hyp.push_back(to_fuse[k]);
-							++size_final;
+							_from_which_hypo.push_back(_studied_index_to_fuse);
 							
 							if(_draw == true){
 								Hypothese dm;				
 								dm.push_back(to_fuse[k]);
-								_from_which_hypo.push_back(_studied_index_to_fuse);
 								
 // 								std::cout << std::endl << "NEWNEWNEW " << std::endl << std::endl;
 								dm.drawHypo(gp, gp_model, mat_in, mat_in, "NEW ONE", 1);
@@ -420,10 +419,8 @@ namespace AASS{
 		
 		
 		
-		inline void GraphMatcherAnchor::match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, size_t& size_final, AASS::graphmatch::Hypothese& to_fuse, size_t& size_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size)
+		inline void GraphMatcherAnchor::match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size)
 		{
-			assert(size_final == final_hyp.size());
-			assert(size_fuse == to_fuse.size());
 			
 			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);
 			if(draw == true) {
@@ -434,8 +431,8 @@ namespace AASS{
 			double time = 0 ;
 #endif
 			std::cout << "NEW MATCH TO TESt is seen : " << is_in_final << std::endl;
-			for(size_t j = 0 ; j < size_final ; j++){
-				std::cout << " all the number size_final " << size_final << " j " << j << " size to_fuse " << size_fuse << " k " << k << std::endl;
+			for(size_t j = 0 ; j < final_hyp.size() ; j++){
+				std::cout << " all the number size_final " << final_hyp.size() << " j " << j << " size to_fuse " << to_fuse.size() << " k " << k << std::endl;
 				Hypothese dm;
 					
 				dm.push_back(final_hyp[j]);
@@ -582,14 +579,14 @@ namespace AASS{
 						//To do that : go back one on to_fuse and to max on final ->
 						//Thus we finish the for loop and directly do ++k <=> same place but make sure we're not at size_fuse
 						// start over final.
-						j = size_final;
+						j = final_hyp.size();
 						//Because no removed in replace anymore
 // 						--k;
 // 						--size_fuse;
-						if(match != other){
-							//Minus one only if two match were removed.
-							--size_final;
-						}	
+// 						if(match != other){
+// 							//Minus one only if two match were removed.
+// 							--size_final;
+// 						}	
 					}
 					
 				}
@@ -651,14 +648,16 @@ namespace AASS{
 					
 					if(replaced == true){
 						//Restart the to fuse loop
-						j = size_final;
+						j = final_hyp.size();
 						//Because no removed in replace anymore
 // 						--k;
 // 						--size_fuse;
-						if(match != other){
-							//Minus one only if two match were removed.
-							--size_final;
-						}	
+// 						if(match != other){
+// 							//Minus one only if two match were removed.
+// 							--size_final;
+// 							std::cout << "humhum" << std::endl;
+// // 							assert(size_final == final_hyp.size());
+// 						}	
 					}
 					
 					
@@ -666,8 +665,8 @@ namespace AASS{
 				
 			}
 			
-		// 			std::cout << "FIN : " << is_in_final << std::endl;
-
+					std::cout << "FIN : " << is_in_final << std::endl;
+// assert(size_final == final_hyp.size());
 		}
 		
 		

@@ -60,7 +60,9 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 		/*********************************************************************/
 		
 		
+		std::cout << "_from_which_hypo " << _from_which_hypo.size() << " index_match_original " << index_match_original <<  std::endl;
 		int which = _from_which_hypo[index_match_original];
+		std::cout << "With " << which << std::endl;
 // 		_allhypothese_from_each_anchor[0].getMatches()
 		
 		std::cout << "IN which " << which << " and fuse " << index_match_original << " which should be less than " << _allhypothese_from_each_anchor[which].size() << std::endl;
