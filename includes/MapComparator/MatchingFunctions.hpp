@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "Init.hpp"
+#include "bettergraph/conversion.hpp"
 
 namespace AASS{
 
@@ -349,7 +350,14 @@ namespace AASS{
 			
 		}
 
-		inline void fromList2Place(const AASS::topologicalmap::GraphLine& gl, AASS::graphmatch::GraphPlace& gp, const AllKeypoints& allkey){
+		
+		inline void fromList2Place(const AASS::topologicalmap::GraphLine& gl_in, AASS::graphmatch::GraphPlace& gp, const AllKeypoints& allkey){
+			
+			
+// 			bettergraph::toSimpleGraph(const PseudoGraph<VertexType, EdgeType>& input, SimpleGraph<VertexType, EdgeType>& output);
+			bettergraph::SimpleGraph<topologicalmap::NodeLine, vodigrex::SimpleEdge> gl;
+			bettergraph::toSimpleGraph<topologicalmap::NodeLine, vodigrex::SimpleEdge>(gl_in, gl);
+			
 // 			std::cout << "START" << std::endl;
 			try{				
 				
