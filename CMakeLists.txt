@@ -267,13 +267,13 @@ add_subdirectory(Test/GraphDB/VFLcomp)
 add_subdirectory(Test/SLAM)
 add_subdirectory(Test/Simulation)
 
-# 
-# INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
-# INSTALL(TARGETS Comparatorlib DESTINATION lib/sketchAlgorithm)
-# INSTALL(TARGETS Probabilitieslib DESTINATION lib/sketchAlgorithm)
-# INSTALL(TARGETS VFLib DESTINATION lib/sketchAlgorithm)
-# 
-# install(TARGETS simulation_kth RUNTIME DESTINATION bin)
-# install(TARGETS simulation_taurob RUNTIME DESTINATION bin)
+
+INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)
+INSTALL(TARGETS Comparatorlib DESTINATION lib/sketchAlgorithm)
+INSTALL(TARGETS Probabilitieslib DESTINATION lib/sketchAlgorithm)
+INSTALL(TARGETS VFLib DESTINATION lib/sketchAlgorithm)
+
+install(TARGETS simulation_kth RUNTIME DESTINATION bin)
+install(TARGETS simulation_taurob RUNTIME DESTINATION bin)
 
 
