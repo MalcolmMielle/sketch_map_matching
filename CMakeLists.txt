@@ -16,8 +16,6 @@ find_package( OpenCV REQUIRED)
 
 find_package( Boost REQUIRED )
 
-find_package(RSI REQUIRED)
-
 find_package( editdistance REQUIRED )
 find_package( vodigrex REQUIRED )
 find_package( bettergraph REQUIRED )
