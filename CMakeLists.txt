@@ -84,12 +84,6 @@ add_library(Comparatorlib
 			)
 target_link_libraries(Comparatorlib)
 
-add_library(Probabilitieslib
-			includes/ProbabilisticMethod/ProbabilisticEditDistanceEdge.cpp
-			)
-target_link_libraries(Probabilitieslib Comparatorlib)
-
-
 add_library(VFLib
 			includes/VFLib/src/argedit.cc
 			includes/VFLib/src/argloader.cc
@@ -225,7 +219,7 @@ add_library(VFLib
 # target_link_libraries(slam_images ${OpenCV_LIBS} VFLib Probabilitieslib Maplib Comparatorlib -lboost_filesystem -lboost_system)
 
 add_executable(simulation_kth Test/GraphDB/simulation_kth.cpp)
-target_link_libraries(simulation_kth ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
+target_link_libraries(simulation_kth ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Comparatorlib -lboost_filesystem -lboost_system)
 
 # add_executable(sketchvssketch Test/GraphDB/sketchVSsketch.cpp)
 # target_link_libraries(sketchvssketch ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
@@ -243,7 +237,7 @@ target_link_libraries(simulation_kth ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib 
 # target_link_libraries(vfl_comp ${OpenCV_LIBS}  VFLib Probabilitieslib -lboost_unit_test_framework Maplib Comparatorlib -lboost_filesystem -lboost_system)
 
 add_executable(simulation_taurob Test/GraphDB/simulation_taurob.cpp)
-target_link_libraries(simulation_taurob ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Probabilitieslib Comparatorlib -lboost_filesystem -lboost_system)
+target_link_libraries(simulation_taurob ${OpenCV_LIBS} ${vodigrex_LIBRARIES} VFLib Comparatorlib -lboost_filesystem -lboost_system)
 
 
 # add_executable(scale_space Test/BaseTest/test_scale_space.cpp)
@@ -268,12 +262,10 @@ add_custom_target(uninstall
 add_subdirectory(includes)
 
 add_subdirectory(Test/BaseTest)
-add_subdirectory(Test/Probabilities)
 add_subdirectory(Test/GraphDB)
 add_subdirectory(Test/GraphDB/VFLcomp)
 add_subdirectory(Test/SLAM)
 add_subdirectory(Test/Simulation)
-add_subdirectory(Test/RSI)
 
 # 
 # INSTALL(FILES sketchalgorithm-config.cmake DESTINATION lib/sketchAlgorithm)

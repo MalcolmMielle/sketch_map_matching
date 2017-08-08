@@ -51,10 +51,10 @@ int AASS::graphmatch::Hypothese::updateDistance(AASS::graphmatch::GraphPlace& gp
 // 			assert(same == false);
 // 		}
 		//Add difference of type
-		if(same == true){
-			std::cout << "sub+ " ;
-			
-		}
+// 		if(same == true){
+// 			std::cout << "sub+ " ;
+// 			
+// 		}
 // 		if(str == str2){
 // 			sub++;
 // 			std::cout << "sub+" << std::endl;
