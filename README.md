@@ -1,16 +1,40 @@
-Hello to you who stumbled upon the Sketch Maker program ! I really should change its name because it's more the _sketch algo_ but on Gitlab I don't know how to do it ;). 
+# Sketch Map Matching algorithms
 
-# What is the Sketch Maker ?
+Hello to you who stumbled upon the Sketch Map Matching program !
 
-The Sketch Maker is 2 things : 
+This programm is based from the [paper](http://ieeexplore.ieee.org/abstract/document/7784307/) available [here](https://mro.oru.se/wp-content/material/pdf/1054805.pdf) also.
 
-* An interpretor of the said sketch i.e transcription from drawing to topological map
+If you use this, please cite
 
-* Lots of code
+```
+@inproceedings{mielle_using_2016,
+	title = {Using sketch-maps for robot navigation: Interpretation and matching},
+	doi = {10.1109/SSRR.2016.7784307},
+	shorttitle = {Using sketch-maps for robot navigation},
+	abstract = {We present a study on sketch-map interpretation and sketch to robot map matching, where maps have nonuniform scale, different shapes or can be incomplete. For humans, sketch-maps are an intuitive way to communicate navigation information, which makes it interesting to use sketch-maps for human robot interaction; e.g., in emergency scenarios. To interpret the sketch-map, we propose to use a Voronoi diagram that is obtained from the distance image on which a thinning parameter is used to remove spurious branches. The diagram is extracted as a graph and an efficient error-tolerant graph matching algorithm is used to find correspondences, while keeping time and memory complexity low. A comparison against common algorithms for graph extraction shows that our method leads to twice as many good matches. For simple maps, our method gives 95\% good matches even for heavily distorted sketches, and for a more complex real-world map, up to 58\%. This paper is a first step toward using unconstrained sketch-maps in robot navigation.},
+	eventtitle = {2016 {IEEE} International Symposium on Safety, Security, and Rescue Robotics ({SSRR})},
+	pages = {252--257},
+	booktitle = {2016 {IEEE} International Symposium on Safety, Security, and Rescue Robotics ({SSRR})},
+	author = {Mielle, M. and Magnusson, M. and Lilienthal, A. J.},
+	date = {2016-10},
+	keywords = {Buildings, Junctions, Measurement, Navigation, Robot sensing systems, Shape},
+	file = {IEEE Xplore Abstract Record:/home/malcolm/.zotero/zotero/qwx8o4io.default/zotero/storage/WEKPNXGB/7784307.html:text/html;IEEE Xplore Full Text PDF:/home/malcolm/.zotero/zotero/qwx8o4io.default/zotero/storage/H83R9TWF/Mielle et al. - 2016 - Using sketch-maps for robot navigation Interpreta.pdf:application/pdf}
+}
+```
+
+# What is the Sketch Map Matching ?
+
+The Sketch Maker is a method to interpret sketches i.e transcription from drawing to topological map
+
+# What are sketch maps ?
+
+Drawing that represent an indoor places. They are often innacurate and simplified version of the real environment. You can see some in the folder `Test/GraphDB/Sketches/KTH`.
 
 # How do I use the Sketch Maker ?
 
-To use the sketch maker you need to compile using `cmake ..` in a build directory and then `make` (`make -j4` if you have 4 cores). Next launch a bunch of test would have been create and you can test the algorithm.
+The simplest way to use this package is to use [this UI](https://github.com/MalcolmMielle/sketch_ui). You only have to draw the sketch and to give it the model to see the result :D.
+
+To use the sketch maker you need to compile using `cmake ..` in a build directory and then `make`. Then install the package with `sudo make install`
 
 # What are the dependencies of Sketch Maker ?
 
@@ -51,7 +75,9 @@ For debugging
 	make
 
 
-# I don't like the build in interpretor what can I do ?
+# Questions you might have
+
+## I don't like the build in interpretor what can I do ?
 
 Well, you could code your own. Every interpretor is based out of two abstract classes : 
 
@@ -88,9 +114,9 @@ It's stored in lists, it's undirected, the vertices are `Place` objects and the 
 
 `Place` is an important object since they include an element named `Keypoint` which is used for the comparison. It's easy to had new types of Place and different comparison methods thanks to their Keypoint elements.
 
-## The Keypoint class :
+### The Keypoint class :
 
-### Create the Keypoints
+#### Create the Keypoints
 
 The Keypoint class is the object used for every comparison between two graph places. It's fairly easy to had new type of keypoints and comparison method. Just follow those steps :
  
@@ -121,7 +147,7 @@ For every keypoint you want to use :
 See `JunctionAndDeadEnds.hpp` for an example.
 
 
-### Create a Place extractor :
+#### Create a Place extractor :
 
 You then have to implement a class that inheritate from PlaceExtractorBase. The function that extract a GraphPlace with your keypoints from a GraphList is name `extract` and is the only function that you must implement. The results are stored in `graphmatch::GraphPlace _graph`.
 
@@ -132,7 +158,7 @@ This class is used during the place extraction. Mainly, the function `compare` i
 Now all this must seem complicated and a lot of work __but__ If you only want to use an existing extraction method with your custom keypoints, it's really easy. All you have to doo is declare your keypoints and then change the `AllKeypoints` element in the place extractor you want to use. Simple as that ! :)
 
 
-# How does the interpretor works ?
+## How does the interpretor works ?
 
 For now the interpretation is made like this : 
 
@@ -146,11 +172,11 @@ The main advantage of doing all of this graphically is the possibility to proces
 
 * Finally a GraphMatcher compare to SketchMap to figure out the best matching.
 
-# How are the voronoi lines extracted ?
+## How are the voronoi lines extracted ?
 
-Although, several method to extract Voronoi Lines exists as the [EVG Thin](http://openslam.informatik.uni-freiburg.de/evg-thin.html), I found this method to be more efficient and faster. Plus, it does not remove some of the lines that are removed by EVG. The only problem is that there is a lot of noise when using it a sketch maps. Indeed, lots of curvature == lots of lines.
+I use the Voronoi extraction from [VoDiGrEx](https://github.com/MalcolmMielle/VoDiGrEx). Although, several method to extract Voronoi Lines exists as the [EVG Thin](http://openslam.informatik.uni-freiburg.de/evg-thin.html), I found this method to be more efficient and faster, for all the reasons listed in this [blog post](https://malcolmmielle.wordpress.com/2017/03/10/voronoi-diagram/). Plus, it does not remove some of the lines that are removed by EVG.
 
-## If you have a perfect building map :
+### If you have a perfect building map :
 
 By perfect, we consider all building map with straight corridors. The method is as such :
 
@@ -160,7 +186,7 @@ By perfect, we consider all building map with straight corridors. The method is 
 
 * The negative values in the resulting image correspond to local maximas in the distance image and are the voronoi lines.
 
-## If the map is a sketch :
+### If the map is a sketch :
 
 * Compute the pixel distance of every point in the image.
 
