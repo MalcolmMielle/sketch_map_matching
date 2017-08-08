@@ -51,7 +51,12 @@ Under Ubuntu just :
 
 	sudo apt-get install git cmake
 	sudo apt-get install libopencv-dev 
-	sudo apt-get install libboost-all-dev 
+	sudo apt-get install libboost-all-dev
+	
+It also depends on:
+
+* [BetterGraph](https://github.com/MalcolmMielle/BetterGraph)
+* [VoDiGrEx](https://github.com/MalcolmMielle/VoDiGrEx)
 	
 # Install
 
