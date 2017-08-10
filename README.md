@@ -57,6 +57,7 @@ It also depends on:
 
 * [BetterGraph](https://github.com/MalcolmMielle/BetterGraph)
 * [VoDiGrEx](https://github.com/MalcolmMielle/VoDiGrEx)
+* [Edit distance](https://github.com/MalcolmMielle/edit_distance_cpp)
 	
 # Install
 
