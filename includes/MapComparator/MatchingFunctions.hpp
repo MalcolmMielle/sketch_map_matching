@@ -231,6 +231,13 @@ namespace AASS{
 		{
 			neighbor.clear();
 			places.clear();
+			
+			//Move onto first vertex to match
+			start++;
+			if(start == all_edge.size()){
+				start = 0 ;
+			}
+			
 			while(start != end){
 				neighbor.push_back(all_edge[start].second);
 				places.push_back(gp[all_edge[start].second]);
