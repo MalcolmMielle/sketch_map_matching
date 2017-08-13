@@ -2,7 +2,21 @@
 
 Hello to you who stumbled upon the Sketch Map Matching program !
 
-This programm is based from the [paper](http://ieeexplore.ieee.org/abstract/document/7784307/) available [here](https://mro.oru.se/wp-content/material/pdf/1054805.pdf) also.
+# What is the Sketch Map Matching ?
+
+The Sketch Maker is a method to interpret sketches. It is a method to match a hand drawn map onto an exact map of a building and the main idea and key points are summarised in [this blog post](https://malcolmmielle.wordpress.com/2017/08/11/drawing-to-get-a-robot-where-you-want-it-to-be/).
+
+# What are sketch maps ?
+
+Drawing that represent an indoor places. They are often innacurate and simplified version of the real environment. You can see some in the folder `Test/GraphDB/Sketches/KTH`.
+
+# How do I use the Sketch Map Matcher ?
+
+The simplest way to use this package is to use [this UI](https://github.com/MalcolmMielle/sketch_ui). You only have to draw the sketch and to give it the model to see the result :D.
+
+To use the sketch maker you need to compile using `cmake ..` in a build directory and then `make`. Then install the package with `sudo make install`
+
+This programm is described in this [paper](http://ieeexplore.ieee.org/abstract/document/7784307/) available [here](https://mro.oru.se/wp-content/material/pdf/1054805.pdf) also.
 
 If you use this, please cite
 
@@ -22,19 +36,6 @@ If you use this, please cite
 }
 ```
 
-# What is the Sketch Map Matching ?
-
-The Sketch Maker is a method to interpret sketches i.e transcription from drawing to topological map
-
-# What are sketch maps ?
-
-Drawing that represent an indoor places. They are often innacurate and simplified version of the real environment. You can see some in the folder `Test/GraphDB/Sketches/KTH`.
-
-# How do I use the Sketch Maker ?
-
-The simplest way to use this package is to use [this UI](https://github.com/MalcolmMielle/sketch_ui). You only have to draw the sketch and to give it the model to see the result :D.
-
-To use the sketch maker you need to compile using `cmake ..` in a build directory and then `make`. Then install the package with `sudo make install`
 
 # What are the dependencies of Sketch Maker ?
 
