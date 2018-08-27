@@ -258,9 +258,9 @@ BOOST_AUTO_TEST_CASE(trying)
 	AASS::maoris::Segmentor segmenteur;
 	AASS::maoris::GraphZone graph_segmented;
 
-	double time = 0;
+//	double time = 0;
 // 	makeGraph(slam, graph_slam, time);
-	time = segmenteur.segmentImage(slam1, graph_segmented);
+	segmenteur.segmentImage(slam1, graph_segmented);
 	cv::Mat segmented_map = segmenteur.getSegmentedMap();
 
 	cv::imshow("Segmented", segmented_map);
@@ -278,9 +278,9 @@ BOOST_AUTO_TEST_CASE(trying)
 	AASS::maoris::Segmentor segmenteur2;
 	AASS::maoris::GraphZone graph_segmented2;
 
-	double time2 = 0;
+//	double time2 = 0;
 // 	makeGraph(slam, graph_slam, time);
-	time2 = segmenteur2.segmentImage(slam2, graph_segmented2);
+	segmenteur2.segmentImage(slam2, graph_segmented2);
 	cv::Mat segmented_map2 = segmenteur2.getSegmentedMap();
 
 	cv::imshow("Segmented", segmented_map2);
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(trying)
 	for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
 		AASS::graphmatch::VertexPlace v = *vp.first;
 		std::cout << "TESTING gp after construction" << std::endl;
-		auto outt = std::dynamic_pointer_cast< AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();		
+		std::dynamic_pointer_cast< AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();
 	}
 	
 	AASS::graphmatch::GraphPlace gp2;
@@ -386,12 +386,12 @@ BOOST_AUTO_TEST_CASE(trying)
 	for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
 		AASS::graphmatch::VertexPlace v = *vp.first;
 		std::cout << "TESTING gp " << std::endl;
-		auto outt = std::dynamic_pointer_cast<  AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();		
+		std::dynamic_pointer_cast<  AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();
 	}
 	for (vp = boost::vertices(gp2.getGraph()); vp.first != vp.second; ++vp.first) {
 		AASS::graphmatch::VertexPlace v = *vp.first;
 		std::cout << "TESTING gp2 " << std::endl;
-		auto outt = std::dynamic_pointer_cast<   AASS::graphmatch::ZoneKeypoint >(gp2[v].getKeypoint())->zone.getMaxMinPCA();		
+		std::dynamic_pointer_cast<   AASS::graphmatch::ZoneKeypoint >(gp2[v].getKeypoint())->zone.getMaxMinPCA();
 	}
 	
 	

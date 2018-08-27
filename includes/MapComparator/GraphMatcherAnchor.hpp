@@ -308,7 +308,7 @@ namespace AASS{
 					
 					//This step is needed to not study the match we add from fuse at the end of the deque
 					size_t size_fuse = to_fuse.size();
-					size_t size_final = final_hyp.size();
+//					size_t size_final = final_hyp.size();
 					
 					
 // 					/****************TEST to rmeove later***************/
