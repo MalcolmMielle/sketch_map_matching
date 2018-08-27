@@ -370,7 +370,7 @@ namespace AASS{
 				point.y = (*this)[v].landmarks[i].first.getY();
 				cv::circle(m, point, 10, color, 3);
 			}
-			cv::drawContours( m, std::vector<std::vector<cv::Point> >(1,(*this)[v].contour), -1, color, 2, 8);
+			cv::drawContours( m, (*this)[v].contour, -1, color, 2, 8);
 			cv::circle(m, (*this)[v].mass_center, 10, color, -1);
 		}
 

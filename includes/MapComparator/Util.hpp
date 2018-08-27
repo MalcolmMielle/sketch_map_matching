@@ -69,12 +69,12 @@ namespace AASS{
 		
 			graphmatch::VertexPlace v_previous;
 			graphmatch::VertexPlace v_previous_copy;
-			std::vector <cv::Point> conte_test_editdistance;
+//			std::vector <cv::Point> conte_test_editdistance;
 			cv::Point2i mcnew_test_editdistance(x_size, y_size);
 			cv::Moments m_test_editdistance;
 			Place p;
 			p.moment = m_test_editdistance;
-			p.contour = conte_test_editdistance;
+//			p.contour = conte_test_editdistance;
 			p.mass_center = mcnew_test_editdistance;
 			gp.addVertex(v_previous, p);
 			gp_copy.addVertex(v_previous_copy, p);
@@ -89,7 +89,7 @@ namespace AASS{
 			
 				graphmatch::VertexPlace v;
 				graphmatch::VertexPlace v_copy;
-				std::vector <cv::Point> conte_test_editdistance;
+//				std::vector <cv::Point> conte_test_editdistance;
 				cv::Point2i mcnew_test_editdistance(x_size, y_size);
 				cv::Moments m_test_editdistance;
 				p.mass_center = mcnew_test_editdistance;
@@ -185,11 +185,11 @@ namespace AASS{
 		
 			bool isRoomt = isRoom(gp, vp);
 			graphmatch::VertexPlace v_previous;
-			std::vector <cv::Point> conte_test_editdistance;
+//			std::vector <cv::Point> conte_test_editdistance;
 			cv::Point2i mcnew_test_editdistance(x_size, y_size);
 			cv::Moments m_test_editdistance;
 			Place p;
-			p.contour = conte_test_editdistance;
+//			p.contour = conte_test_editdistance;
 			p.moment = m_test_editdistance;
 			p.mass_center = mcnew_test_editdistance;
 			gp.addVertex(v_previous, p);

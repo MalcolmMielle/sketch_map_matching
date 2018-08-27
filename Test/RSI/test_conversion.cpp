@@ -7,76 +7,89 @@
 #include <boost/test/unit_test.hpp>
 #include <fstream>
 #include <ctime> 
-#include <RSI/FuzzyOpening.hpp>
-#include <RSI/ZoneReducer.hpp>
-#include <RSI/ZoneExtractor.hpp>
+//#include <RSI/FuzzyOpening.hpp>
+//#include <RSI/ZoneReducer.hpp>
+//#include <RSI/ZoneExtractor.hpp>
+
+
+#include "maoris/ZoneExtractor.hpp"
+#include "maoris/FuzzyOpening.hpp"
+//#include "maoris/Kmean.hpp"
+#include "maoris/ZoneReducer.hpp"
+#include "maoris/Segmentor.hpp"
+
+#include "RSI/GraphZoneRI.hpp"
+#include "RSI/ZoneCompared.hpp"
+#include "RSI/hungarian/hungarian.h"
+#include "RSI/HungarianMatcher.hpp"
+
 
 #include "RSIConversion.hpp"
 
 
-void makeGraph(const std::string& file, AASS::RSI::GraphZone& graph_slam){
-	
-	
-	cv::Mat slam = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
-// 	
-// 	cv::imshow("input", slam);
-// 	cv::waitKey(0);
-	
-	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY);
-	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY_INV);
-	
-	std::cout << "/************ FUZZY OPENING*************/ \n";
-	AASS::RSI::FuzzyOpening fuzzy_slam;
-	fuzzy_slam.fast(false);
-	
-	cv::Mat out_slam;
-// 	cv::imshow("SLAM", slam);
-// 	cv::waitKey(0);
-	fuzzy_slam.fuzzyOpening(slam, out_slam, 500);
-	std::cout << "Done opening " << std::endl;
-	out_slam.convertTo(out_slam, CV_8U);
-	
-// 	std::cout << out << std::endl;
-	
-	std::cout << "/************ REDUCING THE SPACE OF VALUES *****************/\n";
-	cv::Mat out_tmp_slam;
-	AASS::RSI::reduceZone(out_slam, out_tmp_slam);
-// 	cv::imshow("REDUCED", out_tmp_slam);
-// 	cv::waitKey(0);
-	
-	AASS::RSI::ZoneExtractor zone_maker;
-	std::cout << "WHATERSHED SLAM" << std::endl;
-	zone_maker.extract(out_tmp_slam);
-	
-	std::cout << "Got the ZONES" << std::endl;
-
-	// 	std::cout << "Getting the graph" << std::endl;
-	
-	std::cout << "/*********** MAKING AND TRIMMING THE GRAPH ***************/\n";
-	graph_slam = zone_maker.getGraph();
-	graph_slam.removeVertexValue(0);
-
-	std::cout << "Number of nodes" << graph_slam.getNumVertices() << std::endl;
-	
-	//Watershed Algorithm
-	graph_slam.watershed(0.25);
-	
-	int size_to_remove = 100;
-	graph_slam.removeVertexUnderSize(size_to_remove, true);
-	graph_slam.removeLonelyVertices();
-	if(graph_slam.lonelyVertices())
-		throw std::runtime_error("Fuck you lonelyness");	
-	
-	cv::Mat graphmat2 = cv::Mat::zeros(out_tmp_slam.size(), CV_8U);
-	graph_slam.draw(graphmat2);
-	cv::imshow("end", graphmat2);
-}
+//void makeGraph(const std::string& file, AASS::RSI::GraphZone& graph_slam){
+//
+//
+//	cv::Mat slam = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+////
+//// 	cv::imshow("input", slam);
+//// 	cv::waitKey(0);
+//
+//	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY);
+//	cv::threshold(slam, slam, 20, 255, cv::THRESH_BINARY_INV);
+//
+//	std::cout << "/************ FUZZY OPENING*************/ \n";
+//	AASS::RSI::FuzzyOpening fuzzy_slam;
+//	fuzzy_slam.fast(false);
+//
+//	cv::Mat out_slam;
+//// 	cv::imshow("SLAM", slam);
+//// 	cv::waitKey(0);
+//	fuzzy_slam.fuzzyOpening(slam, out_slam, 500);
+//	std::cout << "Done opening " << std::endl;
+//	out_slam.convertTo(out_slam, CV_8U);
+//
+//// 	std::cout << out << std::endl;
+//
+//	std::cout << "/************ REDUCING THE SPACE OF VALUES *****************/\n";
+//	cv::Mat out_tmp_slam;
+//	AASS::RSI::reduceZone(out_slam, out_tmp_slam);
+//// 	cv::imshow("REDUCED", out_tmp_slam);
+//// 	cv::waitKey(0);
+//
+//	AASS::RSI::ZoneExtractor zone_maker;
+//	std::cout << "WHATERSHED SLAM" << std::endl;
+//	zone_maker.extract(out_tmp_slam);
+//
+//	std::cout << "Got the ZONES" << std::endl;
+//
+//	// 	std::cout << "Getting the graph" << std::endl;
+//
+//	std::cout << "/*********** MAKING AND TRIMMING THE GRAPH ***************/\n";
+//	graph_slam = zone_maker.getGraph();
+//	graph_slam.removeVertexValue(0);
+//
+//	std::cout << "Number of nodes" << graph_slam.getNumVertices() << std::endl;
+//
+//	//Watershed Algorithm
+//	graph_slam.watershed(0.25);
+//
+//	int size_to_remove = 100;
+//	graph_slam.removeVertexUnderSize(size_to_remove, true);
+//	graph_slam.removeLonelyVertices();
+//	if(graph_slam.lonelyVertices())
+//		throw std::runtime_error("Fuck you lonelyness");
+//
+//	cv::Mat graphmat2 = cv::Mat::zeros(out_tmp_slam.size(), CV_8U);
+//	graph_slam.draw(graphmat2);
+//	cv::imshow("end", graphmat2);
+//}
 
 
 BOOST_AUTO_TEST_CASE(trying)
 {
-	AASS::RSI::Zone zone;
-	AASS::RSI::Zone zone2;
+	AASS::RSI::ZoneRI zone;
+	AASS::RSI::ZoneRI zone2;
 	
 	AASS::graphmatch::ZoneKeypoint* zk = new AASS::graphmatch::ZoneKeypoint();
 	zk->setZone(zone);
@@ -100,18 +113,33 @@ BOOST_AUTO_TEST_CASE(trying)
 	file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/00.png";
 	cv::Mat slam1 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
 
-	AASS::RSI::GraphZone graph_slam;
-	makeGraph(file, graph_slam);
-		
-	
+	AASS::maoris::Segmentor segmenteur;
+	AASS::maoris::GraphZone graph_segmented;
+
+	double time = 0;
+// 	makeGraph(slam, graph_slam, time);
+	time = segmenteur.segmentImage(slam1, graph_segmented);
+	cv::Mat segmented_map = segmenteur.getSegmentedMap();
+
+	cv::imshow("Segmented", segmented_map);
+	cv::waitKey(0);
+
+	AASS::RSI::GraphZoneRI graph_slam(graph_segmented);
+
+	graph_slam.updatePCA();
+	graph_slam.setPCAClassification();
+	graph_slam.setSizesClassification();
+
+
+
 	/********** PCA of all zones in Graph and removing the ripples **********/
 	
 // 	graph_slam.updatePCA();
 // 	graph_slam.removeRiplesv2();
 // 	graph_slam.updateContours();
-	graph_slam.update();
+//	graph_slam.update();
 	
-	std::cout << "Size of graph" << graph_slam.getNumVertices() << std::endl;
+//	std::cout << "Size of graph" << graph_slam.getNumVertices() << std::endl;
 
 	
 // 	std::cout << "Size of graph2" << graph_slam2.getNumVertices() << std::endl;

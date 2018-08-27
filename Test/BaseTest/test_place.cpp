@@ -16,7 +16,7 @@
 
 #include "PlaceExtractorList2Place.hpp"
 #include "vodigrex/voronoidiagram/ThinkerVoronoi.hpp"
-#include "SketchMap.hpp"
+//#include "SketchMap.hpp"
 #include "MapComparator/Util.hpp"
 
 BOOST_AUTO_TEST_CASE(trying)

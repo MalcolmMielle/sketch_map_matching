@@ -376,14 +376,14 @@ namespace AASS{
 				for (vp = boost::vertices(gl.getGraph()); vp.first != vp.second; ++vp.first) {
 					topologicalmap::GraphLine::Vertex v = *vp.first;
 					graphmatch::VertexPlace vpp;
-					std::vector< cv::Point > contour;
+//					std::vector< cv::Point > contour;
 					cv::Moments mom;
 					cv::Point center_mass;
 					center_mass.x = gl[v].getX();
 					center_mass.y = gl[v].getY();
 // 					std::cout << "Ading Vertex" << std::endl;
 					Place p;
-					p.contour = contour;
+//					p.contour = contour;
 					p.moment = mom;
 					p.mass_center = center_mass;
 					

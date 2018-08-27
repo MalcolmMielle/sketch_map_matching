@@ -26,7 +26,7 @@ namespace AASS{
 			std::deque<graphmatch::Gateway> place;
 			std::deque<std::pair <vodigrex::SimpleNode, bettergraph::PseudoGraph<vodigrex::SimpleNode, vodigrex::SimpleEdge>::Vertex > > landmarks;
 			std::deque<std::pair <vodigrex::SimpleNode, bettergraph::PseudoGraph<vodigrex::SimpleNode, vodigrex::SimpleEdge>::Vertex > > junctions;
-			std::vector<cv::Point> contour;
+			std::vector< std::vector< cv::Point > > contour;
 			cv::Moments moment;
 			cv::Point2f mass_center;
 			bool label;
