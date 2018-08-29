@@ -252,6 +252,9 @@ BOOST_AUTO_TEST_CASE(trying)
 	file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/model_simple.png";
 	cv::Mat slam1 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
 
+	cv::threshold(slam1, slam1, 20, 255, cv::THRESH_BINARY);
+	cv::threshold(slam1, slam1, 20, 255, cv::THRESH_BINARY_INV);
+
 //	AASS::RSI::GraphZone graph_slam;
 // 	makeGraphSLAM(file, graph_slam);
 
@@ -272,6 +275,10 @@ BOOST_AUTO_TEST_CASE(trying)
 	std::string file2;
 	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/03.png";
 	cv::Mat slam2 = cv::imread(file2, CV_LOAD_IMAGE_GRAYSCALE);
+
+	cv::threshold(slam2, slam2, 20, 255, cv::THRESH_BINARY);
+	cv::threshold(slam2, slam2, 20, 255, cv::THRESH_BINARY_INV);
+
 
 //	AASS::RSI::GraphZone graph_slam2;
 //	makeGraph(file2, graph_slam2);
@@ -316,26 +323,25 @@ BOOST_AUTO_TEST_CASE(trying)
 // 	
 // 	assert(graph_slam.zoneUniquenessWasCalculated() == true);
 // 	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
-	
-//	graph_slam.setSDAwayFromMeanForUniqueness(1);
-//	graph_slam2.setSDAwayFromMeanForUniqueness(1);
-	
+
+	graph_slam.setSDAwayFromMeanForUniqueness(1);
+	graph_slam2.setSDAwayFromMeanForUniqueness(1);
+
 	/********** Uniqueness *******************************************/
-//	graph_slam.updateUnique();
-//	graph_slam2.updateUnique();
-	
-////	assert(graph_slam.zoneUniquenessWasCalculated() == true);
-////	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
-//
-//	cv::Mat gmatu = cv::Mat::zeros(slam1.size(), CV_8U);
-//	graph_slam.drawUnique(gmatu);
-//	cv::imshow("input unique", gmatu);
-//
-//	cv::Mat gmat2u = cv::Mat::zeros(slam2.size(), CV_8U);
-//	graph_slam2.drawUnique(gmat2u);
-//	cv::imshow("model unique", gmat2u);
-//	cv::waitKey(0);
-//
+	graph_slam.updateUnique();
+	graph_slam2.updateUnique();
+
+	assert(graph_slam.zoneUniquenessWasCalculated() == true);
+	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
+
+	cv::Mat gmatu = cv::Mat::zeros(slam1.size(), CV_8U);
+	graph_slam.drawUnique(gmatu);
+	cv::imshow("input unique", gmatu);
+
+	cv::Mat gmat2u = cv::Mat::zeros(slam2.size(), CV_8U);
+	graph_slam2.drawUnique(gmat2u);
+	cv::imshow("model unique", gmat2u);
+	cv::waitKey(0);
 	
 	/********** Hungarian matching of graph onto itself***************/
 			
