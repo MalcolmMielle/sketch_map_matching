@@ -39,6 +39,9 @@ namespace AASS{
 			void pop_front(){_hypothesis.pop_front();}
 			void clear(){_hypothesis.clear(); _dist = 0 ;}
 			bool empty(){return _hypothesis.empty();}
+			void remove(const graphmatch::Match& to_remove){
+				_hypothesis.erase(std::remove(_hypothesis.begin(), _hypothesis.end(), to_remove), _hypothesis.end());
+			}
 			graphmatch::Match& at(int i){return _hypothesis.at(i);}
 			std::deque< graphmatch::Match>::iterator begin(){return _hypothesis.begin();}
 			std::deque< graphmatch::Match >::iterator erase(const std::deque< graphmatch::Match>::iterator& it){return _hypothesis.erase(it);};
@@ -125,6 +128,13 @@ namespace AASS{
 			int getSizeSimilarZone(AASS::graphmatch::GraphPlace& gp, const AASS::graphmatch::VertexPlace& vertex);
 			
 			int getSizeSimilarZone(graphmatch::GraphPlace& gp, const AASS::graphmatch::VertexPlace& vertex, Hypothese& zone);
+
+
+
+			std::tuple<AASS::graphmatch::Match, AASS::graphmatch::Match> getLinkedMatches(const AASS::graphmatch::Match& match_here);
+
+
+			bool shouldReplaceBasedOnCost(const AASS::graphmatch::Match& match_equivalent);
 			
 			
 			/********************************

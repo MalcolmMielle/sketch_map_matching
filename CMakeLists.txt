@@ -3,8 +3,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(sketchAlgorithms)
 
-add_definitions(-std=c++11)
-
+set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_FLAGS "-Wall")
 
 # Version for all the file in debug have TIMED defined in debug mode

@@ -145,3 +145,80 @@ int AASS::graphmatch::Hypothese::updateDistance(AASS::graphmatch::GraphPlace& gp
 	return nb_edges + nb_ver + (big - small) + sub;
 	
 }
+
+
+
+std::tuple<AASS::graphmatch::Match, AASS::graphmatch::Match> AASS::graphmatch::Hypothese::getLinkedMatches(const AASS::graphmatch::Match& match_equivalent) {
+
+	//Find equivalent matches
+	Match match_here_out;
+//	Match match_equi_out;
+	Match other_here_out;
+	int index_other = -1;
+
+	for(auto match_here : _hypothesis) {
+
+		if (match_equivalent.getFirst() == match_here.getFirst()) {
+			std::cout << "SEEN" << std::endl;
+	//					is_in_final = true;
+			//Both match to compare
+			match_here_out = match_here;
+//			match_equi_out = match_equivalent;
+
+			/* We found a common node in the input graph.
+			* We need to compare the two match to know if replacing it is an advantage or not
+			* But to compare it, maybe, the new match is matched in the model graph to a very good vertex.
+			* So we need to compare the new match to the match of the input AND the model in -->final<--.
+			* */
+			other_here_out = match_here;
+	//					index_other = -1;
+			for (auto match_final_2 : _hypothesis) {
+				//Look if the second vertex is the same AND if the match is not the already selected match
+				if (match_equivalent.getSecond() == match_final_2.getSecond() && match_final_2 != match_here) {
+	//								std::cout << "Found at " << f << std::endl;
+					other_here_out = match_final_2;
+	//								index_other = f;
+				}
+			}
+		}//Test the second part
+		else if (match_equivalent.getSecond() == match_here.getSecond()) {
+			std::cout << "SEEN2" << std::endl;
+	//					is_in_final = true;
+			//Both match to compare
+			match_here_out = match_here;
+//			match_equi_out = match_equivalent;
+
+			/* We found a common node in the input graph.
+			* We need to compare the two match to know if replacing it is an advantage or not
+			* But to compare it, maybe, the new match is matched in the model graph to a very good vertex.
+			* So we need to compare the new match to the match of the input AND the model in -->final<--.
+			* */
+			other_here_out = match_here;
+			//					index_other = -1;
+			for (auto match_final_2 : _hypothesis) {
+				//Look if the second vertex is the same AND if the match is not the already selected match
+				if (match_equivalent.getFirst() == match_final_2.getFirst() && match_final_2 != match_here) {
+					//								std::cout << "Found at " << f << std::endl;
+					other_here_out = match_final_2;
+					//								index_other = f;
+				}
+			}
+		}
+	}
+
+	return std::make_tuple(match_here_out, other_here_out);
+}
+
+
+bool AASS::graphmatch::Hypothese::shouldReplaceBasedOnCost(const AASS::graphmatch::Match& match_equivalent) {
+	auto [match_final_to_compare, other_final_to_compare] = getLinkedMatches(match_equivalent);
+	size_t diff = 0;
+	bool better = match_final_to_compare.bestMatch(match_equivalent, other_final_to_compare, diff);
+// 	std::cout << "COST : " << better << std::endl;
+	//The new match got more confidence than both others.
+	std::cout << "DIFFERENCE " << diff << std::endl;
+
+	return better;
+
+
+}

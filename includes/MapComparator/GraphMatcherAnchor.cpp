@@ -1,86 +1,90 @@
 #include "GraphMatcherAnchor.hpp"
 
 
+//
+//bool AASS::graphmatch::GraphMatcherAnchor::bestMatch(const AASS::graphmatch::Match& match_original, const AASS::graphmatch::Match& match_maybe, const AASS::graphmatch::Match& match_to_compare, size_t& diff) const
+//{
+//// 	std::cout << "cost match " << match_original.getCost() << " maybe " << match_maybe.getCost() << " to compare " << match_to_compare.getCost() << std::endl;
+//
+//	//Extract actual difference to know if it's zero and they are the same
+//	bool better = match_to_compare.isBetterThan(match_original, diff);
+//	//If there is a second match to compare. That first comparison is useless but it make the code clearer in my opinion.
+//	if(match_maybe != match_original){
+//		size_t diff2 = 0;
+//		if(better == true && match_to_compare.isBetterThan(match_maybe, diff2)){
+//			diff += diff2;
+//			better = true;
+//		}
+//		else{
+//			better = false;
+//		}
+//	}
+//	return better;
+//}
 
-bool AASS::graphmatch::GraphMatcherAnchor::bestMatch(const AASS::graphmatch::Match& match_original, const AASS::graphmatch::Match& match_maybe, const AASS::graphmatch::Match& match_to_compare, size_t& diff) const
-{
-// 	std::cout << "cost match " << match_original.getCost() << " maybe " << match_maybe.getCost() << " to compare " << match_to_compare.getCost() << std::endl;
-	
-	//Extract actual difference to know if it's zero and they are the same
-	bool better = match_to_compare.isBetterThan(match_original, diff);
-	//If there is a second match to compare. That first comparison is useless but it make the code clearer in my opinion.
-	if(match_maybe != match_original){
-		size_t diff2 = 0;
-		if(better == true && match_to_compare.isBetterThan(match_maybe, diff2)){
-			diff += diff2;
-			better = true;
-		}
-		else{
-			better = false;
-		}
-	}
-	return better;
-}
+bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare, cv::Size size) {
 
-bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare, cv::Size size)
-{
-	std::cout << "Les couts " << match_original.getCost() << " " << match_to_compare.getCost() << "Les other ? " << index_match_maybe << " " << match_maybe.getCost() << std::endl;
-	
-	size_t diff = 0 ;
-	bool better = bestMatch(match_original, match_maybe, match_to_compare, diff);
+	std::cout << "Les couts " << match_original.getCost() << " " << match_to_compare.getCost() << "Les other ? "
+	          << index_match_maybe << " " << match_maybe.getCost() << std::endl;
+
+	bool better = false;
+	if (_use_lowest_value_for_matching) {
+		size_t diff = 0;
+		better = match_original.bestMatch(match_maybe, match_to_compare, diff);
 // 	std::cout << "COST : " << better << std::endl; 
-	//The new match got more confidence than both others.
-	
-	std::cout << "DIFFERENCE " << diff << std::endl;
-	//It's pretty equal here... So I should use the local detection to know if I should replace. This should become the basic function later on. Not just for the 0 case.
-	
-	//Should detect the one with the largest zone with the same or less value of modification in their respective graphs.
-// 	if(diff == 0){
-	
-		//Just to be sure
-		better = false;
+		//The new match got more confidence than both others.
+		std::cout << "DIFFERENCE " << diff << std::endl;
+	} else if (_use_zone_of_equal_value_for_matching) {
+		//It's pretty equal here... So I should use the local detection to know if I should replace. This should become the basic function later on. Not just for the 0 case.
+//		size_t diff = 0;
+		//Should detect the one with the largest zone with the same or less value of modification in their respective graphs.
 // 		std::cout << "STUF TO IMPLEMENT IN REPLACE IN GRAPHMATCHER ANCHOR" << std::endl;
 // 		throw std::runtime_error("GO FIX THE PROGRAM : STUFF TO TEST IN REPLACE IN GRAPHMATCHER ANCHOR");
-		
-		
+
+
 		/* 1 -> Calculate zone with same or less for both vertex
 		 * 2 -> Compare them
 		 * 3 -> If they are the same FUCK MY LIFE 
 		 */
-		
+
 // 		std::cout << "Compare the final because they are equal" << std::endl;
 //TODO : Replace draw by preprocessor thing to be able to remove those hypothese
 		Hypothese zone;
 		Hypothese zone1;
 		Hypothese zone2;
 		Hypothese zone3;
-		
+
 		/*********************************************************************/
 		//TODO : MAKE SURE THAT THE INDEX SELECTED IS THE GOOD ONE 
 		/*********************************************************************/
-		
-		
-		std::cout << "_from_which_hypo " << _from_which_hypo.size() << " index_match_original " << index_match_original <<  std::endl;
+
+
+		std::cout << "_from_which_hypo " << _from_which_hypo.size() << " index_match_original " << index_match_original
+		          << std::endl;
 		int which = _from_which_hypo[index_match_original];
 		std::cout << "With " << which << std::endl;
 // 		_allhypothese_from_each_anchor[0].getMatches()
-		
-		std::cout << "IN which " << which << " and fuse " << index_match_original << " which should be less than " << _allhypothese_from_each_anchor[which].size() << std::endl;
+
+		std::cout << "IN which " << which << " and fuse " << index_match_original << " which should be less than "
+		          << _allhypothese_from_each_anchor[which].size() << std::endl;
 		int size_final_1 = -1;
 		int size_final_2 = -1;
 		int size_to_fuse_1 = -1;
 		int size_to_fuse_2 = -1;
 #ifdef DEBUG
-		try{
+		try {
 #endif
-			size_final_1 = _allhypothese_from_each_anchor[which].getSizeSimilarZone(gp, match_original.getFirst(), zone);
-			size_final_2 = _allhypothese_from_each_anchor[which].getSizeSimilarZone(gp_model, match_original.getSecond(), zone1);
-	// 		std::cout << "Compare the fuse" << std::endl;
+			size_final_1 = _allhypothese_from_each_anchor[which].getSizeSimilarZone(gp, match_original.getFirst(),
+			                                                                        zone);
+			size_final_2 = _allhypothese_from_each_anchor[which].getSizeSimilarZone(gp_model,
+			                                                                        match_original.getSecond(), zone1);
+			// 		std::cout << "Compare the fuse" << std::endl;
 #ifdef DEBUG
 		}
-		catch(std::exception &e){
-			
-			std::cout << "DRAWINF ZONE size of first and update" << _allhypothese_from_each_anchor[which].size() << " " << final.size() << " at " << index_match_original << std::endl;
+		catch (std::exception &e) {
+
+			std::cout << "DRAWINF ZONE size of first and update" << _allhypothese_from_each_anchor[which].size() << " "
+			          << final.size() << " at " << index_match_original << std::endl;
 			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);;
 			Hypothese dm;
 			dm.push_back(match_original);
@@ -88,17 +92,23 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 			_allhypothese_from_each_anchor[which].drawHypo(gp, gp_model, mat_in, mat_in, "Hyp", 1);
 			final.drawHypo(gp, gp_model, mat_in, mat_in, "Hyp real", 1);
 			cv::waitKey(0);
-			
+
 		}
-		try{
+		try {
 #endif
-			
-			size_to_fuse_1 = _allhypothese_from_each_anchor[_studied_index_to_fuse].getSizeSimilarZone(gp, match_to_compare.getFirst(), zone2);
-			size_to_fuse_2 = _allhypothese_from_each_anchor[_studied_index_to_fuse].getSizeSimilarZone(gp_model, match_to_compare.getSecond(), zone3);
+
+			size_to_fuse_1 = _allhypothese_from_each_anchor[_studied_index_to_fuse].getSizeSimilarZone(gp,
+			                                                                                           match_to_compare.getFirst(),
+			                                                                                           zone2);
+			size_to_fuse_2 = _allhypothese_from_each_anchor[_studied_index_to_fuse].getSizeSimilarZone(gp_model,
+			                                                                                           match_to_compare.getSecond(),
+			                                                                                           zone3);
 #ifdef DEBUG
 		}
-		catch(std::exception &e){
-			std::cout << "DRAWINF ZONE to fuse size of first and update1" << _allhypothese_from_each_anchor[_studied_index_to_fuse].size() << " " << to_fuse.size() << " at " << index_match_to_compare <<  std::endl;
+		catch (std::exception &e) {
+			std::cout << "DRAWINF ZONE to fuse size of first and update1"
+			          << _allhypothese_from_each_anchor[_studied_index_to_fuse].size() << " " << to_fuse.size()
+			          << " at " << index_match_to_compare << std::endl;
 			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);;
 			Hypothese dm;
 			dm.push_back(match_to_compare);
@@ -108,31 +118,31 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 			cv::waitKey(0);
 		}
 #endif
-		
-		
-		if(size_to_fuse_1 + size_to_fuse_2 > size_final_1 + size_final_2){
-			std::cout << "It's better since " << size_to_fuse_1 + size_to_fuse_2  << " > " << size_final_1 + size_final_2 << std::endl;
-			if(diff == 0){
+
+
+		if (size_to_fuse_1 + size_to_fuse_2 > size_final_1 + size_final_2) {
+			std::cout << "It's better since " << size_to_fuse_1 + size_to_fuse_2 << " > " << size_final_1 + size_final_2
+			          << std::endl;
+//			if (diff == 0) {
 				better = true;
-			}
+//			}
+		} else {
+			std::cout << "It's no better since " << size_to_fuse_1 + size_to_fuse_2 << " < "
+			          << size_final_1 + size_final_2 << std::endl;
 		}
-		else{
-			std::cout << "It's no better since " << size_to_fuse_1 + size_to_fuse_2  << " < " << size_final_1 + size_final_2 << std::endl;
-		}
-		
-		if(_draw == true){
-			std::cout << "DRAWINF ZONE" << std::endl;
+
+		if (_draw == true) {
+			std::cout << "DRAWING ZONE" << std::endl;
 			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);;
 			zone.drawHypo(gp, gp_model, mat_in, mat_in, "zone", 1);
 			zone2.drawHypo(gp, gp_model, mat_in, mat_in, "zone2", 1);
 			cv::waitKey(0);
-		}	
-		else{
+		} else {
 			std::cout << "Not drawing " << std::endl;
 		}
-		
-// 	}
-	
+	}
+
+	// Replacement step
 	if(better == true){
 // 		std::cout << "FUSE at " << index_match_original << " and to fuse " << index_match_to_compare << std::endl;
 // 		std::cout << "removing " << final[index_match_original] << " adding " << to_fuse[index_match_to_compare] << " SHOULD EB SEAME" << match_to_compare << std::endl;

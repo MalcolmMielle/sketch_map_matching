@@ -27,6 +27,11 @@
 #include "RSI/hungarian/hungarian.h"
 #include "RSI/HungarianMatcher.hpp"
 
+
+
+
+
+
 void draw(AASS::RSI::GraphZoneRI& gp_real, AASS::RSI::GraphZoneRI& gp_model, const cv::Mat& obstacle, const cv::Mat& obstacle_model, std::vector< AASS::RSI::ZoneCompared > matches){
 
 	cv::Mat obst_copy;
@@ -92,6 +97,56 @@ void draw(AASS::RSI::GraphZoneRI& gp_real, AASS::RSI::GraphZoneRI& gp_model, con
 	cv::imshow("all links", all);
 
 }
+
+void seeHungarian(const std::vector< AASS::RSI::ZoneCompared >& match, AASS::RSI::GraphZoneRI graph_slam, AASS::RSI::GraphZoneRI graph_slam2, cv::Mat& slam1, cv::Mat& slam2){
+	//
+// 	/********** Visualization ****************************************/
+//
+	for(size_t i = 0 ; i < match.size() ; ++i){
+		std::cout << "matching " << i << " : " << match[i].source << " " << match[i].target << std::endl;
+		cv::imshow("Zone1", graph_slam[match[i].source].getZoneMat());
+		cv::imshow("Zone2", graph_slam2[match[i].target].getZoneMat());
+
+		//TODO: Add uniqueness measurement with it
+		std::cout << "SCORE of similarity (diff than uniqueness), it's the matching score between the zones, 0 is good, 1 is bad : " <<  " \nUniqueness : ";
+
+		std::cout << graph_slam[match[i].source].getUniquenessScore() << " ";
+		std::cout << graph_slam2[match[i].target].getUniquenessScore() << " ";
+		std::cout << graph_slam[match[i].source].getUniquenessScore() + graph_slam2[match[i].target].getUniquenessScore() << " ";
+
+		std::cout << "Match print :" << std::endl;
+
+		match[i].print();
+
+		std::cout << "\nrank " << match[i].getRanking(graph_slam, graph_slam2) << std::endl;
+
+		std::cout << std::endl << "zone 1 ";
+		graph_slam[match[i].source].print();
+		std::cout << std::endl << "zone 2 ";
+		graph_slam2[match[i].target].print();
+
+// 		for( auto it = uni1.begin(); it != uni1.end() ; ++it){
+// 			if(it->first == match[i].first){
+// 				std::cout << it->second << " ";
+// 			}
+// 		}
+// 		std::cout << " And " ;
+// 		for( auto it = uni2.begin(); it != uni2.end() ; ++it){
+// 			if(it->first == match[i].second){
+// 				std::cout << it->second << " ";
+// 			}
+// 		}
+//
+		std::cout << std::endl;
+
+		cv::waitKey(0);
+	}
+
+	cv::imshow("TEST", slam1);
+	draw(graph_slam, graph_slam2, slam1, slam2, match);
+	cv::waitKey(0);
+}
+
 
 //void makeGraphSLAM(const std::string& file, AASS::RSI::GraphZone& graph_slam){
 //
@@ -273,7 +328,7 @@ BOOST_AUTO_TEST_CASE(trying)
 //	makeGraph(file, graph_slam);
 	
 	std::string file2;
-	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/03.png";
+	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
 	cv::Mat slam2 = cv::imread(file2, CV_LOAD_IMAGE_GRAYSCALE);
 
 	cv::threshold(slam2, slam2, 20, 255, cv::THRESH_BINARY);
@@ -355,6 +410,10 @@ BOOST_AUTO_TEST_CASE(trying)
 	std::sort(match.begin(), match.end(), [&graph_slam, &graph_slam2](AASS::RSI::ZoneCompared &match, AASS::RSI::ZoneCompared &match1){
 		return match.getRanking(graph_slam, graph_slam2) > match1.getRanking(graph_slam, graph_slam2); 
 	} );
+
+
+	seeHungarian(match, graph_slam, graph_slam2, slam1, slam2);
+
 	
 	/********** Drawing the graphs *******************************************/
 	
