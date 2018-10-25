@@ -8,8 +8,7 @@
 #include "LaplacianGraphMatching/GraphLaplacian.hpp"
 
 
-BOOST_AUTO_TEST_CASE(trying)
-{
+BOOST_AUTO_TEST_CASE(trying) {
 
 	AASS::graphmatch::GraphLaplacian graph;
 
@@ -31,9 +30,8 @@ BOOST_AUTO_TEST_CASE(trying)
 	Eigen::MatrixXd wl = graph.getWeightedGeneralizedLaplacian();
 	std::cout << "Weighted Laplacian\n\n" << wl << "\n" << std::endl;
 
-	auto [eigenvalues, eigenvectors] = graph.eigenLaplacian();
+	auto[eigenvalues, eigenvectors] = graph.eigenLaplacian();
 	std::cout << "Eigenvalues\n" << eigenvalues.transpose() << "\neigenvectors\n" << eigenvectors << "\n" << std::endl;
-
 
 
 	AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex3;
@@ -49,16 +47,19 @@ BOOST_AUTO_TEST_CASE(trying)
 	Eigen::MatrixXd wl2 = graph.getWeightedGeneralizedLaplacian();
 	std::cout << "Weighted Laplacian\n\n" << wl2 << "\n" << std::endl;
 
-	auto [eigenvalues2, eigenvectors2] = graph.eigenLaplacian();
-	std::cout << "Eigenvalues\n" << eigenvalues2.transpose() << "\neigenvectors\n" << eigenvectors2 << "\n" << std::endl;
+	auto[eigenvalues2, eigenvectors2] = graph.eigenLaplacian();
+	std::cout << "Eigenvalues\n" << eigenvalues2.transpose() << "\neigenvectors\n" << eigenvectors2 << "\n"
+	          << std::endl;
 
 
-	//Give to each node its eigen vector and eigen value
-	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp;
-	for (vp = boost::vertices(graph); vp.first != vp.second; ++vp.first) {
-		AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex_in = *vp.first;
-		std::cout << "Vertex index " << graph[vertex_in].index << " eigen value " << graph[vertex_in].getEigenValue() << " eigenvector" << graph[vertex_in].getEigenVector().transpose() << std::endl;
+
+	//** Heat kernel **/
+	for (int i = 0; i < 10; ++i) {
+		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph.getHeatKernelValueNode(vertex, i) << std::endl;
+		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex2, i) << std::endl;
+		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex3, i) << "\n" << std::endl;
 	}
+
 
 
 }

@@ -13,8 +13,8 @@ namespace AASS {
 		protected:
 			double _uniqueness = -1;
 
-			double _eigenvalue;
-			Eigen::VectorXd _eigenvector;
+//			double _eigenvalue;
+//			Eigen::VectorXd _eigenvector;
 
 		public:
 			EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -23,13 +23,25 @@ namespace AASS {
 
 			double getUniqueness() const {return _uniqueness;}
 			void setUniqueness(double se){_uniqueness = se;}
-			void setEigen(double value, const Eigen::VectorXd& vector){
-				_eigenvalue = value;
-				_eigenvector = vector;
+
+
+			double heatKernel( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time) {
+				double score = 0;
+				for (int i = 0; i < eigenvalues.size(); ++i){
+					double eigenvalue = eigenvalues[i];
+					double eigenvectorvalue = eigenvectors.col(i)(index);
+					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue);
+				}
+				return score;
 			}
 
-			double getEigenValue(){return _eigenvalue;}
-			const Eigen::VectorXd& getEigenVector() const {return _eigenvector;}
+//			void setEigen(double value, const Eigen::VectorXd& vector){
+//				_eigenvalue = value;
+//				_eigenvector = vector;
+//			}
+
+//			double getEigenValue(){return _eigenvalue;}
+//			const Eigen::VectorXd& getEigenVector() const {return _eigenvector;}
 
 		};
 
@@ -43,6 +55,9 @@ namespace AASS {
 
 		protected:
 
+			Eigen::VectorXd _eigenvalues;
+			Eigen::MatrixXd _eigenvectors;
+
 		public:
 			EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
@@ -51,7 +66,6 @@ namespace AASS {
 			typedef typename bettergraph::SimpleGraph<Region, EdgeType>::Edge EdgeLaplacian;
 			typedef typename bettergraph::SimpleGraph<Region, EdgeType>::VertexIterator VertexIteratorLaplacian;
 			typedef typename bettergraph::SimpleGraph<Region, EdgeType>::EdgeIterator EdgeIteratorLaplacian;
-
 
 
 			GraphLaplacian() {}
@@ -66,6 +80,10 @@ namespace AASS {
 			std::tuple<Eigen::VectorXd, Eigen::MatrixXd> eigenLaplacian();
 
 			void laplacianFamilySignatureGeneration(){};
+
+			double getHeatKernelValueNode(const VertexLaplacian& vertex, double time){
+				return (*this)[vertex].heatKernel(_eigenvalues, _eigenvectors, time);
+			}
 
 		};
 

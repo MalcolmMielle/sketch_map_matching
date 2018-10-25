@@ -105,25 +105,25 @@ std::tuple<Eigen::VectorXd, Eigen::MatrixXd> AASS::graphmatch::GraphLaplacian::e
 	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigen_solver;
 	eigen_solver.compute(laplacian);
 
-	Eigen::VectorXd eigenvalues = eigen_solver.eigenvalues();
-	Eigen::MatrixXd eigenvectors = eigen_solver.eigenvectors();
+	_eigenvalues = eigen_solver.eigenvalues();
+	_eigenvectors = eigen_solver.eigenvectors();
 
 	//CHeck Semi Positive Definite. First eigen value is the smallest
-	if(eigenvalues(0) < 0.)
+	if(_eigenvalues(0) < 0.)
 	{
-		std::cout << "Laplacian\n" << laplacian << "\n\neigen values\n" << eigenvalues.transpose() << std::endl;
+		std::cout << "Laplacian\n" << laplacian << "\n\neigen values\n" << _eigenvalues.transpose() << std::endl;
 		throw std::runtime_error("non semi-positive definite matrix!");
 	}
 
-	//Give to each node its eigen vector and eigen value
-	std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
-	for (vp = boost::vertices(*this); vp.first != vp.second; ++vp.first) {
-		VertexLaplacian vertex_in = *vp.first;
-		assert((*this)[vertex_in].index != -1);
-		int index = (*this)[vertex_in].index;
-		(*this)[vertex_in].setEigen(eigenvalues(index), eigenvectors.col(index));
-	}
+	//Give to each node its eigen vector and eigen value - NOT AT ALL HOW THIS WORKS
+//	std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
+//	for (vp = boost::vertices(*this); vp.first != vp.second; ++vp.first) {
+//		VertexLaplacian vertex_in = *vp.first;
+//		assert((*this)[vertex_in].index != -1);
+//		int index = (*this)[vertex_in].index;
+//		(*this)[vertex_in].setEigen(eigenvalues(index), eigenvectors.col(index));
+//	}
 
-	return std::make_tuple(eigenvalues, eigenvectors);
+	return std::make_tuple(_eigenvalues, _eigenvectors);
 
 }
