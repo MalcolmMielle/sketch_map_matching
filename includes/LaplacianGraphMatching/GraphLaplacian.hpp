@@ -13,6 +13,9 @@ namespace AASS {
 		protected:
 			double _uniqueness = -1;
 
+			double _heat = -1;
+			double _time = -1;
+
 //			double _eigenvalue;
 //			Eigen::VectorXd _eigenvector;
 
@@ -24,6 +27,8 @@ namespace AASS {
 			double getUniqueness() const {return _uniqueness;}
 			void setUniqueness(double se){_uniqueness = se;}
 
+			double getHeat(){return _heat;}
+			double getTime(){return _time;}
 
 			double heatKernel( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time) {
 				double score = 0;
@@ -32,6 +37,9 @@ namespace AASS {
 					double eigenvectorvalue = eigenvectors.col(i)(index);
 					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue);
 				}
+
+				_heat = score;
+				_time = time;
 				return score;
 			}
 
@@ -83,6 +91,14 @@ namespace AASS {
 
 			double getHeatKernelValueNode(const VertexLaplacian& vertex, double time){
 				return (*this)[vertex].heatKernel(_eigenvalues, _eigenvectors, time);
+			}
+
+			void propagateHeatKernel(double time){
+				std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
+				for (vp = boost::vertices(*this); vp.first != vp.second; ++vp.first) {
+					VertexLaplacian vertex_in = *vp.first;
+					(*this)[vertex_in].heatKernel(_eigenvalues, _eigenvectors, time);
+				}
 			}
 
 		};

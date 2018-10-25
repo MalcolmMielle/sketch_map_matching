@@ -52,13 +52,21 @@ BOOST_AUTO_TEST_CASE(trying) {
 	          << std::endl;
 
 
-
 	//** Heat kernel **/
 	for (int i = 0; i < 10; ++i) {
+		graph.propagateHeatKernel(i);
+
 		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph.getHeatKernelValueNode(vertex, i) << std::endl;
+		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeat() << std::endl;
 		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex2, i) << std::endl;
-		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex3, i) << "\n" << std::endl;
+		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeat() << std::endl;
+		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph.getHeatKernelValueNode(vertex3, i) << std::endl;
+		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeat() << "\n" << std::endl;
 	}
+
+
+
+
 
 
 
