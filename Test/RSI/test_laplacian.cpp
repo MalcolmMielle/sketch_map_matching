@@ -51,6 +51,7 @@ BOOST_AUTO_TEST_CASE(trying) {
 	std::cout << "Eigenvalues\n" << eigenvalues2.transpose() << "\neigenvectors\n" << eigenvectors2 << "\n"
 	          << std::endl;
 
+	graph.addAnchor(vertex2);
 
 	//** Heat kernel **/
 	for (int i = 0; i < 10; ++i) {
@@ -58,10 +59,13 @@ BOOST_AUTO_TEST_CASE(trying) {
 
 		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph.getHeatKernelValueNode(vertex, i) << std::endl;
 		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeat() << std::endl;
+		std::cout << "Anchor heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeatAnchors() << std::endl;
 		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex2, i) << std::endl;
 		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeat() << std::endl;
+		std::cout << "Anchor heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeatAnchors() << std::endl;
 		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph.getHeatKernelValueNode(vertex3, i) << std::endl;
-		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeat() << "\n" << std::endl;
+		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeat() << std::endl;
+		std::cout << "Anchor heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeatAnchors() << "\n" << std::endl;
 	}
 
 

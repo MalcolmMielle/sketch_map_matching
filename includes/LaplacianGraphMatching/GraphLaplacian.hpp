@@ -16,6 +16,8 @@ namespace AASS {
 			double _heat = -1;
 			double _time = -1;
 
+			double _heat_anchors = -1;
+
 //			double _eigenvalue;
 //			Eigen::VectorXd _eigenvector;
 
@@ -28,6 +30,7 @@ namespace AASS {
 			void setUniqueness(double se){_uniqueness = se;}
 
 			double getHeat(){return _heat;}
+			double getHeatAnchors(){return _heat_anchors;}
 			double getTime(){return _time;}
 
 			double heatKernel( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time) {
@@ -41,6 +44,27 @@ namespace AASS {
 				_heat = score;
 				_time = time;
 				return score;
+			}
+
+			double heatKernelAnchor( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time, double index_anchor) {
+				double score = 0;
+				for (int i = 0; i < eigenvalues.size(); ++i){
+					double eigenvalue = eigenvalues[i];
+					double eigenvectorvalue = eigenvectors.col(i)(index);
+					double eigenvectorvalue_anchor = eigenvectors.col(i)(index_anchor);
+					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue_anchor);
+				}
+				return score;
+			}
+
+			double heatKernelAnchors( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time, std::deque<int> indexes_anchor) {
+				double score_anchors = 0;
+				for(auto index : indexes_anchor) {
+					score_anchors = score_anchors + heatKernelAnchor(eigenvalues, eigenvectors, time, index);
+				}
+				_heat_anchors = score_anchors;
+				heatKernel(eigenvalues, eigenvectors, time);
+				return score_anchors;
 			}
 
 //			void setEigen(double value, const Eigen::VectorXd& vector){
@@ -61,11 +85,6 @@ namespace AASS {
 
 		class GraphLaplacian : public bettergraph::SimpleGraph<Region, EdgeType> {
 
-		protected:
-
-			Eigen::VectorXd _eigenvalues;
-			Eigen::MatrixXd _eigenvectors;
-
 		public:
 			EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
@@ -75,8 +94,18 @@ namespace AASS {
 			typedef typename bettergraph::SimpleGraph<Region, EdgeType>::VertexIterator VertexIteratorLaplacian;
 			typedef typename bettergraph::SimpleGraph<Region, EdgeType>::EdgeIterator EdgeIteratorLaplacian;
 
+		protected:
+
+			Eigen::VectorXd _eigenvalues;
+			Eigen::MatrixXd _eigenvectors;
+			std::deque<VertexLaplacian> _anchors;
+
+		public:
+
 
 			GraphLaplacian() {}
+
+			void addAnchor(const VertexLaplacian& anch){_anchors.push_back(anch);}
 
 			/**
 			 *
@@ -94,10 +123,16 @@ namespace AASS {
 			}
 
 			void propagateHeatKernel(double time){
+
+				std::deque<int> index_anchors;
+				for(auto anchor : _anchors){
+					index_anchors.push_back( (*this)[anchor].index );
+				}
+
 				std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
 				for (vp = boost::vertices(*this); vp.first != vp.second; ++vp.first) {
 					VertexLaplacian vertex_in = *vp.first;
-					(*this)[vertex_in].heatKernel(_eigenvalues, _eigenvectors, time);
+					(*this)[vertex_in].heatKernelAnchors(_eigenvalues, _eigenvectors, time, index_anchors);
 				}
 			}
 
