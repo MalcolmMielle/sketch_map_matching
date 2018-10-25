@@ -266,6 +266,8 @@ add_custom_target(uninstall
 
 add_subdirectory(includes)
 
+add_subdirectory(src/LaplacianGraphMatching)
+
 add_subdirectory(Test/BaseTest)
 add_subdirectory(Test/Probabilities)
 add_subdirectory(Test/GraphDB)
