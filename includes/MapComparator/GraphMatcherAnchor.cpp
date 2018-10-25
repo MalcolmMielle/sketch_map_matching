@@ -29,7 +29,7 @@ bool AASS::graphmatch::GraphMatcherAnchor::checkAndReplace(AASS::graphmatch::Gra
 
 	bool better = false;
 	if (_use_lowest_value_for_matching) {
-		size_t diff = 0;
+		double diff = 0;
 		better = match_original.bestMatch(match_maybe, match_to_compare, diff);
 // 	std::cout << "COST : " << better << std::endl; 
 		//The new match got more confidence than both others.

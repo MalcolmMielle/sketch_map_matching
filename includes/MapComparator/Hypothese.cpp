@@ -212,7 +212,7 @@ std::tuple<AASS::graphmatch::Match, AASS::graphmatch::Match> AASS::graphmatch::H
 
 bool AASS::graphmatch::Hypothese::shouldReplaceBasedOnCost(const AASS::graphmatch::Match& match_equivalent) {
 	auto [match_final_to_compare, other_final_to_compare] = getLinkedMatches(match_equivalent);
-	size_t diff = 0;
+	double diff = 0;
 	bool better = match_final_to_compare.bestMatch(match_equivalent, other_final_to_compare, diff);
 // 	std::cout << "COST : " << better << std::endl;
 	//The new match got more confidence than both others.

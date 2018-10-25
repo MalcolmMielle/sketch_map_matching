@@ -118,7 +118,7 @@ void seeHungarian(const std::vector< AASS::RSI::ZoneCompared >& match, AASS::RSI
 
 		match[i].print();
 
-		std::cout << "\nrank " << match[i].getRanking(graph_slam, graph_slam2) << std::endl;
+		std::cout << "\nrank/similarity " << match[i].getSimilarity() << std::endl;
 
 		std::cout << std::endl << "zone 1 ";
 		graph_slam[match[i].source].print();
@@ -294,6 +294,34 @@ void seeHungarian(const std::vector< AASS::RSI::ZoneCompared >& match, AASS::RSI
 
 BOOST_AUTO_TEST_CASE(trying)
 {
+	bool is_sketch = true;
+	int argc = boost::unit_test::framework::master_test_suite().argc;
+	char** argv = boost::unit_test::framework::master_test_suite().argv;
+
+	std::string file;
+	if(argc > 1){
+		file = argv[1];
+	}
+	else{
+		file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
+	}
+
+	std::string file2;
+	if(argc > 2){
+		file2 = argv[2];
+	}
+	else{
+		file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/model_simple.png";
+	}
+
+	if(argc > 3){
+		std::stringstream ss(argv[3]);
+		if(!(ss >> std::boolalpha >> is_sketch)) {
+			std::cout << "NOT CORRECT BOOLEAN VALUE" << std::endl;
+		}
+	}
+	if(is_sketch) std::cout << "Is a SKETCH" << std::endl;
+	else std::cout << "Is NOT a sketch" << std::endl;
 	
 	
 // 	bool res = re->compareKeypoints(re2);
@@ -303,8 +331,8 @@ BOOST_AUTO_TEST_CASE(trying)
 	
 // 	int argc = boost::unit_test::framework::master_test_suite().argc;
 // 	char** argv = boost::unit_test::framework::master_test_suite().argv;
-	std::string file;
-	file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/model_simple.png";
+//	std::string file;
+//	file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
 	cv::Mat slam1 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
 
 	cv::threshold(slam1, slam1, 20, 255, cv::THRESH_BINARY);
@@ -327,8 +355,8 @@ BOOST_AUTO_TEST_CASE(trying)
 	AASS::RSI::GraphZoneRI graph_slam(graph_segmented);
 //	makeGraph(file, graph_slam);
 	
-	std::string file2;
-	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
+//	std::string file2;
+//	file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/model_simple.png";
 	cv::Mat slam2 = cv::imread(file2, CV_LOAD_IMAGE_GRAYSCALE);
 
 	cv::threshold(slam2, slam2, 20, 255, cv::THRESH_BINARY);
@@ -378,13 +406,18 @@ BOOST_AUTO_TEST_CASE(trying)
 // 	
 // 	assert(graph_slam.zoneUniquenessWasCalculated() == true);
 // 	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
-
+	/********** Uniqueness *******************************************/
 	graph_slam.setSDAwayFromMeanForUniqueness(1);
 	graph_slam2.setSDAwayFromMeanForUniqueness(1);
 
 	/********** Uniqueness *******************************************/
 	graph_slam.updateUnique();
-	graph_slam2.updateUnique();
+	if(is_sketch) {
+		graph_slam2.updateUnique();
+	}
+	else{
+		graph_slam2.updateUnique(graph_slam);
+	}
 
 	assert(graph_slam.zoneUniquenessWasCalculated() == true);
 	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
@@ -408,7 +441,7 @@ BOOST_AUTO_TEST_CASE(trying)
 // 	exit(0);
 	
 	std::sort(match.begin(), match.end(), [&graph_slam, &graph_slam2](AASS::RSI::ZoneCompared &match, AASS::RSI::ZoneCompared &match1){
-		return match.getRanking(graph_slam, graph_slam2) > match1.getRanking(graph_slam, graph_slam2); 
+		return match.getSimilarity() < match1.getSimilarity();
 	} );
 
 
@@ -485,16 +518,37 @@ BOOST_AUTO_TEST_CASE(trying)
 		
 		assert(found == true);
 		assert(found2 == true);
+
+		std::cout << "Similarity of match added to anchors : " << match[i].getSimilarity() << std::endl;
 		
 		AASS::graphmatch::Match match_p(vertex_place_anchor_source, vertex_place_anchor_target);
 		anchors.push_back(match_p);
 	}
-	
+
+	cv::waitKey(0);
+
+
+	/************************************************************
+	 * ANCHOR MATCHING
+	 */
+
+	/********** GRAPH LAPLACIAN ****************************/
+
+
+	/********** LAPLACIAN FAMILY SIGNATURES ****************/
+
+
+
+	/********** GRAPH MATCHING ****************************/
+
+
+
+
 	
 // 	while (old_score == -1 || score < old_score){
 	++index_anchor;
 	//MY THING
-	bool draw = false;
+	bool draw = true;
 	graphmatcheranchor.anchorMatching(gp, gp2, anchors, draw, slam1.size() );
 	std::deque<	AASS::graphmatch::Hypothese	> hypothesis_final = graphmatcheranchor.getResult();
 	graphmatcheranchor.sort(hypothesis_final);

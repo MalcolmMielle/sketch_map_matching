@@ -84,7 +84,7 @@ namespace AASS{
 		private:
 
 
-			void getAnchorsMatching(graphmatch::GraphPlace& gp, graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors);
+			void getAnchorsMatching(graphmatch::GraphPlace& gp, graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors, bool sort_by_score = true);
 
 
 
@@ -122,7 +122,7 @@ namespace AASS{
 			bool replace(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final, AASS::graphmatch::Hypothese& to_fuse, const AASS::graphmatch::Match& match_original, int index_match_original, const AASS::graphmatch::Match& match_maybe, int index_match_maybe, const AASS::graphmatch::Match& match_to_compare, int index_match_to_compare);
 
 
-			void fuse_hypo(AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, bool draw, cv::Size size = cv::Size(300,300));
+			void fuse_hypo(AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, bool draw = false, cv::Size size = cv::Size(300,300), AASS::graphmatch::GraphPlace gp = AASS::graphmatch::GraphPlace(), AASS::graphmatch::GraphPlace gp_model = AASS::graphmatch::GraphPlace());
 			
 			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, size_t& k, bool& is_in_final, bool draw, cv::Size size = cv::Size(300,300));
 			void match_one_hypo(AASS::graphmatch::GraphPlace& gp, AASS::graphmatch::GraphPlace& gp_model, AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, size_t& k, bool& is_in_final){
@@ -133,7 +133,8 @@ namespace AASS{
 		};
 
 
-		inline void AASS::graphmatch::GraphMatcherAnchor::getAnchorsMatching(graphmatch::GraphPlace& gp, graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors){
+		inline void AASS::graphmatch::GraphMatcherAnchor::getAnchorsMatching(graphmatch::GraphPlace& gp, graphmatch::GraphPlace& gp_model, std::deque < graphmatch::Match >& anchors, bool sort_by_score){
+
 			for(size_t i = 0 ; i < anchors.size() ; i++){
 				//Put all doors combination as seeds
 
@@ -156,6 +157,20 @@ namespace AASS{
 				_allhypothese_from_each_anchor.push_back( res[0] );
 
 			}
+
+			std::sort(_allhypothese_from_each_anchor.begin(), _allhypothese_from_each_anchor.end(), [](AASS::graphmatch::Hypothese &hyp, AASS::graphmatch::Hypothese &hyp1){
+				return hyp.getDist() < hyp1.getDist();
+			} );
+
+//			for(auto hy : _allhypothese_from_each_anchor){
+//				std::cout << "DIST" << hy.getDist() << std::endl;
+//			}
+
+//			exit(0);
+
+
+
+
 		}
 
 
@@ -185,7 +200,7 @@ namespace AASS{
 				for(int idx = 1 ; idx < _allhypothese_from_each_anchor.size() ; ++idx) {
 
 					std::cout << "Fusing hypo " << idx << std::endl;
-					fuse_hypo(final_hyp, _allhypothese_from_each_anchor[idx], draw, size);
+					fuse_hypo(final_hyp, _allhypothese_from_each_anchor[idx], draw, size, gp, gp_model);
 
 				}
 
@@ -783,12 +798,20 @@ namespace AASS{
 		}
 
 
-		inline void GraphMatcherAnchor::fuse_hypo(AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, bool draw, cv::Size size){
+		inline void GraphMatcherAnchor::fuse_hypo(AASS::graphmatch::Hypothese& final_hyp, AASS::graphmatch::Hypothese& to_fuse, bool draw, cv::Size size, AASS::graphmatch::GraphPlace gp, AASS::graphmatch::GraphPlace gp_model){
 
 			cv::Mat mat_in = cv::Mat::zeros(size, CV_8U);
 			if(draw == true) {
 				mat_in = cv::Mat::zeros(size, CV_8U);
 			}
+
+
+			if(draw){
+				final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final hypo at first", 1);
+				to_fuse.drawHypo(gp, gp_model, mat_in, mat_in, "to_fuse at first", 1);
+				cv::waitKey(0);
+			}
+
 
 #ifdef TIMED
 			double time = 0 ;
@@ -833,6 +856,29 @@ namespace AASS{
 						std::cout << "Removed an element" << std::endl;
 					}
 
+					if(draw == true){
+						Hypothese dm;
+						Hypothese dm3;
+						Hypothese dm2;
+						Hypothese dmweird;
+
+						dm.push_back(match);
+						dm3.push_back(other_final_to_compare);
+						dm2.push_back(match_final_to_compare);
+// 						dmweird.push_back(final_hyp[9]);
+						std::cout << "that here " << std::endl;
+						dm.drawHypo(gp, gp_model, mat_in, mat_in, "match", 1);
+						dm3.drawHypo(gp, gp_model, mat_in, mat_in, "match other", 1);
+						dm2.drawHypo(gp, gp_model, mat_in, mat_in, "match to compare", 1);
+// 						dmweird.drawHypo(gp, gp_model, mat_in, mat_in, "weirdo", 1);
+
+						cv::waitKey(0);
+
+					}
+
+
+
+
 //					bool replaced = replace(gp, gp_model, final_hyp, to_fuse, match_final_to_compare, idx, other_final_to_compare, idx_other, match, i);
 
 					//Not needed because we iterate to_fuse
@@ -841,8 +887,10 @@ namespace AASS{
 //					}
 				}
 
-				int aaaa;
-				std::cin>>aaaa;
+
+
+//				int aaaa;
+//				std::cin>>aaaa;
 
 			}
 
@@ -851,6 +899,12 @@ namespace AASS{
 			//Adding all elements
 			for(auto match : to_add){
 				final_hyp.push_back(match);
+			}
+
+			if(draw){
+				final_hyp.drawHypo(gp, gp_model, mat_in, mat_in, "final hypo after", 1);
+				to_fuse.drawHypo(gp, gp_model, mat_in, mat_in, "to_fuse after", 1);
+				cv::waitKey(0);
 			}
 
 			std::cout << "DONE" << std::endl;

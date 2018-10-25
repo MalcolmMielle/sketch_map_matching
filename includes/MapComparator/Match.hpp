@@ -36,7 +36,7 @@ namespace AASS{
 			}
 			
 			///@brief return a positive value of difference between cost
-			virtual bool isBetterThan(const Match& in, size_t& diff) const {
+			virtual bool isBetterThan(const Match& in, double& diff) const {
 				
 // 				std::cout << "cost : " << _cost << " in " << in.getCost() << std::endl ;
 				if(_cost < in.getCost()){
@@ -85,16 +85,18 @@ namespace AASS{
 *
 * @return true if match_to_compare cost is less than match_original and match_maybe, false otherwise.
 */
-			bool bestMatch(const AASS::graphmatch::Match& match_maybe, const AASS::graphmatch::Match& match_to_compare, size_t& diff) const
+			bool bestMatch(const AASS::graphmatch::Match& match_maybe, const AASS::graphmatch::Match& match_to_compare, double& diff) const
 			{
 // 	std::cout << "cost match " << match_original.getCost() << " maybe " << match_maybe.getCost() << " to compare " << match_to_compare.getCost() << std::endl;
 
 				//Extract actual difference to know if it's zero and they are the same
 				bool better = match_to_compare.isBetterThan(*this, diff);
+				std::cout << "Diff first " << diff << std::endl;
 				//If there is a second match to compare. That first comparison is useless but it make the code clearer in my opinion.
 				if(match_maybe != *this){
-					size_t diff2 = 0;
+					double diff2 = 0;
 					if(better == true && match_to_compare.isBetterThan(match_maybe, diff2)){
+						std::cout << "Diff second " << diff2 << std::endl;
 						diff += diff2;
 						better = true;
 					}
