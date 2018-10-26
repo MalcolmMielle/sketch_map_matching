@@ -1,16 +1,30 @@
 #ifndef SKETCHALGORITHMS_GRAPHLAPLACIAN_251108
 #define SKETCHALGORITHMS_GRAPHLAPLACIAN_251108
 
+#include "RSI/ZoneRI.hpp"
+#include "RSI/hungarian/hungarian.h"
 #include "bettergraph/SimpleGraph.hpp"
 #include "eigen3/Eigen/Core"
 #include <eigen3/Eigen/Eigenvalues>
+#include <opencv2/opencv.hpp>
 
 namespace AASS {
 	namespace graphmatch {
 
 
+		class MatchLaplacian;
+
+
 		class Region {
 		protected:
+
+			std::vector< std::vector< cv::Point > > _contour;
+			std::deque <cv::Point2i> _zone;
+//			cv::Moments moment;
+			cv::Point2f _center;
+
+
+
 			double _uniqueness = -1;
 
 			double _heat = -1;
@@ -22,16 +36,30 @@ namespace AASS {
 //			Eigen::VectorXd _eigenvector;
 
 		public:
+
+			AASS::RSI::ZoneRI zone;
+
+
 			EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 			int index = -1;
 			Region(){}
 
+			void print() const {
+				std::cout << "Node " << index << " heat " << _heat << " heat anchors " << _heat_anchors << " time " << _time << std::endl;
+			}
+
+			void setCenter(const cv::Point2f& center){_center = center;}
+			void setContour(const std::vector< std::vector< cv::Point > >& contour){_contour = contour;}
+
+			const cv::Point2f& getCenter(){return _center;}
+			const std::vector< std::vector< cv::Point > >& getContour() const {return _contour;}
+
 			double getUniqueness() const {return _uniqueness;}
 			void setUniqueness(double se){_uniqueness = se;}
 
-			double getHeat(){return _heat;}
-			double getHeatAnchors(){return _heat_anchors;}
-			double getTime(){return _time;}
+			double getHeat() const {return _heat;}
+			double getHeatAnchors() const {return _heat_anchors;}
+			double getTime() const {return _time;}
 
 			double heatKernel( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time) {
 				double score = 0;
@@ -65,6 +93,14 @@ namespace AASS {
 				_heat_anchors = score_anchors;
 				heatKernel(eigenvalues, eigenvectors, time);
 				return score_anchors;
+			}
+
+			double compare(const Region& region) const {
+				assert(region.getTime() == _time);
+				assert(_heat_anchors != -1);
+				std::cout << "Heats : " << region.getHeatAnchors() << " - " << _heat_anchors << std::endl;
+//				return std::abs( region.getHeatAnchors() - _heat_anchors );
+				return std::abs( region.getHeat() - _heat );
 			}
 
 //			void setEigen(double value, const Eigen::VectorXd& vector){
@@ -105,6 +141,22 @@ namespace AASS {
 
 			GraphLaplacian() {}
 
+			void print() const {
+
+				for(auto anchor : _anchors){
+					std::cout << "Anchor index " << (*this)[anchor].index << " ";
+				}
+				std::cout << std::endl;
+
+
+				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp;
+				//vertices access all the vertix
+				for (vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+					auto v = *vp.first;
+					(*this)[v].print();
+				}
+			}
+
 			void addAnchor(const VertexLaplacian& anch){_anchors.push_back(anch);}
 
 			/**
@@ -135,6 +187,10 @@ namespace AASS {
 					(*this)[vertex_in].heatKernelAnchors(_eigenvalues, _eigenvectors, time, index_anchors);
 				}
 			}
+
+			std::vector<AASS::graphmatch::MatchLaplacian> compare(const GraphLaplacian& gl) const ;
+
+			std::vector< AASS::graphmatch::MatchLaplacian > hungarian_matching(const AASS::graphmatch::GraphLaplacian& laplacian_model);
 
 		};
 

@@ -3,6 +3,7 @@
 
 #include <RSI/GraphZoneRI.hpp>
 #include "GraphPlace.hpp"
+#include "LaplacianGraphMatching/GraphLaplacian.hpp"
 
 	
 namespace AASS{
@@ -92,14 +93,15 @@ namespace AASS{
 		
 		
 		class RSIGraphConverter{
-			
+
 			std::deque < std::pair <AASS::RSI::GraphZoneRI::VertexZone, graphmatch::VertexPlace> > _vertex_equivalent;
+			std::deque < std::pair <AASS::RSI::GraphZoneRI::VertexZone, graphmatch::GraphLaplacian::VertexLaplacian> > _vertex_equivalent_laplacian;
 			
 		public :
 			
 			RSIGraphConverter(){};
-			
-			 bool getEquivalentVPlace(const AASS::RSI::GraphZoneRI::VertexZone& in_v, graphmatch::VertexPlace& out){
+
+			bool getEquivalentVPlace(const AASS::RSI::GraphZoneRI::VertexZone& in_v, graphmatch::VertexPlace& out){
 				for(auto it = _vertex_equivalent.begin(); it != _vertex_equivalent.end() ; ++it){
 					if( it->first == in_v){
 						out = it->second;
@@ -108,8 +110,8 @@ namespace AASS{
 				}
 				return false;
 			}
-			
-			 bool getEquivalentVZone(const graphmatch::VertexPlace& in_v, AASS::RSI::GraphZoneRI::VertexZone& out){
+
+			bool getEquivalentVZone(const graphmatch::VertexPlace& in_v, AASS::RSI::GraphZoneRI::VertexZone& out){
 				for(auto it = _vertex_equivalent.begin(); it != _vertex_equivalent.end() ; ++it){
 					if( it->second == in_v){
 						out = it->first;
@@ -118,7 +120,27 @@ namespace AASS{
 				}
 				return false;
 			}
-			
+
+			bool getEquivalentLaplacianRegion(const AASS::RSI::GraphZoneRI::VertexZone& in_v, graphmatch::GraphLaplacian::VertexLaplacian& out){
+				for(auto it = _vertex_equivalent_laplacian.begin(); it != _vertex_equivalent_laplacian.end() ; ++it){
+					if( it->first == in_v){
+						out = it->second;
+						return true;
+					}
+				}
+				return false;
+			}
+
+			bool getEquivalentLaplacianZone(const graphmatch::GraphLaplacian::VertexLaplacian& in_v, AASS::RSI::GraphZoneRI::VertexZone& out){
+				for(auto it = _vertex_equivalent_laplacian.begin(); it != _vertex_equivalent_laplacian.end() ; ++it){
+					if( it->second == in_v){
+						out = it->first;
+						return true;
+					}
+				}
+				return false;
+			}
+
 			///Make sure the graph zone has been updated
 			void graphZoneToGraphPlace(const AASS::RSI::GraphZoneRI& graph_zone, AASS::graphmatch::GraphPlace& graph_place){
 				std::cout << "START" << std::endl;
@@ -220,6 +242,69 @@ namespace AASS{
 				
 				
 			}
+
+
+			void graphZonetoGraphLaplacian(const AASS::RSI::GraphZoneRI& graph_zone, AASS::graphmatch::GraphLaplacian& graph_place){
+
+			 	std::cout << "START" << std::endl;
+				_vertex_equivalent_laplacian.clear();
+
+				std::pair<AASS::RSI::GraphZoneRI::VertexIteratorZone, AASS::RSI::GraphZoneRI::VertexIteratorZone> vp;
+				//vertices access all the vertices
+				for (vp = boost::vertices(graph_zone.getGraph()); vp.first != vp.second; ++vp.first) {
+					AASS::RSI::GraphZoneRI::VertexZone v = *vp.first;
+					std::cout << "adding vertex " << graph_zone[v].getCentroid() << std::endl;
+					graphmatch::VertexPlace vpp;
+					// 					cv::Point2i center_mass;
+					// 					center_mass = graph_zone[v].getCentroid();
+					// 					std::cout << "Ading Vertex" << std::endl;
+
+					Region region;
+					std::cout << "getting countour" << std::endl;
+					region.setContour(graph_zone[v].getContour() ) ;
+					std::cout << "getting centrer" << std::endl;
+					region.setCenter( graph_zone[v].getCentroid() );
+					region.setUniqueness(graph_zone[v].getUniquenessScore() );
+
+					region.zone = graph_zone[v];
+
+					graph_place.addVertex(vpp, region);
+					_vertex_equivalent_laplacian.push_back(std::pair<AASS::RSI::GraphZoneRI::VertexZone, graphmatch::GraphLaplacian::VertexLaplacian >(v, vpp) );
+
+					std::cout << "done Adding" << std::endl;
+				}
+
+				//copy all edges and add room or not
+				for (vp = boost::vertices(graph_zone.getGraph()); vp.first != vp.second; ++vp.first) {
+					std::cout << "Edge" << std::endl;
+					AASS::RSI::GraphZoneRI::VertexZone v = *vp.first;
+					std::deque< std::pair< AASS::RSI::GraphZoneRI::EdgeZone, AASS::RSI::GraphZoneRI::VertexZone > > all_edges;
+					graph_zone.getAllEdgeLinked(v, all_edges);
+
+					graphmatch::VertexPlace dad;
+					for(size_t i = 0 ; i < _vertex_equivalent_laplacian.size() ; i++){
+						if(_vertex_equivalent_laplacian[i].first == v){
+							dad = _vertex_equivalent_laplacian[i].second;
+						}
+					}
+
+					//Add all edges
+					for(size_t j = 0 ; j < all_edges.size() ; j++){
+						graphmatch::VertexPlace son;
+						for(size_t i = 0 ; i < _vertex_equivalent_laplacian.size() ; i++){
+							if(all_edges[j].second == _vertex_equivalent_laplacian[i].first){
+								son = _vertex_equivalent_laplacian[i].second;
+							}
+						}
+						EdgePlace edge_out;
+						graphmatch::EdgeType g;
+						graph_place.addEdge(edge_out, dad, son, g);
+					}
+
+				}
+
+
+			 }
 		
 		};
 		
