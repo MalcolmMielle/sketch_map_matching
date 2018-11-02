@@ -19,7 +19,7 @@ namespace AASS {
 		protected:
 
 			std::vector< std::vector< cv::Point > > _contour;
-			std::deque <cv::Point2i> _zone;
+//			std::deque <cv::Point2i> _zone;
 //			cv::Moments moment;
 			cv::Point2f _center;
 
@@ -44,6 +44,16 @@ namespace AASS {
 			int index = -1;
 			Region(){}
 
+			Region(const Region& r){
+				_contour = r.getContour();
+				_center = r.getCenter();
+				_uniqueness = r.getUniqueness();
+				_heat = r.getHeat();
+				_time = r.getTime();
+				_heat_anchors = r.getHeatAnchors();
+				zone = r.zone;
+			}
+
 			void print() const {
 				std::cout << "Node " << index << " heat " << _heat << " heat anchors " << _heat_anchors << " time " << _time << std::endl;
 			}
@@ -51,7 +61,7 @@ namespace AASS {
 			void setCenter(const cv::Point2f& center){_center = center;}
 			void setContour(const std::vector< std::vector< cv::Point > >& contour){_contour = contour;}
 
-			const cv::Point2f& getCenter(){return _center;}
+			const cv::Point2f& getCenter() const {return _center;}
 			const std::vector< std::vector< cv::Point > >& getContour() const {return _contour;}
 
 			double getUniqueness() const {return _uniqueness;}
@@ -111,7 +121,31 @@ namespace AASS {
 //			double getEigenValue(){return _eigenvalue;}
 //			const Eigen::VectorXd& getEigenVector() const {return _eigenvector;}
 
+
+
+
+
 		};
+
+
+		inline std::ostream& operator<<(std::ostream& in, const Region &p){
+
+			in << p.getCenter();
+			return in;
+
+		}
+
+		inline bool operator==(const Region& in, const Region &p){
+
+			return in.getHeatAnchors() == p.getHeatAnchors();
+
+		}
+
+
+
+
+
+
 
 		class EdgeType {
 		public:
@@ -191,6 +225,64 @@ namespace AASS {
 			std::vector<AASS::graphmatch::MatchLaplacian> compare(const GraphLaplacian& gl) const ;
 
 			std::vector< AASS::graphmatch::MatchLaplacian > hungarian_matching(const AASS::graphmatch::GraphLaplacian& laplacian_model);
+
+
+			void drawSpecial(cv::Mat& m, const VertexLaplacian& v, const cv::Scalar& color ) const
+			{
+				cv::circle(m, (*this)[v].getCenter(), 15, color, -1);
+			}
+
+			void drawSpecial(cv::Mat& m) const
+			{
+
+				cv::Scalar color_link;
+				if(m.channels() == 1){
+					color_link = 190;
+				}
+				else if(m.channels() == 3){
+					color_link[0] = 0;
+					color_link[1] = 0;
+					color_link[2] = 255;
+				}
+				cv::RNG rrng(12345);
+
+
+				//first is beginning, second is "past the end"
+				std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
+				//vertices access all the vertix
+				for (vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+
+					cv::Scalar color_all_linked;
+
+					if(m.channels() == 1){
+						color_all_linked = rrng.uniform(50, 255);
+					}
+					else if(m.channels() == 3){
+						color_all_linked[1] = rrng.uniform(50, 255);
+						color_all_linked[2] = rrng.uniform(50, 255);
+						color_all_linked[3] = rrng.uniform(50, 255);
+					}
+
+					VertexLaplacian v = *vp.first;
+					drawSpecial(m, v, color_all_linked);
+
+					EdgeIteratorLaplacian out_i, out_end;
+					EdgeLaplacian e;
+
+					for (boost::tie(out_i, out_end) = boost::out_edges(v, (*this));
+					     out_i != out_end; ++out_i) {
+						e = *out_i;
+						VertexLaplacian src = boost::source(e, (*this)), targ = boost::target(e, (*this));
+						cv::line(m, (*this)[src].getCenter(), (*this)[targ].getCenter(), color_link, 5);
+
+					}
+
+				}
+			}
+
+
+
+
 
 		};
 
