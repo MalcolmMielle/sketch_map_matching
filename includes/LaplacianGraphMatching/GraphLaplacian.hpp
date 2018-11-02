@@ -8,11 +8,14 @@
 #include <eigen3/Eigen/Eigenvalues>
 #include <opencv2/opencv.hpp>
 
+#include <editDistance/NormalizedEditDistance.hpp>
+
 namespace AASS {
 	namespace graphmatch {
 
 
 		class MatchLaplacian;
+		class HypotheseLaplacian;
 
 
 		class Region {
@@ -36,6 +39,7 @@ namespace AASS {
 //			Eigen::VectorXd _eigenvector;
 
 		public:
+			bool label = false;
 
 			AASS::RSI::ZoneRI zone;
 
@@ -122,6 +126,12 @@ namespace AASS {
 //			const Eigen::VectorXd& getEigenVector() const {return _eigenvector;}
 
 
+			bool compare(const Region& r){
+				if(r.getHeatAnchors() <= _heat_anchors + 0.1 && r.getHeatAnchors() >= _heat_anchors - 0.1){
+					return true;
+				}
+				return false;
+			}
 
 
 
@@ -139,6 +149,10 @@ namespace AASS {
 
 			return in.getHeatAnchors() == p.getHeatAnchors();
 
+		}
+
+		inline bool compareRegion(const Region& p, const Region& p2){
+			return p.compare(p2);
 		}
 
 
@@ -281,7 +295,102 @@ namespace AASS {
 			}
 
 
+			double angle(const GraphLaplacian::VertexLaplacian& center, const GraphLaplacian::VertexLaplacian& v1, const GraphLaplacian::VertexLaplacian& v2) const
+			{
+				double x1 = (*this)[v1].getCenter().x - (*this)[center].getCenter().x;
+				double y1 = (*this)[v1].getCenter().y - (*this)[center].getCenter().y;
 
+				double x2 = (*this)[v2].getCenter().x - (*this)[center].getCenter().x;
+				double y2 = (*this)[v2].getCenter().y - (*this)[center].getCenter().y;
+
+				// 		std::cout << "values " <<x1 << " " << y1 << " and " << x2 << " " << y2 <<std::endl;
+
+				double angle = atan2(y2, x2) - atan2(y1, x1);
+				if(angle < 0){
+					angle = angle + (2 * M_PI);
+				}
+				return angle;
+
+			}
+
+			void getAllEdgeLinkedCounterClockWise(const GraphLaplacian::VertexLaplacian& v, std::deque< std::pair< GraphLaplacian::EdgeLaplacian, GraphLaplacian::VertexLaplacian > >& all_edge) const
+			{
+
+				getAllEdgeLinked(v, all_edge);
+				// 		std::cout << "Size in function " << all_edge.size() << std::endl;
+				if(all_edge.size() > 0){
+
+					GraphLaplacian::VertexLaplacian firstvertex = all_edge[0].second;
+
+					//classify them in a clock wise manner
+					std::deque< std::pair< GraphLaplacian::EdgeLaplacian, GraphLaplacian::VertexLaplacian > >::iterator it;
+					std::pair< GraphLaplacian::EdgeLaplacian, GraphLaplacian::VertexLaplacian > copy;
+					std::deque< std::pair< GraphLaplacian::EdgeLaplacian, GraphLaplacian::VertexLaplacian > >::iterator it_2;
+					for(it = all_edge.begin()+1 ; it != all_edge.end() ; it++){
+
+						it_2 = it ;
+						copy = *it;
+
+						double angle_to_compare = angle(v, firstvertex, (*it).second);
+
+						while( it_2 != all_edge.begin() && angle(v, firstvertex, (*( it_2-1 )).second) > angle_to_compare){
+							*(it_2) = *(it_2-1);
+							it_2 = it_2 - 1;
+						}
+						*(it_2) = copy;
+
+					}
+
+
+				}
+
+			}
+
+			void getAllVertexAttrCounterClockWise(const GraphLaplacian::VertexLaplacian& v, std::deque< Region>& out) const {
+				std::deque< std::pair< GraphLaplacian::EdgeLaplacian, GraphLaplacian::VertexLaplacian > > all_edge;
+				out.clear();
+
+				getAllEdgeLinkedCounterClockWise(v, all_edge);
+
+				for(auto it = all_edge.begin() ; it != all_edge.end() ; ++it){
+					out.push_back( (*this)[it->second] );
+				}
+			}
+
+			void labelAll(const std::deque< GraphLaplacian::VertexLaplacian >& h)
+			{
+
+				// 		std::cout << "SIZE " << h.size() << std::endl;
+				for(size_t i = 0; i < h.size() ; i++){
+					// 			std::cout << "LABELLED" << std::endl;
+					(*this)[h[i]].label = true;
+				}
+			}
+
+			void resetLabel()
+			{
+
+				// 		//first is beginning, second is "past the end"
+				std::pair<GraphLaplacian::VertexIteratorLaplacian, GraphLaplacian::VertexIteratorLaplacian> vp;
+				//vertices access all the vertix
+				for (vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+					GraphLaplacian::VertexLaplacian v = *vp.first;
+					(*this)[v].label = false;
+				}
+			}
+
+
+			void pairWiseMatch(
+					const graphmatch::GraphLaplacian& gp2,
+					std::deque<graphmatch::MatchLaplacian >& places_pair);
+
+			int editDistance(const GraphLaplacian::VertexLaplacian& v, const std::deque< Region>& other_graph_neighbor, const std::deque< std::pair< GraphLaplacian::EdgeLaplacian, GraphLaplacian::VertexLaplacian > >& all_edge_other_graph, std::deque< graphmatch::MatchLaplacian >& out, std::string& operation_out) const;
+
+			double makeMatching(const AASS::graphmatch::GraphLaplacian::VertexLaplacian& v, const AASS::graphmatch::GraphLaplacian::VertexLaplacian& v_model, const AASS::graphmatch::GraphLaplacian& gp_model, const std::deque< AASS::graphmatch::MatchLaplacian >& matched_previously, std::deque< AASS::graphmatch::MatchLaplacian >& out_match);
+
+			void getNeighborBetween2(size_t start, size_t end, const std::deque< std::pair< AASS::graphmatch::GraphLaplacian::EdgeLaplacian, AASS::graphmatch::GraphLaplacian::VertexLaplacian > >& all_edge, std::deque< AASS::graphmatch::GraphLaplacian::VertexLaplacian >& neighbor, std::deque< AASS::graphmatch::Region >& places) const;
+
+			void createMatch(const std::string& operation, const std::deque< std::pair< AASS::graphmatch::GraphLaplacian::EdgeLaplacian, AASS::graphmatch::GraphLaplacian::VertexLaplacian > >& all_edge, const std::deque< std::pair< AASS::graphmatch::GraphLaplacian::EdgeLaplacian, AASS::graphmatch::GraphLaplacian::VertexLaplacian > >& all_edge_other_graph, std::pair< int, int > start, std::deque< graphmatch::MatchLaplacian >& out);
 
 
 		};

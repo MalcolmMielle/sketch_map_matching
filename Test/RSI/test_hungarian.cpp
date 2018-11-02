@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <boost/test/unit_test.hpp>
 #include <fstream>
-#include <ctime> 
+#include <ctime>
 //#include <RSI/FuzzyOpening.hpp>
 //#include <RSI/ZoneReducer.hpp>
 //#include <RSI/ZoneExtractor.hpp>
@@ -29,7 +29,6 @@
 
 #include "LaplacianGraphMatching/GraphLaplacian.hpp"
 #include "LaplacianGraphMatching/MatchLaplacian.hpp"
-#include "LaplacianGraphMatching/GraphMatcherNeighborLaplacian.hpp"
 
 
 
@@ -506,131 +505,131 @@ BOOST_AUTO_TEST_CASE(trying)
 	if(is_sketch) std::cout << "Is a SKETCH" << std::endl;
 	else std::cout << "Is NOT a sketch" << std::endl;
 
-	AASS::RSI::GraphZoneRI graph_slam_model;
-	cv::Mat graph_slam_segmented = makeGraph(file, graph_slam_model);
+	AASS::RSI::GraphZoneRI graph_slam;
+	cv::Mat graph_slam_segmented = makeGraph(file, graph_slam);
 
 	AASS::RSI::GraphZoneRI graph_slam2;
 	cv::Mat graph_slam2_segmented = makeGraph(file2, graph_slam2);
-	
-	
+
+
 	/******** Calcul of uniqueness********************************************/
-	
+
 // 	/********** Uniqueness *******************************************/
-// 	
+//
 // 	AASS::RSI::Uniqueness unique;
-// 	
+//
 // 	std::cout << "FIRST UNIA" << std::endl;
-// 	
+//
 // 	auto uni1 = unique.uniqueness(graph_slam);
-// 	
+//
 // // 	/********** Uniqueness *******************************************/
-// // 	
+// //
 // 	std::cout << "SECOND UNIA" << std::endl;
-// 	
+//
 // 	auto uni2 = unique.uniqueness(graph_slam2);
-// 	
+//
 // 	assert(graph_slam.zoneUniquenessWasCalculated() == true);
 // 	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
 	/********** Uniqueness *******************************************/
-	graph_slam_model.setSDAwayFromMeanForUniqueness(1);
+	graph_slam.setSDAwayFromMeanForUniqueness(1);
 	graph_slam2.setSDAwayFromMeanForUniqueness(1);
 
 	/********** Uniqueness *******************************************/
-	graph_slam_model.updateUnique();
+	graph_slam.updateUnique();
 	if(is_sketch) {
 		graph_slam2.updateUnique();
 	}
 	else{
 		std::cout << "IS NOT A SKETCH" << std::endl;
-		graph_slam2.updateUnique(graph_slam_model);
+		graph_slam2.updateUnique(graph_slam);
 	}
 
-	assert(graph_slam_model.zoneUniquenessWasCalculated() == true);
+	assert(graph_slam.zoneUniquenessWasCalculated() == true);
 	assert(graph_slam2.zoneUniquenessWasCalculated() == true);
 
 	cv::Mat gmatu = cv::Mat::zeros(graph_slam_segmented.size(), CV_8U);
-	graph_slam_model.drawUnique(gmatu);
+	graph_slam.drawUnique(gmatu);
 	cv::imshow("input unique", gmatu);
 
 	cv::Mat gmat2u = cv::Mat::zeros(graph_slam2_segmented.size(), CV_8U);
 	graph_slam2.drawUnique(gmat2u);
 	cv::imshow("model unique", gmat2u);
 	cv::waitKey(0);
-	
+
 	/********** Hungarian matching of graph onto itself***************/
-			
+
 	std::cout << "Hungarian Match" << std::endl;
 	AASS::RSI::HungarianMatcher hungmatch;
 	std::vector<int> scores;
-	auto match = hungmatch.match(graph_slam_model, graph_slam2, scores);
-	
+	auto match = hungmatch.match(graph_slam, graph_slam2, scores);
+
 // 	exit(0);
-	
-	std::sort(match.begin(), match.end(), [&graph_slam_model, &graph_slam2](AASS::RSI::ZoneCompared &match, AASS::RSI::ZoneCompared &match1){
+
+	std::sort(match.begin(), match.end(), [&graph_slam, &graph_slam2](AASS::RSI::ZoneCompared &match, AASS::RSI::ZoneCompared &match1){
 		return match.getSimilarity() < match1.getSimilarity();
 	} );
 
 
-	seeHungarian(match, graph_slam_model, graph_slam2, graph_slam_segmented, graph_slam2_segmented);
+	seeHungarian(match, graph_slam, graph_slam2, graph_slam_segmented, graph_slam2_segmented);
 
-	
+
 	/********** Drawing the graphs *******************************************/
-	
-//	AASS::graphmatch::GraphPlace gp;
-	AASS::graphmatch::GraphLaplacian gp_laplacian_model;
+
+	AASS::graphmatch::GraphPlace gp;
+	AASS::graphmatch::GraphLaplacian gp_laplacian;
 	AASS::graphmatch::RSIGraphConverter converter;
-//	converter.graphZoneToGraphPlace(graph_slam_model, gp);
-	converter.graphZonetoGraphLaplacian(graph_slam_model, gp_laplacian_model);
-	
-//	std::pair<AASS::graphmatch::VertexIteratorPlace, AASS::graphmatch::VertexIteratorPlace> vp;
-//	for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
-//		AASS::graphmatch::VertexPlace v = *vp.first;
-//		std::cout << "TESTING gp after construction" << std::endl;
-//		std::dynamic_pointer_cast< AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();
-//	}
-	
-//	AASS::graphmatch::GraphPlace gp2;
+	converter.graphZoneToGraphPlace(graph_slam, gp);
+	converter.graphZonetoGraphLaplacian(graph_slam, gp_laplacian);
+
+	std::pair<AASS::graphmatch::VertexIteratorPlace, AASS::graphmatch::VertexIteratorPlace> vp;
+	for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
+		AASS::graphmatch::VertexPlace v = *vp.first;
+		std::cout << "TESTING gp after construction" << std::endl;
+		std::dynamic_pointer_cast< AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();
+	}
+
+	AASS::graphmatch::GraphPlace gp2;
 	AASS::graphmatch::GraphLaplacian gp2_laplacian;
 	AASS::graphmatch::RSIGraphConverter converter2;
-//	converter2.graphZoneToGraphPlace(graph_slam2, gp2);
+	converter2.graphZoneToGraphPlace(graph_slam2, gp2);
 	converter2.graphZonetoGraphLaplacian(graph_slam2, gp2_laplacian);
-	
-//	cv::Mat m = cv::Mat::zeros(graph_slam_segmented.size(), CV_8U);
-//	gp.draw(m);
-//	cv::imshow("graph1 m", m);
-//
-//	cv::Mat m2 = cv::Mat::zeros(graph_slam2_segmented.size(), CV_8U);
-//	gp2.draw(m2);
-//	cv::imshow("graph2 m", m);
-//	cv::waitKey(0);
-	
-	cv::imshow("TEST",graph_slam_segmented);
-	draw(graph_slam_model, graph_slam2, graph_slam_segmented, graph_slam2_segmented, match);
+
+	cv::Mat m = cv::Mat::zeros(graph_slam_segmented.size(), CV_8U);
+	gp.draw(m);
+	cv::imshow("graph1 m", m);
+
+	cv::Mat m2 = cv::Mat::zeros(graph_slam2_segmented.size(), CV_8U);
+	gp2.draw(m2);
+	cv::imshow("graph2 m", m);
 	cv::waitKey(0);
-	
-	
+
+	cv::imshow("TEST",graph_slam_segmented);
+	draw(graph_slam, graph_slam2, graph_slam_segmented, graph_slam2_segmented, match);
+	cv::waitKey(0);
+
+
 	/******** Matching *******************************************************/
-	
-//	for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
-//		AASS::graphmatch::VertexPlace v = *vp.first;
-//		std::cout << "TESTING gp " << std::endl;
-//		std::dynamic_pointer_cast<  AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();
-//	}
-//	for (vp = boost::vertices(gp2.getGraph()); vp.first != vp.second; ++vp.first) {
-//		AASS::graphmatch::VertexPlace v = *vp.first;
-//		std::cout << "TESTING gp2 " << std::endl;
-//		std::dynamic_pointer_cast<   AASS::graphmatch::ZoneKeypoint >(gp2[v].getKeypoint())->zone.getMaxMinPCA();
-//	}
-	
-	
-	
-//	AASS::graphmatch::GraphMatcherAnchor graphmatcheranchor;
+
+	for (vp = boost::vertices(gp.getGraph()); vp.first != vp.second; ++vp.first) {
+		AASS::graphmatch::VertexPlace v = *vp.first;
+		std::cout << "TESTING gp " << std::endl;
+		std::dynamic_pointer_cast<  AASS::graphmatch::ZoneKeypoint >(gp[v].getKeypoint())->zone.getMaxMinPCA();
+	}
+	for (vp = boost::vertices(gp2.getGraph()); vp.first != vp.second; ++vp.first) {
+		AASS::graphmatch::VertexPlace v = *vp.first;
+		std::cout << "TESTING gp2 " << std::endl;
+		std::dynamic_pointer_cast<   AASS::graphmatch::ZoneKeypoint >(gp2[v].getKeypoint())->zone.getMaxMinPCA();
+	}
+
+
+
+	AASS::graphmatch::GraphMatcherAnchor graphmatcheranchor;
 // 	AASS::graphmatch::GraphMatcherClusterFiltered graphmatchold;
-	
+
 //	double score = -1;
 //	double old_score = -1;
 //	int index_anchor = 0;
-	
+
 // 	auto vertex_anchor1 = match[0].source;
 // 	auto vertex_anchor2 = match[0].target;
 
@@ -638,19 +637,21 @@ BOOST_AUTO_TEST_CASE(trying)
 	std::deque < AASS::graphmatch::MatchLaplacian > anchors_laplacian;
 
 	for(size_t i = 0 ; i < match.size() ; ++i){
-	
+
 		auto vertex_anchor1 = match[i].source;
 		auto vertex_anchor2 = match[i].target;
 
-//		AASS::graphmatch::VertexPlace vertex_place_anchor_source;
-//		bool found = converter.getEquivalentVPlace(vertex_anchor1, vertex_place_anchor_source);
-//		AASS::graphmatch::VertexPlace vertex_place_anchor_target;
-//		bool found2 = converter2.getEquivalentVPlace(vertex_anchor2, vertex_place_anchor_target);
-//
-//		assert(found == true);
-//		assert(found2 == true);
-//		AASS::graphmatch::Match match_p(vertex_place_anchor_source, vertex_place_anchor_target);
-//		anchors.push_back(match_p);
+		AASS::graphmatch::VertexPlace vertex_place_anchor_source;
+		bool found = converter.getEquivalentVPlace(vertex_anchor1, vertex_place_anchor_source);
+		AASS::graphmatch::VertexPlace vertex_place_anchor_target;
+		bool found2 = converter2.getEquivalentVPlace(vertex_anchor2, vertex_place_anchor_target);
+
+		assert(found == true);
+		assert(found2 == true);
+
+
+		AASS::graphmatch::Match match_p(vertex_place_anchor_source, vertex_place_anchor_target);
+		anchors.push_back(match_p);
 
 		//Laplacian
 		AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex_region_anchor_source;
@@ -679,7 +680,7 @@ BOOST_AUTO_TEST_CASE(trying)
 	 */
 
 	for(auto anchor : anchors_laplacian) {
-		gp_laplacian_model.addAnchor(anchor.getFirst());
+		gp_laplacian.addAnchor(anchor.getFirst());
 		gp2_laplacian.addAnchor(anchor.getSecond());
 	}
 
@@ -688,9 +689,9 @@ BOOST_AUTO_TEST_CASE(trying)
 
 	//Not using uniqueness score for now
 	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
-	for (vp3 = boost::vertices(gp_laplacian_model); vp3.first != vp3.second; ++vp3.first) {
+	for (vp3 = boost::vertices(gp_laplacian); vp3.first != vp3.second; ++vp3.first) {
 		auto v = *vp3.first;
-		gp_laplacian_model[v].setUniqueness(1);
+		gp_laplacian[v].setUniqueness(1);
 	}
 	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp2;
 	for (vp2 = boost::vertices(gp2_laplacian); vp2.first != vp2.second; ++vp2.first) {
@@ -698,7 +699,7 @@ BOOST_AUTO_TEST_CASE(trying)
 		gp2_laplacian[v].setUniqueness(1);
 	}
 
-	gp_laplacian_model.eigenLaplacian();
+	gp_laplacian.eigenLaplacian();
 	gp2_laplacian.eigenLaplacian();
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
@@ -706,68 +707,18 @@ BOOST_AUTO_TEST_CASE(trying)
 	for(double time = 0 ; time < 10 ; time =  time + 0.5) {
 
 		gp2_laplacian.propagateHeatKernel(time);
-		gp_laplacian_model.propagateHeatKernel(time);
+		gp_laplacian.propagateHeatKernel(time);
 
 		/********** GRAPH MATCHING ****************************/
 
-//		auto hungarian_matches = gp_laplacian.hungarian_matching(gp2_laplacian);
-//		std::cout << "TIME " << time << std::endl;
-//		gp_laplacian.print();
-//		seeHungarianLaplacian(hungarian_matches, gp_laplacian, gp2_laplacian, graph_slam_segmented, graph_slam2_segmented);
-
-
-//		AASS::graphmatch::GraphMatcherNeighborLaplacian graphmatch_evg;
-		AASS::graphmatch::GraphMatcherNeighborLaplacian graphmatch_custom;
-		// 	AASS::graphmatch::GraphMatcherClusterFiltered graphmatchold;
-
-		//MY THING
-//		graphmatch_evg.planarEditDistanceAlgorithm(gp, gp_model);
-		graphmatch_custom.planarEditDistanceAlgorithm(gp2_laplacian, gp_laplacian_model);
-
-		int rows = 0;
-		if(graph_slam_segmented.rows > graph_slam2_segmented.rows){
-			rows = graph_slam_segmented.rows;
-		}
-		else{
-			rows = graph_slam2_segmented.rows;
-		}
-		int cols = 0;
-		if(graph_slam_segmented.cols > graph_slam2_segmented.cols){
-			cols = graph_slam_segmented.cols;
-		}
-		else{
-			cols = graph_slam2_segmented.cols;
-		}
-
-		cv::Mat drawing = cv::Mat::zeros(rows , cols, CV_8UC3);
-
-		std::deque<
-				AASS::graphmatch::HypotheseLaplacian
-		> hypothesis_final_custom = graphmatch_custom.getResult();
-		graphmatch_custom.sort(hypothesis_final_custom);
-// 					hypothesis_final_custom[0].drawMoved(gp_voro, gp_voro_model, drawing, drawing, "ALL FINAL CUSTOM Moved", 1);
-		hypothesis_final_custom[0].drawHypo(gp2_laplacian, gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1);
-		hypothesis_final_custom[0].drawLinks(gp2_laplacian, gp_laplacian_model, graph_slam2_segmented, graph_slam_segmented, "ALL FINAL CUSTOM ", 1);
-// 					std::string na = name + "_partial";
-// 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
-
-		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
-
-		//EXPORT
-		cv::Mat drawing_out;
-		hypothesis_final_custom[0].drawHypo(gp2_laplacian, gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
-
-		cv::imwrite("RESULT.jpg", drawing_out);
-
-		cv::waitKey(0);
-
-
-
-
+		auto hungarian_matches = gp_laplacian.hungarian_matching(gp2_laplacian);
+		std::cout << "TIME " << time << std::endl;
+		gp_laplacian.print();
+		seeHungarianLaplacian(hungarian_matches, gp_laplacian, gp2_laplacian, graph_slam_segmented, graph_slam2_segmented);
 	}
 
 
-	
+
 // 	while (old_score == -1 || score < old_score){
 //	++index_anchor;
 //	//MY THING
@@ -783,14 +734,14 @@ BOOST_AUTO_TEST_CASE(trying)
 //	cv::waitKey(0);
 //
 //	std::cout << "Score " << score << " old_score " << old_score << std::endl;
-		
+
 // 		vertex_anchor1 = match[index_anchor].source;
 // 		vertex_anchor2 = match[index_anchor].target;
-		
+
 // 		converter.getEquivalentVPlace(vertex_anchor1, vertex_place_anchor_source);
 // 		converter2.getEquivalentVPlace(vertex_anchor2, vertex_place_anchor_target);
 // 		AASS::graphmatch::Match match_tmp(vertex_place_anchor_source, vertex_place_anchor_target);
 // 		anchors.push_back(match_tmp);
 // 	}
-	
+
 }

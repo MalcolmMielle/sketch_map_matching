@@ -2,6 +2,7 @@ add_subdirectory(MapComparator)
 add_subdirectory(ProbabilisticMethod)
 add_subdirectory(TopologicalMap)
 add_subdirectory(VFLConversion)
+add_subdirectory(LaplacianGraphMatching)
 
 
 find_package(RSI)
