@@ -40,6 +40,7 @@ namespace AASS {
 
 		public:
 			bool label = false;
+			double _threshold_same = 0.05;
 
 			AASS::RSI::ZoneRI zone;
 
@@ -112,7 +113,7 @@ namespace AASS {
 			double compare(const Region& region) const {
 				assert(region.getTime() == _time);
 				assert(_heat_anchors != -1);
-				std::cout << "Heats : " << region.getHeatAnchors() << " - " << _heat_anchors << std::endl;
+//				std::cout << "Heats : " << region.getHeatAnchors() << " - " << _heat_anchors << std::endl;
 //				return std::abs( region.getHeatAnchors() - _heat_anchors );
 				return std::abs( region.getHeat() - _heat );
 			}
@@ -126,10 +127,15 @@ namespace AASS {
 //			const Eigen::VectorXd& getEigenVector() const {return _eigenvector;}
 
 
-			bool compare(const Region& r){
-				if(r.getHeatAnchors() <= _heat_anchors + 0.1 && r.getHeatAnchors() >= _heat_anchors - 0.1){
+			bool compareBool(const Region& r) const {
+				assert(r.getTime() == _time);
+				assert(_heat_anchors != -1);
+				std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
+				if(r.getHeatAnchors() <= _heat_anchors + _threshold_same && r.getHeatAnchors() >= _heat_anchors - _threshold_same){
+					std::cout << "True" << std::endl;
 					return true;
 				}
+				std::cout << "False" << std::endl;
 				return false;
 			}
 
@@ -152,7 +158,7 @@ namespace AASS {
 		}
 
 		inline bool compareRegion(const Region& p, const Region& p2){
-			return p.compare(p2);
+			return p.compareBool(p2);
 		}
 
 
@@ -279,6 +285,10 @@ namespace AASS {
 
 					VertexLaplacian v = *vp.first;
 					drawSpecial(m, v, color_all_linked);
+
+					double value = (*this)[v].getHeatAnchors();
+					(*this)[v].zone.drawZone(m, cv::Scalar(value * 255) );
+
 
 					EdgeIteratorLaplacian out_i, out_end;
 					EdgeLaplacian e;

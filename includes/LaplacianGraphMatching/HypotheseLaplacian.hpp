@@ -1011,7 +1011,7 @@ namespace AASS{
 
 			for(size_t i = 0 ; i < _hypothesis.size() ; i++ ){
 
-				if(gp_real.getNumEdges(_hypothesis[i].getFirst()) > 1 && gp_model.getNumEdges(_hypothesis[i].getSecond()) > 1){
+				if(gp_real.getNumEdges(_hypothesis[i].getFirst()) >= 1 && gp_model.getNumEdges(_hypothesis[i].getSecond()) >= 1){
 
 					//UGLY HACK BECAUSE THE SCALING DOESN'T WORK
 					cv::Point2i model_normal;

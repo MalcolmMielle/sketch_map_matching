@@ -757,7 +757,7 @@ BOOST_AUTO_TEST_CASE(trying)
 		cv::Mat drawing_out;
 		hypothesis_final_custom[0].drawHypo(gp2_laplacian, gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
 
-		cv::imwrite("RESULT.jpg", drawing_out);
+//		cv::imwrite("RESULT.jpg", drawing_out);
 
 		cv::waitKey(0);
 

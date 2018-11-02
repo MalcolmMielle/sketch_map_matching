@@ -763,7 +763,7 @@ void AASS::graphmatch::GraphLaplacian::pairWiseMatch(
 			//ATTENTION
 			//Same number of linked room + same type of room. Maybe it's too big an assumption that they have the same number of links
 // 			if(/*all_linked_edge.size() == all_linked_edge2.size() &&*/ is_room_2 == is_room){
-			if( (*this)[v].compare(gp2[v2]) ){
+			if( (*this)[v].compareBool(gp2[v2]) ){
 				//Adding to the list of the vertex are of the same type
 				places_pair.push_back(graphmatch::MatchLaplacian(v, v2) );
 			}
