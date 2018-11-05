@@ -17,3 +17,5 @@ target_link_libraries(test_vfl ${OpenCV_LIBS} ${RSI_LIBRARIES} GraphLaplacianLib
 
 add_executable(test_hungarian test_hungarian.cpp)
 target_link_libraries(test_hungarian ${OpenCV_LIBS} ${RSI_LIBRARIES} GraphLaplacianLib Comparatorlib -lboost_filesystem -lboost_system -lboost_unit_test_framework)
+
+add_subdirectory(Evaluation)
