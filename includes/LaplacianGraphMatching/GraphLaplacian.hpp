@@ -194,6 +194,8 @@ namespace AASS {
 
 
 			GraphLaplacian() {}
+			GraphLaplacian( const GraphLaplacian& ) = delete; // non construction-copyable
+			GraphLaplacian& operator=( const GraphLaplacian& ) = delete; // non copyable
 
 			void print() const {
 

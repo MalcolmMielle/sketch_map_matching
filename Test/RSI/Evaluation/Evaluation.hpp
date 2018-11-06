@@ -119,16 +119,21 @@ namespace AASS{
 						for(auto mapmatches : _matches.matches){
 							for(auto point_map1 : mapmatches.pt_map1){
 								if(point_map1 == point){
+									std::cout << "Found the point: " << point << std::endl;
 									auto zone_model = region_model.zone.getZone();
-									for(auto point_model : zone_model ){
-										for(auto point_map2 : mapmatches.pt_map2) {
+									for(auto point_map2 : mapmatches.pt_map2) {
+										std::cout << "Searching: " << point_map2 << std::endl;
+										int count = 0;
+										for(auto point_model : zone_model ){
 											if (point_map2 == point_model) {
-												std::cout << "Found with " << point << " and " << point_model << std::endl;
+												std::cout << "Found with " << point << " and " << point_model
+												          << std::endl;
 												return true;
 											}
+											++count;
 										}
+										std::cout << "Count false pixel : " << count << std::endl;
 									}
-
 								}
 							}
 						}

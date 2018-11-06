@@ -71,6 +71,15 @@ namespace AASS {
 					pt_map2.clear();
 				}
 
+				void draw(cv::Mat& map1, cv::Mat& map2, const cv::Scalar& color){
+					for (auto point : pt_map1) {
+						circle(map1, point, 5, color, -1);
+					}
+					for (auto point : pt_map2) {
+						circle(map2, point, 5, color, -1);
+					}
+				}
+
 
 
 			};
@@ -109,7 +118,12 @@ namespace AASS {
 							myfile << "\n";
 						}
 					}
+				}
 
+				void draw(cv::Mat& map1, cv::Mat& map2, const cv::Scalar& color) {
+					for(auto match : matches){
+						match.draw(map1, map2, color);
+					}
 				}
 
 

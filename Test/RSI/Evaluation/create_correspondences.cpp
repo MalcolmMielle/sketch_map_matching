@@ -102,11 +102,14 @@
 
 struct userdataCV{
 
-	userdataCV(const std::string& name, const std::string& name2) : matchmaps( new AASS::graphmatch::evaluation::MatchMaps(name, name2) ) {};
+	userdataCV(const std::string& name, const std::string& name2) : matchmaps(name, name2) {};
 
-	AASS::graphmatch::evaluation::MatchMaps* matchmaps;
+	AASS::graphmatch::evaluation::MatchMaps matchmaps;
 //	std::string file;
 	bool exit = false;
+
+	cv::Mat map1_cvmat;
+	cv::Mat map2_cvmat;
 };
 
 void CallBackFunc(int event, int x, int y, int flags, void* userdata)
@@ -116,22 +119,25 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 
 	if  ( event == cv::EVENT_LBUTTONDOWN )
 	{
-		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map1 << std::endl;
-		usrdatacv->matchmaps->pt_map1.push_back(cv::Point2i(x, y));
+		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map1 << std::endl;
+		usrdatacv->matchmaps.pt_map1.push_back(cv::Point2i(x, y));
+		cv::Scalar sc(150);
+		usrdatacv->matchmaps.draw(usrdatacv->map1_cvmat, usrdatacv->map2_cvmat, sc);
+		imshow("Input", usrdatacv->map1_cvmat);
 
 	}
 	else if  ( event == cv::EVENT_RBUTTONDOWN )
 	{
-		std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map1 << std::endl;
+		std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map1 << std::endl;
 		usrdatacv->exit = true;
 	}
 	else if  ( event == cv::EVENT_MBUTTONDOWN )
 	{
-		std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map1 << std::endl;
+		std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map1 << std::endl;
 	}
 	else if ( event == cv::EVENT_MOUSEMOVE )
 	{
-		std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map1 << std::endl;
+		std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map1 << std::endl;
 
 	}
 }
@@ -144,22 +150,25 @@ void CallBackFunc2(int event, int x, int y, int flags, void* userdata)
 
 	if  ( event == cv::EVENT_LBUTTONDOWN )
 	{
-		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map2 << std::endl;
-		usrdatacv->matchmaps->pt_map2.push_back(cv::Point2i(x, y));
+		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map2 << std::endl;
+		usrdatacv->matchmaps.pt_map2.push_back(cv::Point2i(x, y));
+		cv::Scalar sc(150);
+		usrdatacv->matchmaps.draw(usrdatacv->map1_cvmat, usrdatacv->map2_cvmat, sc);
+		imshow("Model", usrdatacv->map2_cvmat);
 
 	}
 	else if  ( event == cv::EVENT_RBUTTONDOWN )
 	{
-		std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map2 << std::endl;
+		std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map2 << std::endl;
 		usrdatacv->exit = true;
 	}
 	else if  ( event == cv::EVENT_MBUTTONDOWN )
 	{
-		std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map2 << std::endl;
+		std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map2 << std::endl;
 	}
 	else if ( event == cv::EVENT_MOUSEMOVE )
 	{
-		std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps->map2 << std::endl;
+		std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map2 << std::endl;
 
 	}
 }
@@ -229,6 +238,11 @@ int main(int argc, char** argv){
 	bool exit = false;
 	while(exit == false) {
 		userdataCV usrdataCV(file, file2);
+		usrdataCV.map1_cvmat = graph_slam_segmented;
+		usrdataCV.map2_cvmat = graph_slam_segmented2;
+//		imshow("Input", graph_slam_segmented);
+//		imshow("Model", graph_slam_segmented2);
+//		cv::waitKey(0);
 
 		cv::namedWindow("Input", 1);
 		cv::setMouseCallback("Input", CallBackFunc, &usrdataCV);
@@ -240,8 +254,15 @@ int main(int argc, char** argv){
 
 		cv::waitKey(0);
 
-		matches.matches.push_back(*usrdataCV.matchmaps);
-		usrdataCV.matchmaps->print();
+		matches.matches.push_back(usrdataCV.matchmaps);
+		usrdataCV.matchmaps.print();
+
+		cv::Scalar sc(0);
+		matches.draw(graph_slam_segmented, graph_slam_segmented2, sc);
+//		imshow("Input", graph_slam_segmented);
+//		imshow("Model", graph_slam_segmented2);
+//		cv::waitKey(0);
+
 		exit = usrdataCV.exit;
 	}
 
@@ -249,11 +270,11 @@ int main(int argc, char** argv){
 	matches.print();
 
 
+	std::cout << "EXPORT TO " << file_export << std::endl;
 	matches.export_all(file_export);
 
-
-	AASS::graphmatch::evaluation::Evaluation ev;
-	ev.read_file(file_export);
+//	AASS::graphmatch::evaluation::Evaluation ev;
+//	ev.read_file(file_export);
 
 	//Save centers in file
 
