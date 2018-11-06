@@ -34,13 +34,13 @@ int main(){
 
 			std::string program = "/home/malcolm/AASS/sketch_algorithms/build/Test/RSI/Evaluation/create_correspondences ";
 			std::string file_export = "gt_" + p_canon.stem().string() + "_"+ p_canon_second.stem().string() + ".dat";
-			program = program + p_canon.string() + " " + p_canon_second.string() + " " + file_export;
+			program.append(p_canon.string() + " " + p_canon_second.string() + " " + file_export);
 
 			std::cout << "Launching " << program << std::endl;
 
 			system(program.c_str());
 
-			exit(0);
+//			exit(0);
 		}
 		++p;
 //		std::cout << "NEW" << std::endl;
