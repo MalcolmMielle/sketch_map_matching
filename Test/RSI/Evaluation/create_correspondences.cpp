@@ -194,15 +194,31 @@ cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 	return segmented_map;
 }
 
-int main(){
+int main(int argc, char** argv){
+
+	std::string file;
+	std::string file2;
+	std::string file_export;
+
+	std::cout << "argc " << argc << std::endl;
+	if(argc == 4){
+		file = argv[1];
+		file2 = argv[2];
+		file_export = argv[3];
+	}
+	else{
+		file  = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/Sketches/01.png";
+		file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/Sketches/02.png";
+		file_export = "export.dat";
+	}
 
 	//Segment maps
-	std::string file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
+//	std::string file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
 	AASS::RSI::GraphZoneRI graph_slam_model;
 	cv::Mat graph_slam_segmented = makeGraph(file, graph_slam_model);
 
 
-	std::string file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/02.png";
+//	std::string file2 = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/02.png";
 	AASS::RSI::GraphZoneRI graph_slam_model2;
 	cv::Mat graph_slam_segmented2 = makeGraph(file2, graph_slam_model2);
 
@@ -232,7 +248,7 @@ int main(){
 	std::cout << "All matches" << std::endl;
 	matches.print();
 
-	std::string file_export = "export.dat";
+
 	matches.export_all(file_export);
 
 
