@@ -26,7 +26,7 @@ namespace AASS {
 //			cv::Moments moment;
 			cv::Point2f _center;
 
-
+			bool _use_heat_anchors = true;
 
 			double _uniqueness = -1;
 
@@ -58,6 +58,9 @@ namespace AASS {
 				_heat_anchors = r.getHeatAnchors();
 				zone = r.zone;
 			}
+
+			void useHeatAnchors(bool b){_use_heat_anchors = b;}
+			bool useHeatAnchors() const {return _use_heat_anchors;}
 
 			void print() const {
 				std::cout << "Node " << index << " heat " << _heat << " heat anchors " << _heat_anchors << " time " << _time << std::endl;
@@ -115,7 +118,11 @@ namespace AASS {
 				assert(_heat_anchors != -1);
 //				std::cout << "Heats : " << region.getHeatAnchors() << " - " << _heat_anchors << std::endl;
 //				return std::abs( region.getHeatAnchors() - _heat_anchors );
-				return std::abs( region.getHeat() - _heat );
+				if (_use_heat_anchors) {
+					return std::abs(region.getHeatAnchors() - _heat_anchors);
+				} else {
+					return std::abs(region.getHeat() - _heat);
+				}
 			}
 
 //			void setEigen(double value, const Eigen::VectorXd& vector){
@@ -130,13 +137,23 @@ namespace AASS {
 			bool compareBool(const Region& r) const {
 				assert(r.getTime() == _time);
 				assert(_heat_anchors != -1);
-				std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
-				if(r.getHeatAnchors() <= _heat_anchors + _threshold_same && r.getHeatAnchors() >= _heat_anchors - _threshold_same){
-					std::cout << "True" << std::endl;
-					return true;
+
+				if(_use_heat_anchors){
+					std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
+					if(r.getHeatAnchors() <= _heat_anchors + _threshold_same && r.getHeatAnchors() >= _heat_anchors - _threshold_same){
+						std::cout << "True" << std::endl;
+						return true;
+					}
+				}
+				else{
+					if(r.getHeat() <= _heat + _threshold_same && r.getHeat() >= _heat - _threshold_same){
+						std::cout << "True" << std::endl;
+						return true;
+					}
 				}
 				std::cout << "False" << std::endl;
 				return false;
+
 			}
 
 
@@ -210,6 +227,15 @@ namespace AASS {
 				for (vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
 					auto v = *vp.first;
 					(*this)[v].print();
+				}
+			}
+
+			void useHeatAnchors(bool b){
+				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp;
+				//vertices access all the vertix
+				for (vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+					auto v = *vp.first;
+					(*this)[v].useHeatAnchors(b);
 				}
 			}
 
@@ -288,7 +314,13 @@ namespace AASS {
 					VertexLaplacian v = *vp.first;
 					drawSpecial(m, v, color_all_linked);
 
-					double value = (*this)[v].getHeatAnchors();
+					double value = 0;
+					if((*this)[v].useHeatAnchors() ){
+						value = (*this)[v].getHeatAnchors();
+					}
+					else{
+						value = (*this)[v].getHeat();
+					}
 					(*this)[v].zone.drawZone(m, cv::Scalar(value * 255) );
 
 

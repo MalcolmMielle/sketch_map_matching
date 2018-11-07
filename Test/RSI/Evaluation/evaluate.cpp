@@ -134,6 +134,9 @@ auto match_maps(const std::string& map_input, const std::string& map_model) {
 		gp_laplacian_model->addAnchor(anchor.getSecond());
 	}
 
+	gp_laplacian->useHeatAnchors(false);
+	gp_laplacian_model->useHeatAnchors(false);
+
 
 	/********** GRAPH LAPLACIAN ****************************/
 
@@ -198,19 +201,34 @@ auto match_maps(const std::string& map_input, const std::string& map_model) {
 		> hypothesis_final_custom = graphmatch_custom.getResult();
 		graphmatch_custom.sort(hypothesis_final_custom);
 // 					hypothesis_final_custom[0].drawMoved(gp_voro, gp_voro_model, drawing, drawing, "ALL FINAL CUSTOM Moved", 1);
-		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1);
-		hypothesis_final_custom[0].drawLinks(*gp_laplacian, *gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model, "ALL FINAL CUSTOM ", 1);
+//		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1);
+
+
+
+		//TODO SWicth grpah_slam_segmented to heat map
+
+		cv::Mat draw_tmp;
+		graph_slam_segmented.copyTo(draw_tmp);
+		gp_laplacian->drawSpecial(draw_tmp);
+
+		cv::Mat draw_tmp_model;
+		graph_slam_segmented_model.copyTo(draw_tmp_model);
+		gp_laplacian_model->drawSpecial(draw_tmp_model);
+
+		hypothesis_final_custom[0].drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM ", 1);
 // 					std::string na = name + "_partial";
 // 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
 
 		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
 
 		//EXPORT
-		cv::Mat drawing_out;
-		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
+//		cv::Mat drawing_out;
+//		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
+//		cv::imshow("Final", drawing_out);
 
 //		cv::imwrite("RESULT.jpg", drawing_out);
 
+		std::cout << "Time : " << time << std::endl;
 		cv::waitKey(0);
 
 		std::cout << "Input 0 if not good and anything otherwise" << std::endl;
