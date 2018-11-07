@@ -120,7 +120,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 	if  ( event == cv::EVENT_LBUTTONDOWN )
 	{
 		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map1 << std::endl;
-		usrdatacv->matchmaps.pt_map1.push_back(cv::Point2i(x, y));
+		usrdatacv->matchmaps.pt_map1.push_back(cv::Point2i(y, x));
 		cv::Scalar sc(150);
 		usrdatacv->matchmaps.draw(usrdatacv->map1_cvmat, usrdatacv->map2_cvmat, sc);
 		imshow("Input", usrdatacv->map1_cvmat);
@@ -151,7 +151,7 @@ void CallBackFunc2(int event, int x, int y, int flags, void* userdata)
 	if  ( event == cv::EVENT_LBUTTONDOWN )
 	{
 		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << " in " << usrdatacv->matchmaps.map2 << std::endl;
-		usrdatacv->matchmaps.pt_map2.push_back(cv::Point2i(x, y));
+		usrdatacv->matchmaps.pt_map2.push_back(cv::Point2i(y, x));
 		cv::Scalar sc(150);
 		usrdatacv->matchmaps.draw(usrdatacv->map1_cvmat, usrdatacv->map2_cvmat, sc);
 		imshow("Model", usrdatacv->map2_cvmat);

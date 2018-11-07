@@ -260,7 +260,7 @@ int main(){
 			std::cout << "Running on :\n" << gt_folder + "/" + gt_name << " And the graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
 
 			double perc = ev.evaluate(hyp, *gp_laplacian, *gp_laplacian_model);
-			std::cout << "\nRESULT:\n" << perc << "%\n" << std::endl;
+			std::cout << "\nRESULT:\n" << perc * 100 << "%\n" << std::endl;
 
 			delete gp_laplacian;
 			delete gp_laplacian_model;

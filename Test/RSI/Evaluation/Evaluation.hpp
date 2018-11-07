@@ -114,25 +114,50 @@ namespace AASS{
 
 					auto zone = region1.zone.getZone();
 
-					for(auto point : zone ){
+					for(auto mapmatches : _matches.matches){
 
-						for(auto mapmatches : _matches.matches){
-							for(auto point_map1 : mapmatches.pt_map1){
+						for(auto point_map1 : mapmatches.pt_map1){
+
+//							cv::Scalar scal(255);
+//							cv::Scalar color(150);
+//							cv::Mat zone_img = cv::Mat::zeros(500, 500, CV_8UC1);
+//							region1.zone.drawZone(zone_img, scal);
+//
+//							int value = (int) zone_img.at<uchar>(point_map1);
+//							std::cout << "VALUE " << value << std::endl;
+//
+//							cv::circle(zone_img, point_map1, 5, color, -1);
+//							cv::imshow("input zone test", zone_img);
+//							cv::waitKey(0);
+
+							for(auto point : zone ){
+
+//								std::cout << point.x << " " << point.y  << " and " << point_map1.x << " " << point_map1.y << std::endl;
+
 								if(point_map1 == point){
 									std::cout << "Found the point: " << point << std::endl;
 									auto zone_model = region_model.zone.getZone();
+
 									for(auto point_map2 : mapmatches.pt_map2) {
-										std::cout << "Searching: " << point_map2 << std::endl;
-										int count = 0;
+
+//										cv::Mat zone_img_model = cv::Mat::zeros(500, 500, CV_8UC1);
+//										region_model.zone.drawZone(zone_img_model, scal);
+//										cv::imshow("Model zone test", zone_img_model);
+//										cv::circle(zone_img_model, point_map2, 5, color, -1);
+//										cv::waitKey(0);
+
+//										std::cout << "Searching: " << point_map2 << std::endl;
+//										int count = 0;
 										for(auto point_model : zone_model ){
+//											std::cout << "Searching : " << point_map2 << " " << point_model << std::endl;
 											if (point_map2 == point_model) {
 												std::cout << "Found with " << point << " and " << point_model
 												          << std::endl;
 												return true;
 											}
-											++count;
+//											++count;
 										}
-										std::cout << "Count false pixel : " << count << std::endl;
+//										std::cout << "Count false pixel : " << count << std::endl;
 									}
 								}
 							}

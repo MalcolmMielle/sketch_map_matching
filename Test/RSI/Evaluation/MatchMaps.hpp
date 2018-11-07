@@ -73,10 +73,10 @@ namespace AASS {
 
 				void draw(cv::Mat& map1, cv::Mat& map2, const cv::Scalar& color){
 					for (auto point : pt_map1) {
-						circle(map1, point, 5, color, -1);
+						cv::circle(map1, cv::Point2i(point.y, point.x), 5, color, -1);
 					}
 					for (auto point : pt_map2) {
-						circle(map2, point, 5, color, -1);
+						cv::circle(map2, cv::Point2i(point.y, point.x), 5, color, -1);
 					}
 				}
 
