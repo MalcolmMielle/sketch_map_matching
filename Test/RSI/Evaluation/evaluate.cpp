@@ -233,7 +233,7 @@ auto match_maps(const std::string& map_input, const std::string& map_model) {
 
 
 
-int main(){
+int main(int argc, char** argv){
 
 
 	std::string input_folder = "../../../../Test/RSI/Sketches_small_test";
@@ -242,7 +242,10 @@ int main(){
 	//HACK because can't copy iterator
 	//	int count = 0;
 
-	auto rec = std::experimental::filesystem::recursive_directory_iterator(input_folder);
+	std::vector<std::pair<std::string, double > > results;
+
+
+	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
 	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
 
 		auto p_canon = std::experimental::filesystem::canonical(*p);
@@ -262,15 +265,23 @@ int main(){
 			double perc = ev.evaluate(hyp, *gp_laplacian, *gp_laplacian_model);
 			std::cout << "\nRESULT:\n" << perc * 100 << "%\n" << std::endl;
 
+			results.push_back(std::pair<std::string, double >(p_canon.stem().string(), perc) );
+
 			delete gp_laplacian;
 			delete gp_laplacian_model;
-
-			exit(0);
 
 		}
 
 	}
 
+	double sum = 0;
+
+	for (auto result : results){
+		std::cout << result.first << " -> " << result.second << std::endl;
+		sum += result.second;
+	}
+
+	std::cout << "Final result : " << sum / results.size() << std::endl;
 
 	std::cout << "END" << std::endl;
 
