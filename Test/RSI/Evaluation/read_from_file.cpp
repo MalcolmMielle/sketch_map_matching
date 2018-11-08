@@ -148,14 +148,14 @@ BOOST_AUTO_TEST_CASE(trying){
 
 	AASS::graphmatch::HypotheseLaplacian hyp;
 	hyp.push_back(match);
-	double perc = ev.evaluate(hyp, gp_laplacian, gp_laplacian_model);
-	BOOST_CHECK_EQUAL(perc, 1);
+	auto[tp, fp, fn, prec, rec, F1] = ev.evaluate(hyp, gp_laplacian, gp_laplacian_model);
+	BOOST_CHECK_EQUAL(F1, 1);
 
 //	assert(perc == 1);
 
 	hyp.push_back(match_small);
-	perc = ev.evaluate(hyp, gp_laplacian, gp_laplacian_model);
-	BOOST_CHECK_EQUAL(perc, 0.5);
+	auto[tp2, fp2, fn2, prec2, rec2, F12] = ev.evaluate(hyp, gp_laplacian, gp_laplacian_model);
+	BOOST_CHECK_EQUAL(F12, 0.5);
 
 
 	std::cout << "END" << std::endl;

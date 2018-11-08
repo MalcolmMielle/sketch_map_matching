@@ -280,10 +280,10 @@ int main(int argc, char** argv){
 
 			std::cout << "Running on :\n" << gt_folder + "/" + gt_name << " And the graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
 
-			double perc = ev.evaluate(hyp, *gp_laplacian, *gp_laplacian_model);
-			std::cout << "\nRESULT:\n" << perc * 100 << "%\n" << std::endl;
+			auto[tp, fp, fn, prec, rec, F1] = ev.evaluate(hyp, *gp_laplacian, *gp_laplacian_model);
+			std::cout << "\nRESULT:\nprecision" << prec << " recall " << rec << " F1 " << F1 << "\n" << std::endl;
 
-			results.push_back(std::pair<std::string, double >(p_canon.stem().string(), perc) );
+			results.push_back(std::pair<std::string, double >(p_canon.stem().string(), F1) );
 
 			delete gp_laplacian;
 			delete gp_laplacian_model;

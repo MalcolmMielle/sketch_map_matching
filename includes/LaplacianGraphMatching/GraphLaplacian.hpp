@@ -139,19 +139,19 @@ namespace AASS {
 				assert(_heat_anchors != -1);
 
 				if(_use_heat_anchors){
-					std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
+//					std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
 					if(r.getHeatAnchors() <= _heat_anchors + _threshold_same && r.getHeatAnchors() >= _heat_anchors - _threshold_same){
-						std::cout << "True" << std::endl;
+//						std::cout << "True" << std::endl;
 						return true;
 					}
 				}
 				else{
 					if(r.getHeat() <= _heat + _threshold_same && r.getHeat() >= _heat - _threshold_same){
-						std::cout << "True" << std::endl;
+//						std::cout << "True" << std::endl;
 						return true;
 					}
 				}
-				std::cout << "False" << std::endl;
+//				std::cout << "False" << std::endl;
 				return false;
 
 			}
