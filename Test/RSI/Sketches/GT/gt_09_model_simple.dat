@@ -1,38 +1,42 @@
 # /home/malcolm/AASS/sketch_algorithms/Test/RSI/Sketches/09.png ../../../../Test/RSI/Sketches/model_simple.png
 # 0match set
 # map1
-367 167
+195 215
 # map2
-302 189
+171 248
 
 # 1match set
 # map1
-449 346
+339 437
 # map2
-407 303
-397 343
+299 411
+334 386
 
 # 2match set
 # map1
-447 64
+74 432
 # map2
-386 43
+47 397
 
 # 3match set
 # map1
-79 144
+200 83
 # map2
-153 92
+102 139
 
 # 4match set
 # map1
-102 377
-54 369
+378 59
 # map2
-149 259
-124 253
+257 126
 
 # 5match set
+# map1
+371 99
+# map2
+270 148
+
+# 6match set
 # map1
 # map2
 

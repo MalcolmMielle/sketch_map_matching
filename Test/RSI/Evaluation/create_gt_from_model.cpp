@@ -15,7 +15,7 @@ int main(){
 	//HACK because can't copy iterator
 //	int count = 0;
 
-	auto rec = std::experimental::filesystem::recursive_directory_iterator(path);
+	auto rec = std::experimental::filesystem::directory_iterator(path);
 
 
 	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {

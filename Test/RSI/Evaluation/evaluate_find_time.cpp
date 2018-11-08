@@ -349,8 +349,8 @@ void print_results(const std::vector<std::tuple<std::string, double, double, dou
 int main(int argc, char** argv){
 
 
-	std::string input_folder = "../../../../Test/RSI/Sketches_small_test";
-	std::string gt_folder = "../../../../Test/RSI/Sketches_small_test/GT";
+	std::string input_folder = "../../../../Test/RSI/Sketches";
+	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
 	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false);
 	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false);
