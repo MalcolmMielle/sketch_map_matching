@@ -28,7 +28,7 @@ namespace AASS {
 
 			bool _use_heat_anchors = true;
 
-			double _uniqueness = -1;
+			double _value_vertex = -1;
 
 			double _heat = -1;
 			double _time = -1;
@@ -52,7 +52,7 @@ namespace AASS {
 			Region(const Region& r){
 				_contour = r.getContour();
 				_center = r.getCenter();
-				_uniqueness = r.getUniqueness();
+				_value_vertex = r.getValue();
 				_heat = r.getHeat();
 				_time = r.getTime();
 				_heat_anchors = r.getHeatAnchors();
@@ -72,8 +72,8 @@ namespace AASS {
 			const cv::Point2f& getCenter() const {return _center;}
 			const std::vector< std::vector< cv::Point > >& getContour() const {return _contour;}
 
-			double getUniqueness() const {return _uniqueness;}
-			void setUniqueness(double se){_uniqueness = se;}
+			double getValue() const {return _value_vertex;}
+			void setValue(double se){_value_vertex = se;}
 
 			double getHeat() const {return _heat;}
 			double getHeatAnchors() const {return _heat_anchors;}
@@ -240,6 +240,44 @@ namespace AASS {
 			}
 
 			void addAnchor(const VertexLaplacian& anch){_anchors.push_back(anch);}
+
+
+			void noWeightForVertices(){
+				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
+				for (vp3 = boost::vertices(*this); vp3.first != vp3.second; ++vp3.first) {
+					auto v = *vp3.first;
+					(*this)[v].setValue(1);
+				}
+			}
+
+			void useUniquenessScoreAsWeights(){
+				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
+				for (vp3 = boost::vertices(*this); vp3.first != vp3.second; ++vp3.first) {
+					auto v = *vp3.first;
+					double uniqueness = (*this)[v].zone.getUniquenessScore();
+					(*this)[v].setValue(uniqueness);
+				}
+			}
+
+			void useRelativeSizeAsWeights(){
+//				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
+				auto vp3 = boost::vertices(*this);
+				auto v = *vp3.first;
+				double lowest_value = (*this)[v].zone.getSizeClassification();
+
+				for (; vp3.first != vp3.second; ++vp3.first) {
+					v = *vp3.first;
+					double size_class = (*this)[v].zone.getSizeClassification();
+					if(size_class < lowest_value){
+						lowest_value = size_class;
+					}
+				}
+				for (vp3 = boost::vertices(*this); vp3.first != vp3.second; ++vp3.first) {
+					v = *vp3.first;
+					double size_class = (*this)[v].zone.getSizeClassification();
+					(*this)[v].setValue(size_class - lowest_value);
+				}
+			}
 
 			/**
 			 *

@@ -144,16 +144,19 @@ auto match_maps(const std::string& map_input, const std::string& map_model) {
 	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
 	for (vp3 = boost::vertices(*gp_laplacian_model); vp3.first != vp3.second; ++vp3.first) {
 		auto v = *vp3.first;
-		(*gp_laplacian_model)[v].setUniqueness(1);
+		(*gp_laplacian_model)[v].setValue(1);
 	}
 	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp2;
 	for (vp2 = boost::vertices(*gp_laplacian_model); vp2.first != vp2.second; ++vp2.first) {
 		auto v = *vp2.first;
-		(*gp_laplacian_model)[v].setUniqueness(1);
+		(*gp_laplacian_model)[v].setValue(1);
 	}
 
 	gp_laplacian->eigenLaplacian();
 	gp_laplacian_model->eigenLaplacian();
+
+	gp_laplacian->useHeatAnchors(true);
+	gp_laplacian_model->useHeatAnchors(true);
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
@@ -254,8 +257,8 @@ auto match_maps(const std::string& map_input, const std::string& map_model) {
 int main(int argc, char** argv){
 
 
-	std::string input_folder = "../../../../Test/RSI/Sketches_small_test";
-	std::string gt_folder = "../../../../Test/RSI/Sketches_small_test/GT";
+	std::string input_folder = "../../../../Test/RSI/Sketches";
+	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
 	//HACK because can't copy iterator
 	//	int count = 0;

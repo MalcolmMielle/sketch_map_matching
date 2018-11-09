@@ -264,7 +264,7 @@ namespace AASS{
 					region.setContour(graph_zone[v].getContour() ) ;
 					std::cout << "getting centrer" << std::endl;
 					region.setCenter( graph_zone[v].getCentroid() );
-					region.setUniqueness(graph_zone[v].getUniquenessScore() );
+					region.setValue(graph_zone[v].getUniquenessScore() );
 
 					region.zone = graph_zone[v];
 

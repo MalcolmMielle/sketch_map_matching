@@ -448,6 +448,7 @@ Eigen::MatrixXd AASS::graphmatch::GraphLaplacian::getWeightedGeneralizedLaplacia
 
 	int number_of_vertices = getNumVertices();
 	Eigen::MatrixXd generalized_laplacian = Eigen::MatrixXd::Zero(number_of_vertices, number_of_vertices);
+	std::cout << "G\n" << generalized_laplacian << std::endl;
 
 	std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
 	int index_count = 0;
@@ -463,11 +464,14 @@ Eigen::MatrixXd AASS::graphmatch::GraphLaplacian::getWeightedGeneralizedLaplacia
 		getAllVertexLinked(vertex_in, all_vertices);
 		double sum_neighboring_uniqueness = 0;
 		for(auto vertex : all_vertices){
-			assert((*this)[vertex].getUniqueness() != -1);
-			sum_neighboring_uniqueness = sum_neighboring_uniqueness + (*this)[vertex].getUniqueness();
+			assert((*this)[vertex].getValue() != -1);
+//			std::cout << "Get value " << (*this)[vertex].getValue() << std::endl;
+			sum_neighboring_uniqueness = sum_neighboring_uniqueness + (*this)[vertex].getValue();
 		}
+//		std::cout << "Sum " << sum_neighboring_uniqueness << std::endl;
 		generalized_laplacian(index_count, index_count) = sum_neighboring_uniqueness;
 
+//		std::cout << "G\n" << generalized_laplacian << std::endl;
 		index_count++;
 	}
 
@@ -483,16 +487,26 @@ Eigen::MatrixXd AASS::graphmatch::GraphLaplacian::getWeightedGeneralizedLaplacia
 		int index_source = (*this)[source].index;
 		int index_target = (*this)[target].index;
 
-		double uniqueness_target = target_region.getUniqueness();
-		double uniqueness_source = source_region.getUniqueness();
+		std::cout << "Uniqueness " << target_region.getValue() << " " << source_region.getValue() << std::endl;
+
+		double uniqueness_target = target_region.getValue();
+		double uniqueness_source = source_region.getValue();
+		assert(uniqueness_target >= 0 );
+		assert(uniqueness_source >= 0 );
 		double weight = - std::sqrt(uniqueness_target * uniqueness_source);
 
 		generalized_laplacian(index_source, index_target) = weight;
+
+//		std::cout << "G\n" << generalized_laplacian << std::endl;
 		generalized_laplacian(index_target, index_source) = weight;
+//		std::cout << "G\n" << generalized_laplacian << std::endl;
 
 	}
 
 	//Check that the matrix is symmetric so that we can use the self adjoint solver
+	if(generalized_laplacian != generalized_laplacian.transpose()){
+		std::cout << "Not symmetric : !\n" << generalized_laplacian << " \n==\n" << generalized_laplacian.transpose() << std::endl;
+	}
 	assert(generalized_laplacian == generalized_laplacian.transpose());
 	return generalized_laplacian;
 

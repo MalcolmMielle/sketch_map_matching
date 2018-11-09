@@ -29,6 +29,7 @@
 
 
 #include "Evaluation.hpp"
+#include <fstream>
 
 
 cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
@@ -56,7 +57,7 @@ cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 }
 
 
-auto match_maps(const std::string& map_input, const std::string& map_model, bool use_anchor_heat, bool use_uniqueness_score){
+auto match_maps(const std::string& map_input, const std::string& map_model, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
 
 	AASS::RSI::GraphZoneRI graph_slam;
 	cv::Mat graph_slam_segmented = makeGraph(map_input, graph_slam);
@@ -139,19 +140,19 @@ auto match_maps(const std::string& map_input, const std::string& map_model, bool
 	/********** GRAPH LAPLACIAN ****************************/
 
 	//Not using uniqueness score for now
-	if(!use_uniqueness_score) {
-		std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
-		for (vp3 = boost::vertices(*gp_laplacian_model); vp3.first != vp3.second; ++vp3.first) {
-			auto v = *vp3.first;
-			(*gp_laplacian_model)[v].setUniqueness(1);
-		}
-		std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp2;
-		for (vp2 = boost::vertices(*gp_laplacian_model); vp2.first != vp2.second; ++vp2.first) {
-			auto v = *vp2.first;
-			(*gp_laplacian_model)[v].setUniqueness(1);
-		}
-	}
 
+	if(use_relative_size_as_weight) {
+		gp_laplacian->useRelativeSizeAsWeights();
+		gp_laplacian_model->useRelativeSizeAsWeights();
+	}
+	else if(use_uniqueness_score){
+		gp_laplacian->useUniquenessScoreAsWeights();
+		gp_laplacian_model->useUniquenessScoreAsWeights();
+	}
+	else{
+		gp_laplacian->noWeightForVertices();
+		gp_laplacian_model->noWeightForVertices();
+	}
 	gp_laplacian->eigenLaplacian();
 	gp_laplacian_model->eigenLaplacian();
 
@@ -162,10 +163,10 @@ auto match_maps(const std::string& map_input, const std::string& map_model, bool
 
 
 
-auto match_maps_and_find_time(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score) {
+auto match_maps_and_find_time(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
 
 
-	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = match_maps(map_input, map_model, use_anchor_heat, use_uniqueness_score);
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = match_maps(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
@@ -295,7 +296,7 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 }
 
 
-auto evaluate_all_files(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score){
+auto evaluate_all_files(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
 
@@ -316,7 +317,7 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 				          << std::endl;
 
 				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(p_canon.string(), input_folder + "/model_simple.png",
-				                                            gt_file, use_anchor_heat, use_uniqueness_score);
+				                                            gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
 
 				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
 			}
@@ -324,7 +325,6 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 		}
 
 	}
-
 	return results;
 
 
@@ -344,6 +344,35 @@ void print_results(const std::vector<std::tuple<std::string, double, double, dou
 }
 
 
+void export_results(const std::string& file_out, const std::vector<std::tuple<std::string, double, double, double, double, double, double, double > >& results){
+
+	double sum = 0;
+
+	std::string result_file = file_out;
+	std::ofstream myfile;
+	if (!AASS::graphmatch::evaluation::exists_test3(result_file)) {
+		myfile.open(result_file);
+		myfile << "# map tp fp fn precision recall F1 time\n";
+	} else {
+		myfile.open(result_file, std::ios::out | std::ios::app);
+		myfile << "# map tp fp fn precision recall F1 time\n";
+	}
+
+	if (myfile.is_open()) {
+		for (auto result : results){
+			myfile << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << " " << std::get<4>(result) << " " << std::get<5>(result) << " " << std::get<6>(result) << " " << std::get<7>(result);
+			myfile << "\n";
+			sum +=  std::get<6>(result);
+		}
+	}
+
+	myfile << "\n# F1 mean\n";
+	myfile << sum / results.size() << "\n";
+
+
+}
+
+
 
 
 int main(int argc, char** argv){
@@ -352,16 +381,23 @@ int main(int argc, char** argv){
 	std::string input_folder = "../../../../Test/RSI/Sketches";
 	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
-	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false);
-	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false);
-	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true);
+	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false);
+	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false);
+	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false);
+	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true);
 
 	std::cout << "Results base" << std::endl;
 	print_results(results_base);
+	export_results("results_base.dat", results_base);
 	std::cout << "Results Anchors" << std::endl;
 	print_results(results_anchors);
+	export_results("results_anchors.dat", results_anchors);
 	std::cout << "Results Anchors Uniqueness" << std::endl;
 	print_results(results_anchors_uniqueness);
+	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
+	std::cout << "Results Anchors Relative size" << std::endl;
+	print_results(results_anchors_relative_size);
+	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
 
 
 	//HACK because can't copy iterator
