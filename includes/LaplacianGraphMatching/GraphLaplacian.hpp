@@ -310,7 +310,7 @@ namespace AASS {
 
 			std::vector<AASS::graphmatch::MatchLaplacian> compare(const GraphLaplacian& gl) const ;
 
-			std::vector< AASS::graphmatch::MatchLaplacian > hungarian_matching(const AASS::graphmatch::GraphLaplacian& laplacian_model);
+			HypotheseLaplacian hungarian_matching(const AASS::graphmatch::GraphLaplacian& laplacian_model);
 
 
 			void drawSpecial(cv::Mat& m, const VertexLaplacian& v, const cv::Scalar& color ) const

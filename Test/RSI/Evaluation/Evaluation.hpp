@@ -11,6 +11,8 @@
 #include <vector>
 #include <string>
 
+#include <bettergraph/HypotheseBase.hpp>
+
 #include "LaplacianGraphMatching/GraphLaplacian.hpp"
 #include "LaplacianGraphMatching/HypotheseLaplacian.hpp"
 #include "LaplacianGraphMatching/MatchLaplacian.hpp"
@@ -93,6 +95,54 @@ namespace AASS{
 
 				}
 
+
+				auto evaluate(const bettergraph::HypotheseBase<bettergraph::MatchComparable<AASS::graphmatch::Region*> >& hyp, const AASS::graphmatch::GraphLaplacian& gl, const AASS::graphmatch::GraphLaplacian& gl_model){
+
+					std::deque<bettergraph::MatchComparable<AASS::graphmatch::Region*> > tp_list;
+					for(auto match : hyp.getAllElements()){
+						if(is_correct(*(match.getFirst()), *(match.getSecond() ) ) ){
+							tp_list.push_back(match);
+						}
+					}
+
+					std::cout << "tp: " << tp_list.size() << std::endl;
+
+					double count = 0;
+					for(auto match : hyp.getAllElements()){
+						auto v1 = match.getFirst();
+						auto v2 = match.getSecond();
+						for(auto match_found : tp_list){
+							auto v1_found = match_found.getFirst();
+							auto v2_found = match_found.getSecond();
+
+							if(v1 == v1_found || v1 == v2_found || v2 == v1_found || v2 == v2_found){
+								count ++;
+							}
+						}
+					}
+
+					std::cout << "done with count: " << count << std::endl;
+
+					assert(count >= tp_list.size());
+					double fp = hyp.getAllElements().size() - count;
+					double tp = tp_list.size();
+					double fn = fn_from_matches(tp_list, gl, gl_model);
+					assert(fn >= 0);
+
+					double precision = tp / (tp + fp);
+					double recall = tp / (tp + fn);
+					double F_measure = (2 * precision * recall) / (precision + recall);
+
+					if(tp == 0){F_measure = 0;}
+
+//					double mcc = ( (tp * tn) - (fp * fn) ) / ( std::sqrt( (tp + fn) * (tp + fn) * (tn + fp) * (tn + fn) ));
+
+					return std::make_tuple(tp, fp, fp, precision, recall, F_measure);
+
+
+				}
+
+
 				auto evaluate(const AASS::graphmatch::HypotheseLaplacian& hyp, const AASS::graphmatch::GraphLaplacian& gl, const AASS::graphmatch::GraphLaplacian& gl_model){
 
 					std::deque<AASS::graphmatch::MatchLaplacian> tp_list;
@@ -101,6 +151,8 @@ namespace AASS{
 							tp_list.push_back(match);
 						}
 					}
+
+					std::cout << "tp: " << tp_list.size() << std::endl;
 
 					double count = 0;
 					for(auto match : hyp.getMatches()){
@@ -115,6 +167,8 @@ namespace AASS{
 							}
 						}
 					}
+
+					std::cout << "done with count: " << count << std::endl;
 
 					assert(count >= tp_list.size());
 					double fp = hyp.getMatches().size() - count;
@@ -181,13 +235,56 @@ namespace AASS{
 
 				}
 
-				bool is_correct(const AASS::graphmatch::MatchLaplacian& match, const AASS::graphmatch::GraphLaplacian& gl, const AASS::graphmatch::GraphLaplacian& gl_model){
 
-					auto v1 = match.getFirst();
-					auto v2 = match.getSecond();
-					auto region1 = gl[v1];
-					auto region_model = gl[v2];
+				double fn_from_matches(const std::deque<bettergraph::MatchComparable<AASS::graphmatch::Region*> >& tp_list, const AASS::graphmatch::GraphLaplacian& gl, const AASS::graphmatch::GraphLaplacian& gl_model){
+					double fn = 0;
+					for(auto mapmatches : _matches.matches) {
+						for (auto point_map1 : mapmatches.pt_map1) {
+							for (auto point_map2 : mapmatches.pt_map2) {
+								if(fn_from_matches(point_map1, point_map2, tp_list, gl, gl_model)){
+									fn ++;
+								}
+							}
+						}
+					}
+					return fn;
+				}
 
+				bool fn_from_matches(const cv::Point2i& map1_point, const cv::Point2i& map2_point, const std::deque<bettergraph::MatchComparable<AASS::graphmatch::Region*> >& tp_list, const AASS::graphmatch::GraphLaplacian& gl, const AASS::graphmatch::GraphLaplacian& gl_model){
+
+					bool is_fn = true;
+					for(auto match : tp_list){
+						auto v1 = match.getFirst();
+						auto v2 = match.getSecond();
+						auto region1 = *v1;
+						auto region_model = *v2;
+
+						auto zone = region1.zone.getZone();
+						for(auto point : zone ) {
+//								std::cout << point.x << " " << point.y  << " and " << point_map1.x << " " << point_map1.y << std::endl;
+							if (map1_point == point) {
+								std::cout << "Found the point: " << point << std::endl;
+								auto zone_model = region_model.zone.getZone();
+								//										std::cout << "Searching: " << point_map2 << std::endl;
+//										int count = 0;
+								for (auto point_model : zone_model) {
+//											std::cout << "Searching : " << point_map2 << " " << point_model << std::endl;
+									if (map2_point == point_model) {
+										//It's a true positive
+										is_fn = false;
+									}
+								}
+							}
+						}
+
+					}
+
+					return is_fn;
+
+				}
+
+
+				bool is_correct(const AASS::graphmatch::Region& region1, const AASS::graphmatch::Region& region_model){
 					auto zone = region1.zone.getZone();
 
 					for(auto mapmatches : _matches.matches){
@@ -242,6 +339,20 @@ namespace AASS{
 					std::cout << "Not found" << std::endl;
 
 					return false;
+
+
+				}
+
+				bool is_correct(const AASS::graphmatch::MatchLaplacian& match, const AASS::graphmatch::GraphLaplacian& gl, const AASS::graphmatch::GraphLaplacian& gl_model){
+
+					auto v1 = match.getFirst();
+					auto v2 = match.getSecond();
+					std::cout << "Getting regions" << std::endl;
+					auto region1 = gl[v1];
+					auto region_model = gl[v2];
+					std::cout << "DONE  Getting regions" << std::endl;
+
+					return is_correct(region1, region_model);
 
 				}
 

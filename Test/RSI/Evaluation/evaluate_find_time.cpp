@@ -31,6 +31,15 @@
 #include "Evaluation.hpp"
 #include <fstream>
 
+#include "MapComparator/Hypothese.hpp"
+#include "MapComparator/GraphMatcherNeighbor.hpp"
+#include "LaplacianGraphMatching/GraphLaplacian.hpp"
+#include "LaplacianGraphMatching/MatchLaplacian.hpp"
+
+#include "Timed.hpp"
+#include "vfl_utils_evaluation.hpp"
+
+
 
 cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 
@@ -57,7 +66,7 @@ cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 }
 
 
-auto match_maps(const std::string& map_input, const std::string& map_model, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
+auto create_graphs_laplacian(const std::string& map_input, const std::string& map_model, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
 
 	AASS::RSI::GraphZoneRI graph_slam;
 	cv::Mat graph_slam_segmented = makeGraph(map_input, graph_slam);
@@ -163,10 +172,261 @@ auto match_maps(const std::string& map_input, const std::string& map_model, bool
 
 
 
+auto match_maps_vfl(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
+
+	auto[gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(
+			map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+
+	/********** LAPLACIAN FAMILY SIGNATURES ****************/
+
+	int aninput = 0;
+	double F1_good = -1;
+	double precision = -1;
+	double recall = -1;
+	double good_time = -1;
+	double tp_good = -1, fp_good = -1, fn_good = -1;
+	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
+
+		gp_laplacian->propagateHeatKernel(time);
+		gp_laplacian_model->propagateHeatKernel(time);
+		/****************************************************************************
+	 * Conversion
+	 *
+	 * **************************************************************************/
+		std::map< AASS::graphmatch::Region*, AASS::graphmatch::GraphLaplacian::VertexLaplacian > equivalent_laplacian, equivalent_laplacian_model;
+
+		ARGraph<AASS::graphmatch::Region, AASS::graphmatch::EdgeType> graph_vfl = AASS::graphmatch::evaluation::graphLaplacian2VFL(*gp_laplacian, equivalent_laplacian);
+		ARGraph<AASS::graphmatch::Region, AASS::graphmatch::EdgeType> graph_vfl_model = AASS::graphmatch::evaluation::graphLaplacian2VFL(*gp_laplacian_model, equivalent_laplacian_model);
+
+//		std::cout << "Size of input " << graph_slam.getNumVertices() << std::endl;
+//		std::cout << "Size of model " << graph_slam_model.getNumVertices() << std::endl;
+
+		/****************************************************************************
+	 * Matching
+	 *
+	 * **************************************************************************/
+
+		//Smallest graph needs to be first
+		bettergraph::HypotheseBase<bettergraph::MatchComparable<AASS::graphmatch::Region*> > hyp_vfl;
+		if(graph_vfl.NodeCount() < graph_vfl_model.NodeCount()){
+			hyp_vfl = AASS::graphmatch::evaluation::matchTest(graph_vfl, graph_vfl_model);
+		}
+		else{
+			hyp_vfl = AASS::graphmatch::evaluation::matchTest(graph_vfl_model, graph_vfl);
+		}
+
+//		AASS::graphmatch::HypotheseLaplacian hyp_res;
+//
+
+//		for(auto match : hyp_vfl.getAllElements()){
+//			auto v1 = equivalent_laplacian[match.getFirst()];
+//			auto v2 = equivalent_laplacian_model[match.getSecond()];
+//
+//			AASS::graphmatch::MatchLaplacian ma(v1, v2);
+//			hyp_res.push_back(ma);
+//		}
+//
+//		assert(hyp_res.size() == hyp_vfl.size());
+
+		/********** GRAPH MATCHING ****************************/
+
+		if(hyp_vfl.size() > 0) {
+			// 					hypothesis_final_custom[0].drawMoved(gp_voro, gp_voro_model, drawing, drawing, "ALL FINAL CUSTOM Moved", 1);
+			//		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1);
+
+
+
+			//TODO SWicth grpah_slam_segmented to heat map
+
+//			cv::Mat draw_tmp;
+//			graph_slam_segmented.copyTo(draw_tmp);
+//			gp_laplacian->drawSpecial(draw_tmp);
+//
+//			cv::Mat draw_tmp_model;
+//			graph_slam_segmented_model.copyTo(draw_tmp_model);
+//			gp_laplacian_model->drawSpecial(draw_tmp_model);
+//	//
+//			hypothesis_final_custom[0].drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM ", 1);
+//	//// 					std::string na = name + "_partial";
+//	//// 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
+//	//
+//	//		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
+//	//
+//	//		//EXPORT
+//	////		cv::Mat drawing_out;
+//	////		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
+//	////		cv::imshow("Final", drawing_out);
+//	//
+//	////		cv::imwrite("RESULT.jpg", drawing_out);
+//	//
+//			std::cout << "Time : " << time << std::endl;
+//			cv::waitKey(0);
+			//
+			//		std::cout << "Input 0 if not good and anything otherwise" << std::endl;
+			//		std::cin >> aninput;
+
+
+			std::cout << "Read file"<< gt_file  << std::endl;
+			AASS::graphmatch::evaluation::Evaluation ev;
+			ev.read_file(gt_file);
+			std::cout << "Read file" << std::endl;
+
+			auto [tp, fp, fn, prec, rec, F1] = ev.evaluate(hyp_vfl, *gp_laplacian, *gp_laplacian_model);
+
+			if (F1_good == -1 || F1 > F1_good) {
+				F1_good = F1;
+				good_time = time;
+				precision = prec;
+				recall = rec;
+				tp_good = tp;
+				fp_good = fp;
+				fn_good = fn;
+			}
+		}
+
+		std::cout << "Running on :\n" << gt_file << " with time " << time << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
+
+	}
+
+
+	delete gp_laplacian;
+	delete gp_laplacian_model;
+
+	if (F1_good == -1) {
+		F1_good = 0;
+		good_time = -1;
+	}
+
+	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
+
+
+
+}
+
+
+auto match_maps_hungarian(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
+
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+
+	/********** LAPLACIAN FAMILY SIGNATURES ****************/
+
+	int aninput = 0;
+	double F1_good = -1;
+	double precision = -1;
+	double recall = -1;
+	double good_time = -1;
+	double tp_good = -1, fp_good = -1, fn_good = -1;
+	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
+
+		gp_laplacian->propagateHeatKernel(time);
+		gp_laplacian_model->propagateHeatKernel(time);
+
+		/********** GRAPH MATCHING ****************************/
+
+
+//		graphmatch_evg.planarEditDistanceAlgorithm(gp, gp_model);
+		auto hungarian_matches = gp_laplacian->hungarian_matching(*gp_laplacian_model);
+		std::cout << "DONE" << std::endl;
+
+//		int rows = 0;
+//		if(graph_slam_segmented.rows > graph_slam_segmented_model.rows){
+//			rows = graph_slam_segmented.rows;
+//		}
+//		else{
+//			rows = graph_slam_segmented_model.rows;
+//		}
+//		int cols = 0;
+//		if(graph_slam_segmented.cols > graph_slam_segmented_model.cols){
+//			cols = graph_slam_segmented.cols;
+//		}
+//		else{
+//			cols = graph_slam_segmented_model.cols;
+//		}
+
+//		cv::Mat drawing = cv::Mat::zeros(rows , cols, CV_8UC3);
+
+//		double perc = 0;
+//		std::deque<
+//				AASS::graphmatch::HypotheseLaplacian
+//		> hypothesis_final_custom = graphmatch_custom.getResult();
+
+		if(hungarian_matches.size() > 0) {
+			// 					hypothesis_final_custom[0].drawMoved(gp_voro, gp_voro_model, drawing, drawing, "ALL FINAL CUSTOM Moved", 1);
+			//		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1);
+
+
+
+			//TODO SWicth grpah_slam_segmented to heat map
+
+//			cv::Mat draw_tmp;
+//			graph_slam_segmented.copyTo(draw_tmp);
+//			gp_laplacian->drawSpecial(draw_tmp);
+//
+//			cv::Mat draw_tmp_model;
+//			graph_slam_segmented_model.copyTo(draw_tmp_model);
+//			gp_laplacian_model->drawSpecial(draw_tmp_model);
+//	//
+//			hypothesis_final_custom[0].drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM ", 1);
+//	//// 					std::string na = name + "_partial";
+//	//// 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
+//	//
+//	//		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
+//	//
+//	//		//EXPORT
+//	////		cv::Mat drawing_out;
+//	////		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
+//	////		cv::imshow("Final", drawing_out);
+//	//
+//	////		cv::imwrite("RESULT.jpg", drawing_out);
+//	//
+//			std::cout << "Time : " << time << std::endl;
+//			cv::waitKey(0);
+			//
+			//		std::cout << "Input 0 if not good and anything otherwise" << std::endl;
+			//		std::cin >> aninput;
+
+
+			std::cout << "Read file" << std::endl;
+			AASS::graphmatch::evaluation::Evaluation ev;
+			ev.read_file(gt_file);
+			std::cout << "Read file" << std::endl;
+
+			auto [tp, fp, fn, prec, rec, F1] = ev.evaluate(hungarian_matches, *gp_laplacian, *gp_laplacian_model);
+
+			if (F1_good == -1 || F1 > F1_good) {
+				F1_good = F1;
+				good_time = time;
+				precision = prec;
+				recall = rec;
+				tp_good = tp;
+				fp_good = fp;
+				fn_good = fn;
+			}
+		}
+
+		std::cout << "Running on :\n" << gt_file << " with time " << time << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
+
+	}
+
+
+	delete gp_laplacian;
+	delete gp_laplacian_model;
+
+	if (F1_good == -1) {
+		F1_good = 0;
+		good_time = -1;
+	}
+
+	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
+
+}
+
+
+
 auto match_maps_and_find_time(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
 
 
-	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = match_maps(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
@@ -260,7 +520,7 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 	//		std::cin >> aninput;
 
 
-			std::cout << "Read file" << std::endl;
+			std::cout << "Read file " << gt_file << std::endl;
 			AASS::graphmatch::evaluation::Evaluation ev;
 			ev.read_file(gt_file);
 			std::cout << "Read file" << std::endl;
@@ -330,6 +590,75 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 
 }
 
+auto evaluate_all_files_hungarian(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
+
+	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+
+
+	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+
+		auto p_canon = std::experimental::filesystem::canonical(*p);
+		if(!std::experimental::filesystem::is_directory(p_canon) ){
+			auto input_file_stem =p_canon.stem();
+
+			if(input_file_stem.string().compare("model_simple") != 0) {
+
+				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+				std::string gt_file = gt_folder + "/" + gt_name;
+
+				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
+				          << std::endl;
+
+				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_hungarian(p_canon.string(), input_folder + "/model_simple.png",
+				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+
+				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+			}
+
+		}
+
+	}
+	return results;
+
+
+}
+
+
+auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
+
+	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+
+
+	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+
+		auto p_canon = std::experimental::filesystem::canonical(*p);
+		if(!std::experimental::filesystem::is_directory(p_canon) ){
+			auto input_file_stem =p_canon.stem();
+
+			if(input_file_stem.string().compare("model_simple") != 0) {
+
+				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+				std::string gt_file = gt_folder + "/" + gt_name;
+
+				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
+				          << std::endl;
+
+				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_vfl(p_canon.string(), input_folder + "/model_simple.png",
+				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+
+				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+			}
+
+		}
+
+	}
+	return results;
+
+
+}
+
 
 void print_results(const std::vector<std::tuple<std::string, double, double, double, double, double, double, double > >& results){
 	double sum = 0;
@@ -381,23 +710,61 @@ int main(int argc, char** argv){
 	std::string input_folder = "../../../../Test/RSI/Sketches";
 	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
-	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false);
-	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false);
-	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false);
-	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true);
+//	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false);
+//	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false);
+//	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false);
+//	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true);
 
-	std::cout << "Results base" << std::endl;
-	print_results(results_base);
-	export_results("results_base.dat", results_base);
-	std::cout << "Results Anchors" << std::endl;
-	print_results(results_anchors);
-	export_results("results_anchors.dat", results_anchors);
-	std::cout << "Results Anchors Uniqueness" << std::endl;
-	print_results(results_anchors_uniqueness);
-	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
-	std::cout << "Results Anchors Relative size" << std::endl;
-	print_results(results_anchors_relative_size);
-	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
+
+//	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false);
+//	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false);
+//	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false);
+//	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true);
+
+	auto results_base_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, false, false, false);
+	auto results_anchors_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, false);
+	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, true, false);
+	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true);
+
+//	std::cout << "Results base" << std::endl;
+//	print_results(results_base);
+//	export_results("results_base.dat", results_base);
+//	std::cout << "Results Anchors" << std::endl;
+//	print_results(results_anchors);
+//	export_results("results_anchors.dat", results_anchors);
+//	std::cout << "Results Anchors Uniqueness" << std::endl;
+//	print_results(results_anchors_uniqueness);
+//	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
+//	std::cout << "Results Anchors Relative size" << std::endl;
+//	print_results(results_anchors_relative_size);
+//	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
+
+
+//	std::cout << "Results base_hungarian" << std::endl;
+//	print_results(results_base_hungarian);
+//	export_results("results_base_hungarian.dat", results_base_hungarian);
+//	std::cout << "Results Anchors_hungarian" << std::endl;
+//	print_results(results_anchors_hungarian);
+//	export_results("results_anchors_hungarian.dat", results_anchors_hungarian);
+//	std::cout << "Results Anchors Uniqueness_hungarian" << std::endl;
+//	print_results(results_anchors_uniqueness_hungarian);
+//	export_results("results_anchors_uniqueness_hungarian.dat", results_anchors_uniqueness_hungarian);
+//	std::cout << "Results Anchors Relative size_hungarian" << std::endl;
+//	print_results(results_anchors_relative_size_hungarian);
+//	export_results("results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
+
+	std::cout << "Results base_vfl" << std::endl;
+	print_results(results_base_vfl);
+	export_results("results_base_vfl.dat", results_base_vfl);
+	std::cout << "Results Anchors_vfl" << std::endl;
+	print_results(results_anchors_vfl);
+	export_results("results_anchors_vfl.dat", results_anchors_vfl);
+	std::cout << "Results Anchors Uniqueness_vfl" << std::endl;
+	print_results(results_anchors_uniqueness_vfl);
+	export_results("results_anchors_uniqueness_vfl.dat", results_anchors_uniqueness_vfl);
+	std::cout << "Results Anchors Relative size_vfl" << std::endl;
+	print_results(results_anchors_relative_size_vfl);
+	export_results("results_anchors_relative_size_vfl.dat", results_anchors_relative_size_vfl);
 
 
 	//HACK because can't copy iterator

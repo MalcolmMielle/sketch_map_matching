@@ -571,7 +571,7 @@ std::vector<AASS::graphmatch::MatchLaplacian> AASS::graphmatch::GraphLaplacian::
 }
 
 
-std::vector< AASS::graphmatch::MatchLaplacian > AASS::graphmatch::GraphLaplacian::hungarian_matching(const AASS::graphmatch::GraphLaplacian& laplacian_model){
+AASS::graphmatch::HypotheseLaplacian AASS::graphmatch::GraphLaplacian::hungarian_matching(const AASS::graphmatch::GraphLaplacian& laplacian_model){
 
 	auto res = this->compare(laplacian_model);
 
@@ -585,8 +585,8 @@ std::vector< AASS::graphmatch::MatchLaplacian > AASS::graphmatch::GraphLaplacian
 	for ( ; it != res.end() ; ++it){
 		int input = it->getCost()*100;
 		std::cout << " pushing " << input << " because " << it->getCost()*100 << std::endl;
-		assert(input <= 100);
-		assert(input >= 0);
+//		assert(input <= 100);
+//		assert(input >= 0);
 		simi.push_back(input);
 	}
 
@@ -636,7 +636,8 @@ std::vector< AASS::graphmatch::MatchLaplacian > AASS::graphmatch::GraphLaplacian
 	fprintf(stderr, "cost-matrix:");
 	hungarian_print_costmatrix(&p);
 
-	std::vector< MatchLaplacian > hungarian_matches;
+//	std::vector< MatchLaplacian > hungarian_matches;
+	HypotheseLaplacian hungarian_matches;
 	std::vector<int> scores;
 	// This depend on which one as more nodes !
 	// Goes along the line
@@ -737,7 +738,7 @@ std::vector< AASS::graphmatch::MatchLaplacian > AASS::graphmatch::GraphLaplacian
 		std::cout << "matching " << i << " : " << hungarian_matches[i].getFirst() << " " << hungarian_matches[i].getSecond() << std::endl;
 	}
 
-	std::sort(hungarian_matches.begin(), hungarian_matches.end(), [](AASS::graphmatch::MatchLaplacian &match, AASS::graphmatch::MatchLaplacian &match1){
+	std::sort(hungarian_matches.begin(), hungarian_matches.getMatches().end(), [](AASS::graphmatch::MatchLaplacian &match, AASS::graphmatch::MatchLaplacian &match1){
 //		return match.getRanking(graph_slam, graph_slam2) > match1.getRanking(graph_slam, graph_slam2);
 		return match.getCost() < match1.getCost();
 	} );
