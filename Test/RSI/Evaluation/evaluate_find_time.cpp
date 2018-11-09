@@ -695,9 +695,17 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 		}
 	}
 
-	myfile << "\n# F1 mean\n";
-	myfile << sum / results.size() << "\n";
+	double std_sum = 0;
+	double mean = sum / results.size();
+	for (auto result : results) {
+		std_sum += (std::get<6>(result) - mean) * (std::get<6>(result) - mean);
+	}
 
+	std_sum = std::sqrt(std_sum / (results.size() - 1 ) );
+
+
+	myfile << "\n# F1 mean std\n";
+	myfile << sum / results.size() << " " << std_sum << "\n";
 
 }
 
@@ -710,48 +718,49 @@ int main(int argc, char** argv){
 	std::string input_folder = "../../../../Test/RSI/Sketches";
 	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
-//	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false);
-//	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false);
-//	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false);
-//	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true);
+	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false);
+	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false);
+	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false);
+	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true);
+
+	std::cout << "Results base" << std::endl;
+	print_results(results_base);
+	export_results("results_base.dat", results_base);
+	std::cout << "Results Anchors" << std::endl;
+	print_results(results_anchors);
+	export_results("results_anchors.dat", results_anchors);
+	std::cout << "Results Anchors Uniqueness" << std::endl;
+	print_results(results_anchors_uniqueness);
+	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
+	std::cout << "Results Anchors Relative size" << std::endl;
+	print_results(results_anchors_relative_size);
+	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
 
 
-//	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false);
-//	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false);
-//	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false);
-//	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true);
+
+	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false);
+	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false);
+	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false);
+	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true);
+
+	std::cout << "Results base_hungarian" << std::endl;
+	print_results(results_base_hungarian);
+	export_results("results_base_hungarian.dat", results_base_hungarian);
+	std::cout << "Results Anchors_hungarian" << std::endl;
+	print_results(results_anchors_hungarian);
+	export_results("results_anchors_hungarian.dat", results_anchors_hungarian);
+	std::cout << "Results Anchors Uniqueness_hungarian" << std::endl;
+	print_results(results_anchors_uniqueness_hungarian);
+	export_results("results_anchors_uniqueness_hungarian.dat", results_anchors_uniqueness_hungarian);
+	std::cout << "Results Anchors Relative size_hungarian" << std::endl;
+	print_results(results_anchors_relative_size_hungarian);
+	export_results("results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
 
 	auto results_base_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, false, false, false);
 	auto results_anchors_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, false);
 	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, true, false);
 	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true);
 
-//	std::cout << "Results base" << std::endl;
-//	print_results(results_base);
-//	export_results("results_base.dat", results_base);
-//	std::cout << "Results Anchors" << std::endl;
-//	print_results(results_anchors);
-//	export_results("results_anchors.dat", results_anchors);
-//	std::cout << "Results Anchors Uniqueness" << std::endl;
-//	print_results(results_anchors_uniqueness);
-//	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
-//	std::cout << "Results Anchors Relative size" << std::endl;
-//	print_results(results_anchors_relative_size);
-//	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
-
-
-//	std::cout << "Results base_hungarian" << std::endl;
-//	print_results(results_base_hungarian);
-//	export_results("results_base_hungarian.dat", results_base_hungarian);
-//	std::cout << "Results Anchors_hungarian" << std::endl;
-//	print_results(results_anchors_hungarian);
-//	export_results("results_anchors_hungarian.dat", results_anchors_hungarian);
-//	std::cout << "Results Anchors Uniqueness_hungarian" << std::endl;
-//	print_results(results_anchors_uniqueness_hungarian);
-//	export_results("results_anchors_uniqueness_hungarian.dat", results_anchors_uniqueness_hungarian);
-//	std::cout << "Results Anchors Relative size_hungarian" << std::endl;
-//	print_results(results_anchors_relative_size_hungarian);
-//	export_results("results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
 
 	std::cout << "Results base_vfl" << std::endl;
 	print_results(results_base_vfl);
