@@ -172,7 +172,7 @@ auto create_graphs_laplacian(const std::string& map_input, const std::string& ma
 
 
 
-auto match_maps_vfl(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
+auto match_maps_vfl(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
 	auto[gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(
 			map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
@@ -282,6 +282,17 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 				fp_good = fp;
 				fn_good = fn;
 			}
+
+			if(all_results.find( time ) != all_results.end() ) {
+				auto data = all_results.find(time)->second;
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				all_results.find(time)->second = data;
+			}
+			else{
+				AASS::graphmatch::evaluation::DataEvaluation data(time);
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(time, data));
+			}
 		}
 
 		std::cout << "Running on :\n" << gt_file << " with time " << time << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
@@ -304,7 +315,7 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 }
 
 
-auto match_maps_hungarian(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
+auto match_maps_hungarian(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
 	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
 
@@ -316,6 +327,9 @@ auto match_maps_hungarian(const std::string& map_input, const std::string& map_m
 	double recall = -1;
 	double good_time = -1;
 	double tp_good = -1, fp_good = -1, fn_good = -1;
+
+//	std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
+
 	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
 
 		gp_laplacian->propagateHeatKernel(time);
@@ -402,7 +416,22 @@ auto match_maps_hungarian(const std::string& map_input, const std::string& map_m
 				fp_good = fp;
 				fn_good = fn;
 			}
+			if(all_results.find( time ) != all_results.end() ) {
+				auto data = all_results.find(time)->second;
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				all_results.find(time)->second = data;
+			}
+			else{
+				AASS::graphmatch::evaluation::DataEvaluation data(time);
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(time, data));
+			}
 		}
+//		else{
+//
+//			all_results.push_back( std::make_tuple(tp, fp, fn, prec, rec, F1) );
+//		}
+
 
 		std::cout << "Running on :\n" << gt_file << " with time " << time << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
 
@@ -423,7 +452,7 @@ auto match_maps_hungarian(const std::string& map_input, const std::string& map_m
 
 
 
-auto match_maps_and_find_time(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight) {
+auto match_maps_and_find_time(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
 
 	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
@@ -536,6 +565,17 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 				fp_good = fp;
 				fn_good = fn;
 			}
+
+			if(all_results.find( time ) != all_results.end() ) {
+				auto data = all_results.find(time)->second;
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				all_results.find(time)->second = data;
+			}
+			else{
+				AASS::graphmatch::evaluation::DataEvaluation data(time);
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(time, data));
+			}
 		}
 
 		std::cout << "Running on :\n" << gt_file << " with time " << time << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
@@ -556,12 +596,56 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 }
 
 
-auto evaluate_all_files(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
+//auto fuse_detailed_results(const std::map< double, std::tuple<double, double, double, double, double, double> >& results, std::map< double, std::tuple<double, double, double, double, double, double> >& all_results_out){
+//
+//	for (auto element : results){
+//
+//		//Merge results
+//		if(all_results_out.find( element.first ) != all_results_out.end() ){
+//
+//			auto [tp, fp, fn, prec, rec, F1] = all_results_out[element.first];
+//			auto [tp_r, fp_r, fn_r, prec_r, rec_r, F1_r] = element.second;
+//			all_results_out[element.first] = std::make_tuple(tp + tp_r, fp + fp_r, fn + fn_r , prec + prec_r, rec + rec_r, F1 + F1_r);
+//
+//		}
+//		else{
+//			all_results_out[element.first] = element.second;
+//		}
+//	}
+//}
+
+
+auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results_out, const std::string& file_out){
+
+	std::string result_file = file_out;
+	std::ofstream myfile;
+	if (!AASS::graphmatch::evaluation::exists_test3(result_file)) {
+		myfile.open(result_file);
+		myfile << "# map tp fp fn precision recall F1 time\n";
+	} else {
+		myfile.open(result_file, std::ios::out | std::ios::app);
+		myfile << "# map tp fp fn precision recall F1 time\n";
+	}
+
+	if (myfile.is_open()) {
+		for(auto element : all_results_out) {
+			myfile << "# element " << element.first << "\n";
+			element.second.export_data(myfile);
+		}
+	}
+
+
+}
+
+
+auto evaluate_all_files(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, const std::string& prefix_details){
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
 
 
 	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+	int count = 0;
 	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
 
 		auto p_canon = std::experimental::filesystem::canonical(*p);
@@ -569,6 +653,7 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 			auto input_file_stem =p_canon.stem();
 
 			if(input_file_stem.string().compare("model_simple") != 0) {
+				count++;
 
 				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
 				std::string gt_file = gt_folder + "/" + gt_name;
@@ -576,26 +661,33 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
 				          << std::endl;
 
+//				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
 				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(p_canon.string(), input_folder + "/model_simple.png",
-				                                            gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+				                                            gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, all_results_detailed);
 
 				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+//				fuse_detailed_results(all_results_tmp, all_results_detailed);
 			}
 
 		}
 
 	}
+	export_mean_std_detailed_results(all_results_detailed, "export_detailed" + prefix_details +".dat");
 	return results;
 
 
 }
 
-auto evaluate_all_files_hungarian(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
+auto evaluate_all_files_hungarian(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, const std::string& prefix_details){
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
-
+	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
 
 	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+
+	int count = 0;
+
+
 	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
 
 		auto p_canon = std::experimental::filesystem::canonical(*p);
@@ -604,30 +696,41 @@ auto evaluate_all_files_hungarian(const std::string& input_folder, const std::st
 
 			if(input_file_stem.string().compare("model_simple") != 0) {
 
+				count++;
+
 				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
 				std::string gt_file = gt_folder + "/" + gt_name;
 
 				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
 				          << std::endl;
 
+//				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
 				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_hungarian(p_canon.string(), input_folder + "/model_simple.png",
-				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, all_results_detailed);
 
 				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+
+//				fuse_detailed_results(all_results_tmp, all_results_detailed);
+
 			}
 
 		}
 
 	}
+
+	export_mean_std_detailed_results(all_results_detailed, "export_detailed_hungarian" + prefix_details +".dat");
+
 	return results;
 
 
 }
 
 
-auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight){
+auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, const std::string& prefix_details){
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
+	int count = 0;
 
 
 	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
@@ -638,6 +741,7 @@ auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& 
 			auto input_file_stem =p_canon.stem();
 
 			if(input_file_stem.string().compare("model_simple") != 0) {
+				count++;
 
 				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
 				std::string gt_file = gt_folder + "/" + gt_name;
@@ -645,15 +749,19 @@ auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& 
 				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
 				          << std::endl;
 
+//				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
 				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_vfl(p_canon.string(), input_folder + "/model_simple.png",
-				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight);
+				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, all_results_detailed);
 
 				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+
+//				fuse_detailed_results(all_results_tmp, all_results_detailed);
 			}
 
 		}
 
 	}
+	export_mean_std_detailed_results(all_results_detailed, "export_detailed_vfl" + prefix_details +".dat");
 	return results;
 
 
@@ -676,6 +784,8 @@ void print_results(const std::vector<std::tuple<std::string, double, double, dou
 void export_results(const std::string& file_out, const std::vector<std::tuple<std::string, double, double, double, double, double, double, double > >& results){
 
 	double sum = 0;
+	double sum_precision = 0;
+	double sum_recall = 0;
 
 	std::string result_file = file_out;
 	std::ofstream myfile;
@@ -692,20 +802,30 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 			myfile << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << " " << std::get<4>(result) << " " << std::get<5>(result) << " " << std::get<6>(result) << " " << std::get<7>(result);
 			myfile << "\n";
 			sum +=  std::get<6>(result);
+			sum_precision +=  std::get<4>(result);
+			sum_recall +=  std::get<5>(result);
 		}
 	}
 
 	double std_sum = 0;
+	double std_mean_precision = 0;
+	double std_mean_recall = 0;
 	double mean = sum / results.size();
+	double mean_precision = sum_precision / results.size();
+	double mean_recall = sum_recall / results.size();
 	for (auto result : results) {
 		std_sum += (std::get<6>(result) - mean) * (std::get<6>(result) - mean);
+		std_mean_precision += (std::get<4>(result) - mean_precision) * (std::get<4>(result) - mean_precision);
+		std_mean_recall += (std::get<5>(result) - mean_recall) * (std::get<5>(result) - mean_recall);
 	}
 
 	std_sum = std::sqrt(std_sum / (results.size() - 1 ) );
+	std_mean_precision = std::sqrt(std_mean_precision / (results.size() - 1 ) );
+	std_mean_precision = std::sqrt(std_mean_recall / (results.size() - 1 ) );
 
 
-	myfile << "\n# F1 mean std\n";
-	myfile << sum / results.size() << " " << std_sum << "\n";
+	myfile << "\n# F1mean std precisionmean std recallmean std \n";
+	myfile << mean << " " << std_sum << " " << mean_precision << " " << std_mean_precision << " " << mean_recall << " " << std_mean_recall << "\n";
 
 }
 
@@ -718,14 +838,15 @@ int main(int argc, char** argv){
 	std::string input_folder = "../../../../Test/RSI/Sketches";
 	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
-	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false);
-	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false);
-	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false);
-	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true);
-
+	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false, "base");
 	std::cout << "Results base" << std::endl;
 	print_results(results_base);
 	export_results("results_base.dat", results_base);
+
+	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false, "anchors");
+	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false, "anchors_unique");
+	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true, "anchors_relative_size");
+
 	std::cout << "Results Anchors" << std::endl;
 	print_results(results_anchors);
 	export_results("results_anchors.dat", results_anchors);
@@ -738,10 +859,10 @@ int main(int argc, char** argv){
 
 
 
-	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false);
-	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false);
-	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false);
-	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true);
+	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false, "base");
+	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false, "anchors");
+	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false, "anchors_unique");
+	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true, "anchors_relative_size");
 
 	std::cout << "Results base_hungarian" << std::endl;
 	print_results(results_base_hungarian);
@@ -756,10 +877,10 @@ int main(int argc, char** argv){
 	print_results(results_anchors_relative_size_hungarian);
 	export_results("results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
 
-	auto results_base_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, false, false, false);
-	auto results_anchors_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, false);
-	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, true, false);
-	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true);
+	auto results_base_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, false, false, false, "base");
+	auto results_anchors_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, false, "anchors");
+	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, true, false, "anchors_unique");
+	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true, "anchors_relative_size");
 
 
 	std::cout << "Results base_vfl" << std::endl;

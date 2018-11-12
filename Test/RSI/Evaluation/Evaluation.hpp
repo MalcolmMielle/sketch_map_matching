@@ -10,6 +10,10 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <array>
+#include <experimental/array>
+
+#include <tuple>
 
 #include <bettergraph/HypotheseBase.hpp>
 
@@ -22,6 +26,90 @@
 namespace AASS{
 	namespace graphmatch{
 		namespace evaluation{
+
+
+			class DataEvaluation{
+
+			public:
+
+				double time;
+
+				std::vector<std::array<double, 6> > tp_fp_fn_precision_recall_F1;
+
+				DataEvaluation(double time_t) : time(time_t){};
+
+				void push_back(const std::tuple<double, double, double, double, double, double>& input){
+					auto array = std::experimental::make_array(std::get<0>(input), std::get<1>(input), std::get<2>(input), std::get<3>(input), std::get<4>(input), std::get<5>(input));
+					tp_fp_fn_precision_recall_F1.push_back(array);
+				}
+
+				auto getMeanStdTp() const {
+					return std::make_tuple(getMean(0), getStd(0) );
+				}
+				auto getMeanStdFp() const {
+					return std::make_tuple(getMean(1), getStd(1) );
+				}
+				auto getMeanStdFn() const {
+					return std::make_tuple(getMean(2), getStd(2) );
+				}
+				auto getMeanStdPrecision() const {
+					return std::make_tuple(getMean(3), getStd(3) );
+				}
+				auto getMeanStdRecall() const {
+					return std::make_tuple(getMean(4), getStd(4) );
+				}
+				auto getMeanStdF1() const {
+					return std::make_tuple(getMean(5), getStd(5) );
+				}
+
+				void export_data(std::ofstream& myfile) const {
+
+					myfile << "#tp fp fn precision recall F1\n";
+					for(auto element : tp_fp_fn_precision_recall_F1){
+						myfile << element[0] << " "<< element[1] << " "<< element[2] << " "<< element[3] << " "<< element[4] << " "<< element[5] << "\n";
+					}
+					myfile << "\n";
+
+					myfile << "# meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
+					auto meanstdtp = getMeanStdTp();
+					auto meanstdfp = getMeanStdFp();
+					auto meanstdfn = getMeanStdFn();
+					auto meanstdprecision = getMeanStdPrecision();
+					auto meanstdrecall = getMeanStdRecall();
+					auto meanstdF1 = getMeanStdF1();
+					myfile << std::get<0>(meanstdtp) << " " << std::get<1>(meanstdtp) << " " << std::get<0>(meanstdfp) << " " << std::get<1>(meanstdfp) << " " << std::get<0>(meanstdfn) << " " << std::get<1>(meanstdfn) << " " << std::get<0>(meanstdprecision) << " " << std::get<1>(meanstdprecision) << " " << std::get<0>(meanstdrecall) << " " << std::get<1>(meanstdrecall) << " " << std::get<0>(meanstdF1) << " " << std::get<1>(meanstdF1) << "\n" ;
+
+					myfile << "\n\n";
+
+
+				}
+
+			private:
+
+				double getMean(int index) const {
+					double sum = 0;
+					for(auto element : tp_fp_fn_precision_recall_F1){
+						sum += element[index];
+					}
+					return sum / (double) tp_fp_fn_precision_recall_F1.size();
+				}
+
+				double getStd(int index) const {
+					double mean_t = getMean(index);
+					double std_sum = 0;
+					for (auto element : tp_fp_fn_precision_recall_F1) {
+						std_sum += (element[index] - mean_t) * (element[index] - mean_t);
+					}
+					return std::sqrt(std_sum / (tp_fp_fn_precision_recall_F1.size() - 1 ) );
+				}
+
+			};
+
+
+
+
+
+
 
 			class Evaluation{
 
