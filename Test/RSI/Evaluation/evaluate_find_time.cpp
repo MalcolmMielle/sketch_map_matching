@@ -821,7 +821,7 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 
 	std_sum = std::sqrt(std_sum / (results.size() - 1 ) );
 	std_mean_precision = std::sqrt(std_mean_precision / (results.size() - 1 ) );
-	std_mean_precision = std::sqrt(std_mean_recall / (results.size() - 1 ) );
+	std_mean_recall = std::sqrt(std_mean_recall / (results.size() - 1 ) );
 
 
 	myfile << "\n# F1mean std precisionmean std recallmean std \n";
