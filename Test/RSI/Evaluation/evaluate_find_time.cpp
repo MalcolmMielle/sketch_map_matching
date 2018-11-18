@@ -592,6 +592,9 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 	if (F1_good == -1) {
 		F1_good = 0;
 		good_time = -1;
+		precision = 0;
+		recall = 0;
+		tp_good = fp_good = fn_good = 0;
 	}
 
 	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
@@ -616,6 +619,29 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 //		}
 //	}
 //}
+
+
+auto export_mean_std_detailed_results_mean(const std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results_out, const std::string& file_out){
+
+	std::string result_file = file_out;
+	std::ofstream myfile;
+	if (!AASS::graphmatch::evaluation::exists_test3(result_file)) {
+		myfile.open(result_file);
+		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
+	} else {
+		myfile.open(result_file, std::ios::out | std::ios::app);
+		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
+	}
+
+	if (myfile.is_open()) {
+		for(auto element : all_results_out) {
+			myfile << "# element " << element.first << "\n";
+			element.second.export_mean_data(myfile);
+		}
+	}
+
+
+}
 
 
 auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results_out, const std::string& file_out){
@@ -675,7 +701,8 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 		}
 
 	}
-	export_mean_std_detailed_results(all_results_detailed, "export_detailed" + prefix_details +".dat");
+	export_mean_std_detailed_results(all_results_detailed, "export_detailed_" + prefix_details +".dat");
+	export_mean_std_detailed_results_mean(all_results_detailed, "export_detailed_" + prefix_details +"_all_summarized.dat");
 	return results;
 
 
@@ -721,7 +748,8 @@ auto evaluate_all_files_hungarian(const std::string& input_folder, const std::st
 
 	}
 
-	export_mean_std_detailed_results(all_results_detailed, "export_detailed_hungarian" + prefix_details +".dat");
+	export_mean_std_detailed_results(all_results_detailed, "export_detailed_hungarian_" + prefix_details +".dat");
+	export_mean_std_detailed_results_mean(all_results_detailed, "export_detailed_hungarian_" + prefix_details +"_all_summarized.dat");
 
 	return results;
 
@@ -764,7 +792,8 @@ auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& 
 		}
 
 	}
-	export_mean_std_detailed_results(all_results_detailed, "export_detailed_vfl" + prefix_details +".dat");
+	export_mean_std_detailed_results(all_results_detailed, "export_detailed_vfl_" + prefix_details +".dat");
+	export_mean_std_detailed_results_mean(all_results_detailed, "export_detailed_vfl_" + prefix_details +"_all_summarized.dat");
 	return results;
 
 
