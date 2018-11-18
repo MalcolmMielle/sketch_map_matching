@@ -42,6 +42,10 @@ namespace AASS {
 			bool label = false;
 			double _threshold_same = 0.05;
 
+
+			///JUST FOR TESTING OF ALL METHOD
+			std::string type_old_method_testing = "nan";
+
 			AASS::RSI::ZoneRI zone;
 
 
@@ -178,6 +182,15 @@ namespace AASS {
 			return p.compareBool(p2);
 		}
 
+		inline bool compareRegionOldStrategy(const Region& p, const Region& p2){
+			assert(p.type_old_method_testing.compare("nan") != 0);
+			assert(p2.type_old_method_testing.compare("nan") != 0);
+			if(p.type_old_method_testing.compare(p2.type_old_method_testing) == 0){
+				return true;
+			}
+			return false;
+		}
+
 
 
 
@@ -207,12 +220,35 @@ namespace AASS {
 			Eigen::MatrixXd _eigenvectors;
 			std::deque<VertexLaplacian> _anchors;
 
+			bool _use_old_comparison_method;
+
 		public:
 
 
 			GraphLaplacian() {}
 			GraphLaplacian( const GraphLaplacian& ) = delete; // non construction-copyable
 			GraphLaplacian& operator=( const GraphLaplacian& ) = delete; // non copyable
+
+			void useOldComparisonMethod(bool b){
+
+				_use_old_comparison_method = b;
+				if(_use_old_comparison_method == true) {
+					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+						auto v = *vp.first;
+						int num_edges = this->getNumEdges(v);
+
+						//Crossings
+						if (num_edges > 1) {
+							(*this)[v].type_old_method_testing = "c";
+						}
+							//Dead ends
+						else {
+							(*this)[v].type_old_method_testing = "d";
+						}
+					}
+				}
+
+			}
 
 			void print() const {
 

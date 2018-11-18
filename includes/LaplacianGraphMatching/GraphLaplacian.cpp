@@ -210,8 +210,20 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 			//Match every string correspondance
 			std::string out;
 
-			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
-			edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place, f_neigh_place_model, compareFunction, out);
+			if(!_use_old_comparison_method) {
+				std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
+				edit_distance = edit_distance +
+				                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+				                                                                           f_neigh_place_model,
+				                                                                           compareFunction, out);
+			}
+			else{
+				std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegionOldStrategy;
+				edit_distance = edit_distance +
+				                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+				                                                                           f_neigh_place_model,
+				                                                                           compareFunction, out);
+			}
 
 // 					edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
 
@@ -237,8 +249,20 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 		//Match every string correspondance
 		std::string out;
 
-		std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
-		edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place, f_neigh_place_model, compareFunction, out);
+		if(!_use_old_comparison_method) {
+			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
+			edit_distance = edit_distance +
+			                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+			                                                                           f_neigh_place_model,
+			                                                                           compareFunction, out);
+		}
+		else{
+			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegionOldStrategy;
+			edit_distance = edit_distance +
+			                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+			                                                                           f_neigh_place_model,
+			                                                                           compareFunction, out);
+		}
 
 		// 			std::cout << "String result size " << all_strings_first.size() << std::endl;
 
@@ -273,8 +297,20 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 		//Match every string correspondance
 		std::string out;
 
-		std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
-		edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place, f_neigh_place_model, compareFunction, out);
+		if(!_use_old_comparison_method) {
+			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
+			edit_distance = edit_distance +
+			                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+			                                                                           f_neigh_place_model,
+			                                                                           compareFunction, out);
+		}
+		else{
+			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegionOldStrategy;
+			edit_distance = edit_distance +
+			                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+			                                                                           f_neigh_place_model,
+			                                                                           compareFunction, out);
+		}
 
 
 		// 			std::cout << "the linked" << std::endl;
