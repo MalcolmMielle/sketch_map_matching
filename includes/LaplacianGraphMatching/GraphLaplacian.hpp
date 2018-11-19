@@ -61,6 +61,8 @@ namespace AASS {
 				_time = r.getTime();
 				_heat_anchors = r.getHeatAnchors();
 				zone = r.zone;
+				type_old_method_testing = r.type_old_method_testing;
+				label = r.label;
 			}
 
 			void useHeatAnchors(bool b){_use_heat_anchors = b;}
@@ -118,14 +120,28 @@ namespace AASS {
 			}
 
 			double compare(const Region& region) const {
-				assert(region.getTime() == _time);
-				assert(_heat_anchors != -1);
+
+				if(type_old_method_testing.compare("nan") == 0) {
+
+					assert(region.type_old_method_testing.compare("nan") == 0);
+					assert(region.getTime() == _time);
+					assert(_heat_anchors != -1);
+
 //				std::cout << "Heats : " << region.getHeatAnchors() << " - " << _heat_anchors << std::endl;
 //				return std::abs( region.getHeatAnchors() - _heat_anchors );
-				if (_use_heat_anchors) {
-					return std::abs(region.getHeatAnchors() - _heat_anchors);
-				} else {
-					return std::abs(region.getHeat() - _heat);
+					if (_use_heat_anchors) {
+						return std::abs(region.getHeatAnchors() - _heat_anchors);
+					} else {
+						return std::abs(region.getHeat() - _heat);
+					}
+				}
+				else{
+
+					assert(region.type_old_method_testing.compare("nan") != 0);
+					if(region.type_old_method_testing.compare(type_old_method_testing) == 0){
+						return true;
+					}
+					return false;
 				}
 			}
 
@@ -139,24 +155,37 @@ namespace AASS {
 
 
 			bool compareBool(const Region& r) const {
-				assert(r.getTime() == _time);
-				assert(_heat_anchors != -1);
 
-				if(_use_heat_anchors){
+//				assert(type_old_method_testing.compare("nan") == 0);
+//				assert(r.type_old_method_testing.compare("nan") == 0);
+
+				if(type_old_method_testing.compare("nan") == 0) {
+					assert(r.getTime() == _time);
+					assert(_heat_anchors != -1);
+
+					if (_use_heat_anchors) {
 //					std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
-					if(r.getHeatAnchors() <= _heat_anchors + _threshold_same && r.getHeatAnchors() >= _heat_anchors - _threshold_same){
+						if (r.getHeatAnchors() <= _heat_anchors + _threshold_same &&
+						    r.getHeatAnchors() >= _heat_anchors - _threshold_same) {
 //						std::cout << "True" << std::endl;
-						return true;
+							return true;
+						}
+					} else {
+						if (r.getHeat() <= _heat + _threshold_same && r.getHeat() >= _heat - _threshold_same) {
+//						std::cout << "True" << std::endl;
+							return true;
+						}
 					}
+//				std::cout << "False" << std::endl;
+					return false;
 				}
 				else{
-					if(r.getHeat() <= _heat + _threshold_same && r.getHeat() >= _heat - _threshold_same){
-//						std::cout << "True" << std::endl;
+					assert(r.type_old_method_testing.compare("nan") != 0);
+					if(r.type_old_method_testing.compare(type_old_method_testing) == 0){
 						return true;
 					}
+					return false;
 				}
-//				std::cout << "False" << std::endl;
-				return false;
 
 			}
 
@@ -179,10 +208,14 @@ namespace AASS {
 		}
 
 		inline bool compareRegion(const Region& p, const Region& p2){
+			assert(p.type_old_method_testing.compare("nan") == 0);
+			assert(p2.type_old_method_testing.compare("nan") == 0);
+//			assert(false);
 			return p.compareBool(p2);
 		}
 
 		inline bool compareRegionOldStrategy(const Region& p, const Region& p2){
+//			std::cout << "Wait what ? " <<p.type_old_method_testing << std::endl;
 			assert(p.type_old_method_testing.compare("nan") != 0);
 			assert(p2.type_old_method_testing.compare("nan") != 0);
 			if(p.type_old_method_testing.compare(p2.type_old_method_testing) == 0){
@@ -232,23 +265,49 @@ namespace AASS {
 			void useOldComparisonMethod(bool b){
 
 				_use_old_comparison_method = b;
-				if(_use_old_comparison_method == true) {
+				if(_use_old_comparison_method) {
 					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
 						auto v = *vp.first;
 						int num_edges = this->getNumEdges(v);
 
 						//Crossings
 						if (num_edges > 1) {
+							std::cout << "Changing TYPE" << std::endl;
 							(*this)[v].type_old_method_testing = "c";
 						}
 							//Dead ends
 						else {
+							std::cout << "Changing TYPE" << std::endl;
 							(*this)[v].type_old_method_testing = "d";
 						}
+					}
+					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+						auto v = *vp.first;
+						assert((*this)[v].type_old_method_testing.compare("nan") != 0);
+					}
+					std::cout << "Check passed " << std::endl;
+				}
+				else{
+					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+						auto v = *vp.first;
+						(*this)[v].type_old_method_testing = "nan";
+
 					}
 				}
 
 			}
+
+			bool isUsingOldMethod() const {
+				if(_use_old_comparison_method == true) {
+					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+						auto v = *vp.first;
+						assert((*this)[v].type_old_method_testing.compare("nan") != 0);
+					}
+				}
+				std::cout << "Check passed " << std::endl;
+				return _use_old_comparison_method;
+			}
+
 
 			void print() const {
 

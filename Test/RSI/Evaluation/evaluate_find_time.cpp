@@ -169,6 +169,11 @@ auto create_graphs_laplacian(const std::string& map_input, const std::string& ma
 	gp_laplacian->useOldComparisonMethod(use_old_matching_scheme);
 	gp_laplacian_model->useOldComparisonMethod(use_old_matching_scheme);
 
+	if(use_old_matching_scheme == true) {
+		assert(gp_laplacian->isUsingOldMethod());
+		assert(gp_laplacian_model->isUsingOldMethod());
+	}
+
 	return std::make_tuple(gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model);
 
 }
@@ -179,6 +184,11 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 
 	auto[gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(
 			map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme);
+
+	if(use_old_matching_scheme == true) {
+		assert(gp_laplacian->isUsingOldMethod());
+		assert(gp_laplacian_model->isUsingOldMethod());
+	}
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
@@ -309,6 +319,9 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 	if (F1_good == -1) {
 		F1_good = 0;
 		good_time = -1;
+		precision = 0;
+		recall = 0;
+		tp_good = fp_good = fn_good = 0;
 	}
 
 	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
@@ -321,6 +334,11 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 auto match_maps_hungarian(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
 	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme);
+
+	if(use_old_matching_scheme == true) {
+		assert(gp_laplacian->isUsingOldMethod());
+		assert(gp_laplacian_model->isUsingOldMethod());
+	}
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
@@ -444,9 +462,16 @@ auto match_maps_hungarian(const std::string& map_input, const std::string& map_m
 	delete gp_laplacian;
 	delete gp_laplacian_model;
 
+//	if (F1_good == -1) {
+//		F1_good = 0;
+//		good_time = -1;
+//	}
 	if (F1_good == -1) {
 		F1_good = 0;
 		good_time = -1;
+		precision = 0;
+		recall = 0;
+		tp_good = fp_good = fn_good = 0;
 	}
 
 	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
@@ -459,6 +484,11 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 
 
 	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme);
+
+	if(use_old_matching_scheme == true) {
+		assert(gp_laplacian->isUsingOldMethod());
+		assert(gp_laplacian_model->isUsingOldMethod());
+	}
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
@@ -630,12 +660,12 @@ auto export_mean_std_detailed_results_mean(const std::map< double, AASS::graphma
 		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
 	} else {
 		myfile.open(result_file, std::ios::out | std::ios::app);
-		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
+//		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
 	}
 
 	if (myfile.is_open()) {
 		for(auto element : all_results_out) {
-			myfile << "# element " << element.first << "\n";
+//			myfile << "# element " << element.first << "\n";
 			element.second.export_mean_data(myfile);
 		}
 	}
@@ -658,8 +688,17 @@ auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::
 
 	if (myfile.is_open()) {
 		for(auto element : all_results_out) {
-			myfile << "# element " << element.first << "\n";
-			element.second.export_data(myfile);
+			if( element.first == static_cast<int>(element.first)){
+				myfile << "# element " << element.first << "\n";
+				element.second.export_detailed_data(myfile);
+			}
+		}
+		myfile << "\n\n\n";
+		for(auto element : all_results_out) {
+			if( element.first != static_cast<int>(element.first)){
+				myfile << "# element " << element.first << "\n";
+				element.second.export_detailed_data(myfile);
+			}
 		}
 	}
 
@@ -856,7 +895,7 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 	std_mean_recall = std::sqrt(std_mean_recall / (results.size() - 1 ) );
 
 
-	myfile << "\n# F1mean std precisionmean std recallmean std \n";
+	myfile << "\n\n# F1mean std precisionmean std recallmean std \n";
 	myfile << mean << " " << std_sum << " " << mean_precision << " " << std_mean_precision << " " << mean_recall << " " << std_mean_recall << "\n";
 
 }
@@ -869,6 +908,29 @@ int main(int argc, char** argv){
 
 	std::string input_folder = "../../../../Test/RSI/Sketches";
 	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
+
+
+
+	auto results_base_old_method =  evaluate_all_files(input_folder, gt_folder, false, false, false, true, "base_old");
+	std::cout << "Results base_old_method" << std::endl;
+	print_results(results_base_old_method);
+	export_results("results_base_old_method.dat", results_base_old_method);
+
+	auto results_anchors_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, false, true, "anchors_old");
+	std::cout << "Results Anchors_old_method" << std::endl;
+	print_results(results_anchors_old_method);
+	export_results("results_anchors_old_method.dat", results_anchors_old_method);
+
+	auto results_anchors_uniqueness_old_method =  evaluate_all_files(input_folder, gt_folder, true, true, false, true, "anchors_unique_old");
+	auto results_anchors_relative_size_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, true, true, "anchors_relative_size_old");
+
+	std::cout << "Results Anchors Uniqueness_old_method" << std::endl;
+	print_results(results_anchors_uniqueness_old_method);
+	export_results("results_anchors_uniqueness_old_method.dat", results_anchors_uniqueness_old_method);
+	std::cout << "Results Anchors Relative size_old_method" << std::endl;
+	print_results(results_anchors_relative_size_old_method);
+	export_results("results_anchors_relative_size_old_method.dat", results_anchors_relative_size_old_method);
+
 
 	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false, false, "base");
 	std::cout << "Results base" << std::endl;
@@ -890,31 +952,13 @@ int main(int argc, char** argv){
 	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
 
 
-	auto results_base_old_method =  evaluate_all_files(input_folder, gt_folder, false, false, false, true, "base");
-	std::cout << "Results base_old_method" << std::endl;
-	print_results(results_base_old_method);
-	export_results("results_base_old_method.dat", results_base_old_method);
-
-	auto results_anchors_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, false, true, "anchors");
-	auto results_anchors_uniqueness_old_method =  evaluate_all_files(input_folder, gt_folder, true, true, false, true, "anchors_unique");
-	auto results_anchors_relative_size_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, true, true, "anchors_relative_size");
-
-	std::cout << "Results Anchors_old_method" << std::endl;
-	print_results(results_anchors_old_method);
-	export_results("results_anchors_old_method.dat", results_anchors_old_method);
-	std::cout << "Results Anchors Uniqueness_old_method" << std::endl;
-	print_results(results_anchors_uniqueness_old_method);
-	export_results("results_anchors_uniqueness_old_method.dat", results_anchors_uniqueness_old_method);
-	std::cout << "Results Anchors Relative size_old_method" << std::endl;
-	print_results(results_anchors_relative_size_old_method);
-	export_results("results_anchors_relative_size_old_method.dat", results_anchors_relative_size_old_method);
-
 
 
 	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false, false, "base");
 	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false, false, "anchors");
 	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false, false, "anchors_unique");
 	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true, false, "anchors_relative_size");
+	auto results_old_method_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true, true, "old_method");
 
 	std::cout << "Results base_hungarian" << std::endl;
 	print_results(results_base_hungarian);
@@ -928,11 +972,15 @@ int main(int argc, char** argv){
 	std::cout << "Results Anchors Relative size_hungarian" << std::endl;
 	print_results(results_anchors_relative_size_hungarian);
 	export_results("results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
+	std::cout << "Results Old Method hungarian" << std::endl;
+	print_results(results_old_method_hungarian);
+	export_results("results_old_method_hungarian.dat", results_old_method_hungarian);
 
 	auto results_base_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, false, false, false, false, "base");
 	auto results_anchors_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, false, false, "anchors");
 	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, true, false, false, "anchors_unique");
 	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true, false, "anchors_relative_size");
+	auto results_old_method_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true, true, "old_method");
 
 
 	std::cout << "Results base_vfl" << std::endl;
@@ -947,6 +995,9 @@ int main(int argc, char** argv){
 	std::cout << "Results Anchors Relative size_vfl" << std::endl;
 	print_results(results_anchors_relative_size_vfl);
 	export_results("results_anchors_relative_size_vfl.dat", results_anchors_relative_size_vfl);
+	std::cout << "Results Old Method vfl" << std::endl;
+	print_results(results_old_method_vfl);
+	export_results("results_old_method_vfl.dat", results_old_method_vfl);
 
 
 	//HACK because can't copy iterator

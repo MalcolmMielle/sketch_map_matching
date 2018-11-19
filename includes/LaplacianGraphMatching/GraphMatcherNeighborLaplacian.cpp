@@ -44,6 +44,10 @@ int AASS::graphmatch::GraphMatcherNeighborLaplacian::initPlanar(const AASS::grap
 
 bool AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorithm(graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model)
 {
+//	std::cout << "Beging planar matching" << std::endl;
+//	assert(gp.isUsingOldMethod());
+//	assert(gp_model.isUsingOldMethod());
+//	std::cout << "Checked planar matching" << std::endl;
 
 	//Determine seed substitutions (ie which node is comaprable to which node in the other graph)
 	//Add seed substitution to the FIFO queue Q
@@ -62,6 +66,10 @@ bool AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorith
 
 bool AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorithm(graphmatch::HypotheseLaplacian& starting_seeds, graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model)
 {
+//	std::cout << "Beging seed planar matching" << std::endl;
+//	assert(gp.isUsingOldMethod());
+//	assert(gp_model.isUsingOldMethod());
+//	std::cout << "Checked seed planar matching" << std::endl;
 
 	graphmatch::HypotheseLaplacian seen_before;
 	graphmatch::HypotheseLaplacian Q;
@@ -121,6 +129,11 @@ bool AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorith
 
 // 			//Match neighborhoods
 // 			std::cout << "Going to make the match" << std::endl;
+//			std::cout << "\nBeging befor emake matching matching" << std::endl;
+//			assert(gp.isUsingOldMethod());
+//			std::cout << "Beging befor emake matching matching" << std::endl;
+//			assert(gp_model.isUsingOldMethod());
+//			std::cout << "ALL GOOD" << std::endl;
 
 			std::deque< graphmatch::MatchLaplacian > out_match;
 			dist = dist + gp.makeMatching(the_pair.getFirst(),

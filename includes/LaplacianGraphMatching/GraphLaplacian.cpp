@@ -45,12 +45,23 @@ int AASS::graphmatch::GraphLaplacian::editDistance(const GraphLaplacian::VertexL
 
 		std::string out_string;
 
-		std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
+		double edistance = 0;
+		if(!_use_old_comparison_method) {
+			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
+			edistance = AASS::editdistance::normalizedEditDistance<Region, Region>(new_test, other_graph_neighbor, compareFunction, out_string);
+		}
+		else{
+			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegionOldStrategy;
+			edistance = AASS::editdistance::normalizedEditDistance<Region, Region>(new_test, other_graph_neighbor, compareFunction, out_string);
+//			edit_distance = edit_distance +
+//			                AASS::editdistance::normalizedEditDistance<Region, Region>(f_neigh_place,
+//			                                                                           f_neigh_place_model,
+//			                                                                           compareFunction, out);
+		}
 
 
 // 				(const std::deque<ModifyTypeElement>& string_to_modify, const std::deque<UnchangedTypeElement>& unchanged, std::function<bool(ModifyTypeElement, UnchangedTypeElement)> compareFunction, std::string& out)
 
-		double edistance = AASS::editdistance::normalizedEditDistance<Region, Region>(new_test, other_graph_neighbor, compareFunction, out_string);
 
 // 				std::cout << "the out string " << out_string << " for " << new_test <<" and " <<other(*this)_neighbor <<std::endl;
 		// 			std::cout << "case : " << new_test;
@@ -132,6 +143,13 @@ int AASS::graphmatch::GraphLaplacian::editDistance(const GraphLaplacian::VertexL
 
 double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::GraphLaplacian::VertexLaplacian& v, const AASS::graphmatch::GraphLaplacian::VertexLaplacian& v_model, const AASS::graphmatch::GraphLaplacian& gp_model, const std::deque< AASS::graphmatch::MatchLaplacian >& matched_previously, std::deque< AASS::graphmatch::MatchLaplacian >& out_match){
 
+	if(_use_old_comparison_method) {
+		std::cout << "Beging make matching" << std::endl;
+		assert(this->isUsingOldMethod());
+		std::cout << "Beging make matching model" << std::endl;
+		assert(gp_model.isUsingOldMethod());
+		std::cout << "Checked make matching" << std::endl;
+	}
 	// 		std::cout << std::endl << std::endl << " MAKE MATCHING " << std::endl << std::endl;
 	//List of the final string combined.
 	//Get clockwise edges
@@ -207,6 +225,21 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 
 			// 				std::cout << "String result size " << all_strings_first.size() << std::endl;
 
+
+
+
+//			for(auto element : f_neigh_place)
+//			{
+//				assert(element.type_old_method_testing.compare("nan") != 0);
+//			}
+//			for(auto element : f_neigh_place_model)
+//			{
+//				assert(element.type_old_method_testing.compare("nan") != 0);
+//			}
+
+//			std::cout << "All good :( !" << std::endl;
+
+
 			//Match every string correspondance
 			std::string out;
 
@@ -249,6 +282,20 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 		//Match every string correspondance
 		std::string out;
 
+
+
+//		for(auto element : f_neigh_place)
+//		{
+//			assert(element.type_old_method_testing.compare("nan") != 0);
+//		}
+//		for(auto element : f_neigh_place_model)
+//		{
+//			assert(element.type_old_method_testing.compare("nan") != 0);
+//		}
+
+//		std::cout << "All good :( !" << std::endl;
+
+
 		if(!_use_old_comparison_method) {
 			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
 			edit_distance = edit_distance +
@@ -269,7 +316,7 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 		//Match every string correspondance
 // 				std::string out;
 // 				edit_distance = edit_distance + AASS::editdistance::normalizedEditDistance(all_strings_first, all_strings_model, out);
-		std::cout << "NOT GOOD " << std::endl;
+//		std::cout << "NOT GOOD " << std::endl;
 
 		//Create Match
 		createMatch(out, all_edge, all_edge_model, pair_matched[pair_matched.size()-1], out_match);
@@ -296,6 +343,18 @@ double AASS::graphmatch::GraphLaplacian::makeMatching(const AASS::graphmatch::Gr
 
 		//Match every string correspondance
 		std::string out;
+
+
+//		for(auto element : f_neigh_place)
+//		{
+//			assert(element.type_old_method_testing.compare("nan") != 0);
+//		}
+//		for(auto element : f_neigh_place_model)
+//		{
+//			assert(element.type_old_method_testing.compare("nan") != 0);
+//		}
+
+//		std::cout << "All good :( !" << std::endl;
 
 		if(!_use_old_comparison_method) {
 			std::function<bool(Region, Region)> compareFunction = graphmatch::compareRegion;
@@ -362,7 +421,12 @@ void AASS::graphmatch::GraphLaplacian::getNeighborBetween2(size_t start, size_t 
 
 	while(start != end){
 		neighbor.push_back(all_edge[start].second);
+
+//		assert((*this)[all_edge[start].second].type_old_method_testing.compare("nan") != 0);
+
 		places.push_back((*this)[all_edge[start].second]);
+
+//		assert(places[places.size() - 1].type_old_method_testing.compare("nan") != 0);
 		//Move forward
 		start++;
 		if(start == all_edge.size()){

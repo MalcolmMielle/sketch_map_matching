@@ -70,22 +70,29 @@ namespace AASS{
 					auto meanstdprecision = getMeanStdPrecision();
 					auto meanstdrecall = getMeanStdRecall();
 					auto meanstdF1 = getMeanStdF1();
-					myfile << time << std::get<0>(meanstdtp) << " " << std::get<1>(meanstdtp) << " " << std::get<0>(meanstdfp) << " " << std::get<1>(meanstdfp) << " " << std::get<0>(meanstdfn) << " " << std::get<1>(meanstdfn) << " " << std::get<0>(meanstdprecision) << " " << std::get<1>(meanstdprecision) << " " << std::get<0>(meanstdrecall) << " " << std::get<1>(meanstdrecall) << " " << std::get<0>(meanstdF1) << " " << std::get<1>(meanstdF1) << "\n" ;
+					myfile << time << " " << std::get<0>(meanstdtp) << " " << std::get<1>(meanstdtp) << " " << std::get<0>(meanstdfp) << " " << std::get<1>(meanstdfp) << " " << std::get<0>(meanstdfn) << " " << std::get<1>(meanstdfn) << " " << std::get<0>(meanstdprecision) << " " << std::get<1>(meanstdprecision) << " " << std::get<0>(meanstdrecall) << " " << std::get<1>(meanstdrecall) << " " << std::get<0>(meanstdF1) << " " << std::get<1>(meanstdF1) << "\n" ;
 
-					myfile << "\n\n";
 
+				}
+
+				void export_detailed_data(std::ofstream& myfile) const {
+
+					myfile << "#time tp fp fn precision recall F1\n";
+					for (auto element : tp_fp_fn_precision_recall_F1) {
+						myfile << time << " " << element[0] << " " << element[1] << " " << element[2] << " "
+						       << element[3] << " " << element[4] << " " << element[5] << "\n";
+					}
 				}
 
 				void export_data(std::ofstream& myfile) const {
 
-					myfile << "#tp fp fn precision recall F1\n";
-					for(auto element : tp_fp_fn_precision_recall_F1){
-						myfile << element[0] << " "<< element[1] << " "<< element[2] << " "<< element[3] << " "<< element[4] << " "<< element[5] << "\n";
-					}
+					export_detailed_data(myfile);
 					myfile << "\n";
 
 					myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
 					export_mean_data(myfile);
+
+					myfile << "\n\n";
 
 
 				}
