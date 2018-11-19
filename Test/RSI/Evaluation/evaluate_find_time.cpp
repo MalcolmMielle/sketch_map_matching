@@ -198,7 +198,7 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 	double recall = -1;
 	double good_time = -1;
 	double tp_good = -1, fp_good = -1, fn_good = -1;
-	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
+	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
 
 		gp_laplacian->propagateHeatKernel(time);
 		gp_laplacian_model->propagateHeatKernel(time);
@@ -351,7 +351,7 @@ auto match_maps_hungarian(const std::string& map_input, const std::string& map_m
 
 //	std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
 
-	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
+	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
 
 		gp_laplacian->propagateHeatKernel(time);
 		gp_laplacian_model->propagateHeatKernel(time);
@@ -498,7 +498,7 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 	double recall = -1;
 	double good_time = -1;
 	double tp_good = -1, fp_good = -1, fn_good = -1;
-	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
+	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
 
 		gp_laplacian->propagateHeatKernel(time);
 		gp_laplacian_model->propagateHeatKernel(time);
