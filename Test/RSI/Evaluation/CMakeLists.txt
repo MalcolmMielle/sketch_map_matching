@@ -16,3 +16,6 @@ target_link_libraries(evaluate ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  Graph
 
 add_executable(evaluate_find_time evaluate_find_time.cpp)
 target_link_libraries(evaluate_find_time ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)
+
+add_executable(evaluate_threshold evaluate_threshold.cpp)
+target_link_libraries(evaluate_threshold ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)

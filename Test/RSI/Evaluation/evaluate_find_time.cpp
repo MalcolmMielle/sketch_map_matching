@@ -1000,6 +1000,13 @@ int main(int argc, char** argv){
 	export_results("results_old_method_vfl.dat", results_old_method_vfl);
 
 
+	//Evaluate threshold
+
+
+
+
+
+
 	//HACK because can't copy iterator
 	//	int count = 0;
 

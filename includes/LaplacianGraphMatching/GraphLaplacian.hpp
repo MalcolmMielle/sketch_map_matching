@@ -34,13 +34,13 @@ namespace AASS {
 			double _time = -1;
 
 			double _heat_anchors = -1;
+			double _threshold_same = 0.05;
 
 //			double _eigenvalue;
 //			Eigen::VectorXd _eigenvector;
 
 		public:
 			bool label = false;
-			double _threshold_same = 0.05;
 
 
 			///JUST FOR TESTING OF ALL METHOD
@@ -63,8 +63,11 @@ namespace AASS {
 				zone = r.zone;
 				type_old_method_testing = r.type_old_method_testing;
 				label = r.label;
+				_threshold_same = r.getThresholdSame();
 			}
 
+			double getThresholdSame() const {return _threshold_same;}
+			void setThresholdSame(double tt) {_threshold_same = tt;}
 			void useHeatAnchors(bool b){_use_heat_anchors = b;}
 			bool useHeatAnchors() const {return _use_heat_anchors;}
 
@@ -261,6 +264,26 @@ namespace AASS {
 			GraphLaplacian() {}
 			GraphLaplacian( const GraphLaplacian& ) = delete; // non construction-copyable
 			GraphLaplacian& operator=( const GraphLaplacian& ) = delete; // non copyable
+
+
+			void setThrehsoldSameVertices(double n_t){
+				for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+					auto v = *vp.first;
+					(*this)[v].setThresholdSame(n_t);
+				}
+			}
+
+//			double getThrehsoldSame(){
+//				double thres = -1;
+//				for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+//					auto v = *vp.first;
+//					if(thres == -1) {
+//						thres = (*this)[v].getThresholdSame();
+//					}
+//					if(thres != (*this)[v].getThresholdSame()
+//					std::runtime_error("Theshold values differs");
+//				}
+//			}
 
 			void useOldComparisonMethod(bool b){
 
