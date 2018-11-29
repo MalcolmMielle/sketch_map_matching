@@ -221,6 +221,8 @@ int main(int argc, char** argv){
 		file_export = "export.dat";
 	}
 
+	std::cout << file << " " << file2 << " " << file_export << std::endl;
+
 	//Segment maps
 //	std::string file = "/home/malcolm/AASS/sketch_algorithms/Test/RSI/01.png";
 	AASS::RSI::GraphZoneRI graph_slam_model;

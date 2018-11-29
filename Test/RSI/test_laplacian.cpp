@@ -14,12 +14,12 @@ BOOST_AUTO_TEST_CASE(trying) {
 
 	AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex;
 	AASS::graphmatch::Region region;
-	region.setUniqueness(0.1);
+	region.setValue(0.1);
 	graph.addVertex(vertex, region);
 
 	AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex2;
 	AASS::graphmatch::Region region2;
-	region2.setUniqueness(0.5);
+	region2.setValue(0.5);
 	graph.addVertex(vertex2, vertex, region2);
 
 	std::cout << "Graph created " << std::endl;
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(trying) {
 
 	AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex3;
 	AASS::graphmatch::Region region3;
-	region3.setUniqueness(1);
+	region3.setValue(1);
 	graph.addVertex(vertex3, vertex, region3);
 
 	std::cout << "Graph created " << std::endl;
@@ -70,8 +70,29 @@ BOOST_AUTO_TEST_CASE(trying) {
 
 
 
+	AASS::graphmatch::GraphLaplacian graph2;
+
+	AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex_g2;
+	AASS::graphmatch::Region region_g2;
+	region_g2.setValue(0.1);
+	graph2.addVertex(vertex_g2, region_g2);
+
+	AASS::graphmatch::GraphLaplacian::VertexLaplacian vertex2_g2;
+	AASS::graphmatch::Region region2_g2;
+	region2_g2.setValue(0.5);
+	graph2.addVertex(vertex2_g2, vertex_g2, region2_g2);
 
 
 
+	std::cout << "SImilarity:\n" << graph.getSimilarity(graph2) << std::endl;
+	std::cout << "Chi square:\n" << graph.getChiSquare(graph2) << std::endl;
+	std::cout << "Bhattacha:\n" << graph.getBhattacharyyaDistance(graph2) << std::endl;
+	std::cout << "mAHALANOBIS:\n" << graph.getMahalanobisDistance(graph2) << std::endl;
+
+	BOOST_ASSERT(graph.getMahalanobisDistance(graph2) == 1);
+
+	std::cout << "mAHALANOBIS likelihood:\n" << graph.getMahalanobisLikelihood(graph2) << std::endl;
+
+	std::cout << "DONE" << std::endl;
 
 }

@@ -690,12 +690,12 @@ BOOST_AUTO_TEST_CASE(trying)
 	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
 	for (vp3 = boost::vertices(gp_laplacian_model); vp3.first != vp3.second; ++vp3.first) {
 		auto v = *vp3.first;
-		gp_laplacian_model[v].setUniqueness(1);
+		gp_laplacian_model[v].setValue(1);
 	}
 	std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp2;
 	for (vp2 = boost::vertices(gp2_laplacian); vp2.first != vp2.second; ++vp2.first) {
 		auto v = *vp2.first;
-		gp2_laplacian[v].setUniqueness(1);
+		gp2_laplacian[v].setValue(1);
 	}
 
 	gp_laplacian_model.eigenLaplacian();

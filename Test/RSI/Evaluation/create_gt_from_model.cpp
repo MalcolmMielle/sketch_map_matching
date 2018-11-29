@@ -43,6 +43,7 @@ int main(){
 
 			system(program.c_str());
 
+			std::cout << "DONE " << std::endl;
 //			exit(0);
 //		}
 

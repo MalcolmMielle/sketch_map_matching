@@ -332,6 +332,198 @@ namespace AASS {
 			}
 
 
+
+
+			//***** DISTANCES *****//
+
+
+			//Better Mahalanobis https://stackoverflow.com/questions/18083486/compare-histograms-in-opencv-and-normalize-similarity-index
+			double getBhattacharyyaDistance(const GraphLaplacian& graph_model){
+				auto hist = getHistogramEdges();
+				auto hist_model = graph_model.getHistogramEdges();
+				cv::normalize(hist, hist);
+				cv::normalize(hist_model, hist_model);
+				double l = cv::compareHist(hist, hist_model, CV_COMP_BHATTACHARYYA);
+				assert(l >= 0);
+				assert(l <= 1);
+				return l;
+			}
+
+			double getMahalanobisLikelihood(const GraphLaplacian& graph_model) {
+
+				double dist = getMahalanobisDistance(graph_model);
+				cv::Mat similarity = getSimilarity(graph_model);
+
+				double factor = 1 / std::sqrt(2 * 3.1415 * cv::determinant(similarity) ) ;
+				double l =  factor * std::exp(-0.5 * dist);
+
+				std::cout << "Likelihood " << factor << " " << std::exp(-0.5 * dist) << " " << l << " det " << cv::determinant(similarity) << std::endl;
+
+				assert(l >= 0);
+//				assert(l <= 1);
+
+				return l;
+
+			}
+
+			double getMahalanobisDistance(const GraphLaplacian& graph_model){
+				auto hist = getHistogramEdges();
+				auto hist_model = graph_model.getHistogramEdges();
+				cv::Mat similarity = getSimilarity(hist, hist_model);
+				cv::Mat dst = hist - hist_model;
+				std::cout << "dst" << dst << std::endl;
+				std::cout << "dst" << similarity << std::endl;
+				cv::MatExpr res = (dst.t() * similarity * dst);
+				cv::Mat res_mat = res;
+				if (res_mat.rows != 1 || res_mat.cols != 1) throw "Matrix is not 1 by 1!";
+				return std::sqrt( res_mat.at<float>(0) );
+
+			}
+
+			cv::Mat getSimilarity(const GraphLaplacian& graph_model){
+				auto hist = getHistogramEdges();
+				auto hist_model = graph_model.getHistogramEdges();
+				return getSimilarity(hist, hist_model);
+
+			}
+
+
+			cv::Mat getSimilarity(cv::Mat& hist, cv::Mat& hist_model){
+
+				cv::Mat similarity(hist.rows, hist_model.rows, hist.type());
+
+//				std::cout << "S rows " << hist.rows << " cols " << hist.cols << " sim " << similarity << std::endl;
+				for (int i=0; i< hist.rows; i++) {
+					for (int j=0; j< hist_model.rows; j++) {
+//						std::cout <<  hist.at<float>(i) << "-" << hist_model.at<float>(j) << " = " << hist.at<float>(i) - hist_model.at<float>(j) << " ans " << std::abs( hist.at<float>(i) - hist_model.at<float>(j) ) << " at " << i << " " << j << std::endl;
+
+//i is row and j is col. is it correct ?
+						similarity.at<float>(i, j) = std::abs( hist.at<float>(i) - hist_model.at<float>(j) );
+
+//						std::cout << "sim " << similarity << std::endl;
+					}
+				}
+				return similarity;
+			}
+
+			double getChiSquare(const GraphLaplacian& graph_model){
+				auto hist = getHistogramEdges();
+				auto hist_model = graph_model.getHistogramEdges();
+				cv::normalize(hist, hist);
+				cv::normalize(hist_model, hist_model);
+				double l = cv::compareHist(hist, hist_model, CV_COMP_CHISQR);
+				assert(l >= 0);
+				assert(l <= 1);
+				return l;
+			}
+
+
+			cv::Mat getHistogramEdges() const {
+
+				std::vector<int> edges;
+				for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+					auto v = *vp.first;
+					edges.push_back( getNumEdges(v) );
+				}
+				cv::Mat cvt(edges, false);
+				cvt.convertTo( cvt, CV_8UC1 );
+
+//				std::cout << "Edges " << cvt << "\n DONE" << std::endl;
+
+				cv::Mat hist;
+				/// Establish the number of bins
+				int histSize = 3;
+				/// Set the ranges ( for B,G,R) )
+				float range[] = { 0, histSize } ;
+				const float* histRange = { range };
+				bool uniform = true; bool accumulate = false;
+				cv::calcHist(&cvt, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, uniform, accumulate);
+
+//				cv::normalize(hist, hist);
+
+//				std::cout << "Histogram " << hist << std::endl;
+				return hist;
+			}
+
+
+
+			double getMeanL2Norm(const GraphLaplacian& graph) const {
+				if(this->getNumVertices() <= graph.getNumVertices()){
+					return this->getMeanL2NormOneWay(graph);
+				}
+				else{
+					return graph.getMeanL2NormOneWay(*this);
+				}
+			}
+
+			double getMeanL2NormOneWay(const GraphLaplacian& graph) const {
+
+//				assert(_size_classified == true);
+				double sum_distance = 0;
+
+				for(auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first){
+					VertexLaplacian v = *vp.first;
+					double shortest_distance_relative_size = -1;
+					double size_classification = (*this)[v].zone.getSizeClassification();
+
+					for(auto vp_model = boost::vertices(graph); vp_model.first != vp_model.second; ++vp_model.first){
+						VertexLaplacian v_model = *vp_model.first;
+						double size_classification_model = graph[v_model].zone.getSizeClassification();
+						double distance = std::abs(size_classification -  size_classification_model);
+						if(shortest_distance_relative_size == -1 || shortest_distance_relative_size > distance){
+							shortest_distance_relative_size = distance;
+						}
+					}
+
+					sum_distance += shortest_distance_relative_size;
+
+				}
+				return sum_distance / (double) this->getNumVertices();
+
+			}
+
+			double getHausdorffDistanceRelativeSize(const GraphLaplacian& graph) const {
+
+				double shortest_this_to_graph = this->getLongestDistanceOutOfShortestBetweenRegionSize(graph);
+				double shortest_graph_to_this = graph.getLongestDistanceOutOfShortestBetweenRegionSize(*this);
+				return std::max(shortest_graph_to_this, shortest_this_to_graph);
+
+			}
+
+			double getLongestDistanceOutOfShortestBetweenRegionSize(const GraphLaplacian& graph) const{
+
+//				assert(_size_classified == true);
+				double longest_distance_relative_size = -1;
+
+				for(auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first){
+					VertexLaplacian v = *vp.first;
+					double shortest_distance_relative_size = -1;
+					double size_classification = (*this)[v].zone.getSizeClassification();
+
+					for(auto vp_model = boost::vertices(graph); vp_model.first != vp_model.second; ++vp_model.first){
+						VertexLaplacian v_model = *vp_model.first;
+						double size_classification_model = graph[v_model].zone.getSizeClassification();
+						double distance = std::abs(size_classification -  size_classification_model);
+						if(shortest_distance_relative_size == -1 || shortest_distance_relative_size > distance){
+							shortest_distance_relative_size = distance;
+						}
+					}
+
+					if(shortest_distance_relative_size > longest_distance_relative_size){
+						longest_distance_relative_size = shortest_distance_relative_size;
+					}
+
+				}
+				return longest_distance_relative_size;
+			}
+
+
+			/***********************************************************/
+
+
+
+
+
 			void print() const {
 
 				for(auto anchor : _anchors){
@@ -377,8 +569,13 @@ namespace AASS {
 				}
 			}
 
-			void useRelativeSizeAsWeights(){
+			/**
+			 * @param[in] factor : factor used to "normalize" the weights. Typically, the hausdorff distance or the l2 norm
+			 */
+			void useRelativeSizeAsWeights(double factor = 1){
 //				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
+
+				std::cout << "Factor " << factor << std::endl;
 				auto vp3 = boost::vertices(*this);
 				auto v = *vp3.first;
 				double lowest_value = (*this)[v].zone.getSizeClassification();
@@ -393,8 +590,14 @@ namespace AASS {
 				for (vp3 = boost::vertices(*this); vp3.first != vp3.second; ++vp3.first) {
 					v = *vp3.first;
 					double size_class = (*this)[v].zone.getSizeClassification();
-					(*this)[v].setValue(size_class - lowest_value);
+
+					double value_region = (std::exp(-factor) * (size_class - lowest_value));
+
+					std::cout << "From " << size_class - lowest_value << " to " <<value_region << std::endl;
+					(*this)[v].setValue(value_region);
 				}
+				int aaaa;
+				std::cin >> aaaa;
 			}
 
 			/**

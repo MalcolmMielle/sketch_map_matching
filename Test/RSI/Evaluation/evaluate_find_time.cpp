@@ -66,12 +66,24 @@ cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 }
 
 
-auto create_graphs_laplacian(const std::string& map_input, const std::string& map_model, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme){
+auto create_graphs_laplacian(AASS::RSI::GraphZoneRI& graph_slam, AASS::RSI::GraphZoneRI& graph_slam_model, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, const cv::Mat& graph_slam_segmented, const cv::Mat& graph_slam_segmented_model) {
 
-	AASS::RSI::GraphZoneRI graph_slam;
-	cv::Mat graph_slam_segmented = makeGraph(map_input, graph_slam);
-	AASS::RSI::GraphZoneRI graph_slam_model;
-	cv::Mat graph_slam_segmented_model = makeGraph(map_model, graph_slam_model);
+
+	for(auto vp = boost::vertices(graph_slam); vp.first != vp.second; ++vp.first) {
+		AASS::RSI::GraphZoneRI::VertexZoneRI v = *vp.first;
+		double size_classification = (graph_slam)[v].getSizeClassification();
+		std::cout << "-> " <<size_classification << " ";
+	}
+	std::cout << "\nsecond graph " << std::endl;
+	for(auto vp = boost::vertices(graph_slam_model); vp.first != vp.second; ++vp.first) {
+		AASS::RSI::GraphZoneRI::VertexZoneRI v = *vp.first;
+		double size_classification = (graph_slam_model)[v].getSizeClassification();
+		std::cout << "-> " <<size_classification << " ";
+	}
+	std::cout << "\ndone " << std::endl;
+
+	int aaa;
+	std::cin >> aaa;
 
 	graph_slam.setSDAwayFromMeanForUniqueness(1);
 	graph_slam_model.setSDAwayFromMeanForUniqueness(1);
@@ -151,8 +163,20 @@ auto create_graphs_laplacian(const std::string& map_input, const std::string& ma
 	//Not using uniqueness score for now
 
 	if(use_relative_size_as_weight) {
-		gp_laplacian->useRelativeSizeAsWeights();
-		gp_laplacian_model->useRelativeSizeAsWeights();
+		double factor = 1;
+//		double factor_model = 1;
+
+		if(use_hausdorff_distance){
+			factor = graph_slam.getHausdorffDistanceRelativeSize(graph_slam_model);
+//			factor_model = graph_slam_model.getHausdorffDistanceRelativeSize();
+		}
+		else if(use_l2_norm){
+			factor = graph_slam.getMeanL2Norm(graph_slam_model);
+//			factor_model = graph_slam_model.getHausdorffDistanceRelativeSize();
+		}
+
+		gp_laplacian->useRelativeSizeAsWeights(factor);
+		gp_laplacian_model->useRelativeSizeAsWeights(factor);
 	}
 	else if(use_uniqueness_score){
 		gp_laplacian->useUniquenessScoreAsWeights();
@@ -179,11 +203,22 @@ auto create_graphs_laplacian(const std::string& map_input, const std::string& ma
 }
 
 
+auto create_graphs_laplacian(const std::string& map_input, const std::string& map_model, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm){
 
-auto match_maps_vfl(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
+	AASS::RSI::GraphZoneRI graph_slam;
+	cv::Mat graph_slam_segmented = makeGraph(map_input, graph_slam);
+	AASS::RSI::GraphZoneRI graph_slam_model;
+	cv::Mat graph_slam_segmented_model = makeGraph(map_model, graph_slam_model);
 
-	auto[gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(
-			map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme);
+	return create_graphs_laplacian(graph_slam, graph_slam_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, graph_slam_segmented, graph_slam_segmented_model);
+
+}
+
+
+
+auto match_maps_vfl(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_input, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
+
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(*(std::get<1>(graph_input)), *(std::get<1>(graph_model)), use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, std::get<2>(graph_input), std::get<2>(graph_model));
 
 	if(use_old_matching_scheme == true) {
 		assert(gp_laplacian->isUsingOldMethod());
@@ -331,9 +366,9 @@ auto match_maps_vfl(const std::string& map_input, const std::string& map_model, 
 }
 
 
-auto match_maps_hungarian(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
+auto match_maps_hungarian(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_input, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
-	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme);
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(*(std::get<1>(graph_input)), *(std::get<1>(graph_model)), use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, std::get<2>(graph_input), std::get<2>(graph_model));
 
 	if(use_old_matching_scheme == true) {
 		assert(gp_laplacian->isUsingOldMethod());
@@ -480,10 +515,10 @@ auto match_maps_hungarian(const std::string& map_input, const std::string& map_m
 
 
 
-auto match_maps_and_find_time(const std::string& map_input, const std::string& map_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
+auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_input, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
 
-	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(map_input, map_model, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme);
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(*(std::get<1>(graph_input)), *(std::get<1>(graph_model)), use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, std::get<2>(graph_input), std::get<2>(graph_model));
 
 	if(use_old_matching_scheme == true) {
 		assert(gp_laplacian->isUsingOldMethod());
@@ -498,7 +533,7 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 	double recall = -1;
 	double good_time = -1;
 	double tp_good = -1, fp_good = -1, fn_good = -1;
-	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
+	for(double time = 0 ; time <= 10 && aninput == 0; time = time + 0.5) {
 
 		gp_laplacian->propagateHeatKernel(time);
 		gp_laplacian_model->propagateHeatKernel(time);
@@ -577,9 +612,9 @@ auto match_maps_and_find_time(const std::string& map_input, const std::string& m
 //	//
 //			std::cout << "Time : " << time << std::endl;
 //			cv::waitKey(0);
-	//
-	//		std::cout << "Input 0 if not good and anything otherwise" << std::endl;
-	//		std::cin >> aninput;
+//
+//			std::cout << "Input 0 if not good and anything otherwise" << std::endl;
+//			std::cin >> aninput;
 
 
 			std::cout << "Read file " << gt_file << std::endl;
@@ -706,40 +741,55 @@ auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::
 }
 
 
-auto evaluate_all_files(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, const std::string& prefix_details){
+auto evaluate_all_files(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, const std::string gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, const std::string& prefix_details){
+
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
 	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
 
+	for(auto element : names_maps_images){
 
-	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
-	int count = 0;
-	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+		std::string map_name = std::get<0>(element);
 
-		auto p_canon = std::experimental::filesystem::canonical(*p);
-		if(!std::experimental::filesystem::is_directory(p_canon) ){
-			auto input_file_stem =p_canon.stem();
+		std::string gt_name = "gt_" + map_name + "_model_simple.dat";
+		std::string gt_file = gt_folder + "/" + gt_name;
+//		std::cout << "Running on :\n" << map_name << "\nand \n" << input_folder + "/model_simple.png" << std::endl;
 
-			if(input_file_stem.string().compare("model_simple") != 0) {
-				count++;
+		auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(element, gt,
+		                                                                 gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, all_results_detailed);
 
-				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
-				std::string gt_file = gt_folder + "/" + gt_name;
-
-				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
-				          << std::endl;
-
-//				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
-				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(p_canon.string(), input_folder + "/model_simple.png",
-				                                            gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, all_results_detailed);
-
-				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
-//				fuse_detailed_results(all_results_tmp, all_results_detailed);
-			}
-
-		}
-
+		results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, time));
 	}
+
+
+//	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+//	int count = 0;
+//	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+//
+//		auto p_canon = std::experimental::filesystem::canonical(*p);
+//		if(!std::experimental::filesystem::is_directory(p_canon) ){
+//			auto input_file_stem =p_canon.stem();
+//
+//			if(input_file_stem.string().compare("model_simple") != 0) {
+//				count++;
+//
+//				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+//				std::string gt_file = gt_folder + "/" + gt_name;
+//
+//				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
+//				          << std::endl;
+//
+////				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
+//				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(p_canon.string(), input_folder + "/model_simple.png",
+//				                                            gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, all_results_detailed);
+//
+//				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+////				fuse_detailed_results(all_results_tmp, all_results_detailed);
+//			}
+//
+//		}
+//
+//	}
 	export_mean_std_detailed_results(all_results_detailed, "export_detailed_" + prefix_details +".dat");
 	export_mean_std_detailed_results_mean(all_results_detailed, "export_detailed_" + prefix_details +"_all_summarized.dat");
 	return results;
@@ -747,45 +797,63 @@ auto evaluate_all_files(const std::string& input_folder, const std::string& gt_f
 
 }
 
-auto evaluate_all_files_hungarian(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, const std::string& prefix_details){
+auto evaluate_all_files_hungarian(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, const std::string& prefix_details){
+
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
 	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
 
-	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+	for(auto element : names_maps_images){
 
-	int count = 0;
+		std::string map_name = std::get<0>(element);
 
+		std::string gt_name = "gt_" + map_name + "_model_simple.dat";
+		std::string gt_file = gt_folder + "/" + gt_name;
+//		std::cout << "Running on :\n" << map_name << "\nand \n" << input_folder + "/model_simple.png" << std::endl;
 
-	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+		auto[tp, fp, fn, prec, rec, F1, time] = match_maps_hungarian(element, gt,
+		                                                                 gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, all_results_detailed);
 
-		auto p_canon = std::experimental::filesystem::canonical(*p);
-		if(!std::experimental::filesystem::is_directory(p_canon) ){
-			auto input_file_stem =p_canon.stem();
-
-			if(input_file_stem.string().compare("model_simple") != 0) {
-
-				count++;
-
-				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
-				std::string gt_file = gt_folder + "/" + gt_name;
-
-				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
-				          << std::endl;
-
-//				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
-				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_hungarian(p_canon.string(), input_folder + "/model_simple.png",
-				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, all_results_detailed);
-
-				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
-
-//				fuse_detailed_results(all_results_tmp, all_results_detailed);
-
-			}
-
-		}
-
+		results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, time));
 	}
+
+
+
+
+//	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+//
+//	int count = 0;
+//
+//
+//	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+//
+//		auto p_canon = std::experimental::filesystem::canonical(*p);
+//		if(!std::experimental::filesystem::is_directory(p_canon) ){
+//			auto input_file_stem =p_canon.stem();
+//
+//			if(input_file_stem.string().compare("model_simple") != 0) {
+//
+//				count++;
+//
+//				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+//				std::string gt_file = gt_folder + "/" + gt_name;
+//
+//				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
+//				          << std::endl;
+//
+////				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
+//				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_hungarian(p_canon.string(), input_folder + "/model_simple.png",
+//				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, all_results_detailed);
+//
+//				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+//
+////				fuse_detailed_results(all_results_tmp, all_results_detailed);
+//
+//			}
+//
+//		}
+//
+//	}
 
 	export_mean_std_detailed_results(all_results_detailed, "export_detailed_hungarian_" + prefix_details +".dat");
 	export_mean_std_detailed_results_mean(all_results_detailed, "export_detailed_hungarian_" + prefix_details +"_all_summarized.dat");
@@ -796,41 +864,57 @@ auto evaluate_all_files_hungarian(const std::string& input_folder, const std::st
 }
 
 
-auto evaluate_all_files_vfl(const std::string& input_folder, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, const std::string& prefix_details){
+auto evaluate_all_files_vfl(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, const std::string& gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, const std::string& prefix_details){
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
 	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
-	int count = 0;
 
+	for(auto element : names_maps_images){
 
-	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
-	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+		std::string map_name = std::get<0>(element);
 
-		auto p_canon = std::experimental::filesystem::canonical(*p);
-		if(!std::experimental::filesystem::is_directory(p_canon) ){
-			auto input_file_stem =p_canon.stem();
+		std::string gt_name = "gt_" + map_name + "_model_simple.dat";
+		std::string gt_file = gt_folder + "/" + gt_name;
+//		std::cout << "Running on :\n" << map_name << "\nand \n" << input_folder + "/model_simple.png" << std::endl;
 
-			if(input_file_stem.string().compare("model_simple") != 0) {
-				count++;
+		auto[tp, fp, fn, prec, rec, F1, time] = match_maps_vfl(element, gt,
+		                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, all_results_detailed);
 
-				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
-				std::string gt_file = gt_folder + "/" + gt_name;
-
-				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
-				          << std::endl;
-
-//				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
-				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_vfl(p_canon.string(), input_folder + "/model_simple.png",
-				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, all_results_detailed);
-
-				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
-
-//				fuse_detailed_results(all_results_tmp, all_results_detailed);
-			}
-
-		}
-
+		results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, time));
 	}
+
+
+//	int count = 0;
+//
+//
+//	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+//	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+//
+//		auto p_canon = std::experimental::filesystem::canonical(*p);
+//		if(!std::experimental::filesystem::is_directory(p_canon) ){
+//			auto input_file_stem =p_canon.stem();
+//
+//			if(input_file_stem.string().compare("model_simple") != 0) {
+//				count++;
+//
+//				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+//				std::string gt_file = gt_folder + "/" + gt_name;
+//
+//				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
+//				          << std::endl;
+//
+////				std::map< double, std::tuple<double, double, double, double, double, double> > all_results_tmp;
+//				auto[tp, fp, fn, prec, rec, F1, time] = match_maps_vfl(p_canon.string(), input_folder + "/model_simple.png",
+//				                                                             gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, all_results_detailed);
+//
+//				results.push_back(std::make_tuple(p_canon.stem().string(), tp, fp, fn, prec, rec, F1, time));
+//
+////				fuse_detailed_results(all_results_tmp, all_results_detailed);
+//			}
+//
+//		}
+//
+//	}
 	export_mean_std_detailed_results(all_results_detailed, "export_detailed_vfl_" + prefix_details +".dat");
 	export_mean_std_detailed_results_mean(all_results_detailed, "export_detailed_vfl_" + prefix_details +"_all_summarized.dat");
 	return results;
@@ -902,63 +986,115 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 
 
 
+auto get_all_images(const std::string& input_folder){
+
+	std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> > names_graphs_images;
+
+	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+
+		auto p_canon = std::experimental::filesystem::canonical(*p);
+		if (!std::experimental::filesystem::is_directory(p_canon)) {
+			auto input_file_stem = p_canon.stem();
+
+			if (input_file_stem.string().compare("model_simple") != 0) {
+
+//				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+//				std::string gt_file = gt_folder + "/" + gt_name;
+//
+//				std::cout << "Running on :\n" << p_canon.string() << "\nand \n" << input_folder + "/model_simple.png"
+//				          << std::endl;
+
+				AASS::RSI::GraphZoneRI* graph_slam = new AASS::RSI::GraphZoneRI();
+				cv::Mat graph_slam_segmented = makeGraph(p_canon.string(), *graph_slam);
+				names_graphs_images.push_back( std::make_tuple(p_canon.stem().string(), graph_slam, graph_slam_segmented) );
+//				AASS::RSI::GraphZoneRI graph_slam_model;
+//				cv::Mat graph_slam_segmented_model = makeGraph(map_model, graph_slam_model);
+
+
+			}
+		}
+	}
+	return names_graphs_images;
+}
+
+
+
+auto get_gt(const std::string gt_folder, const std::string gt_name){
+
+	std::string gt_file = gt_folder + "/" + gt_name;
+	AASS::RSI::GraphZoneRI* graph_slam = new AASS::RSI::GraphZoneRI();
+	cv::Mat graph_slam_segmented = makeGraph(gt_file, *graph_slam);
+
+	return std::make_tuple(gt_file, graph_slam, graph_slam_segmented);
+
+}
 
 int main(int argc, char** argv){
 
 
-	std::string input_folder = "../../../../Test/RSI/Sketches";
+	std::string input_folder = "../../../../Test/RSI/Sketches_trimmed";
 	std::string gt_folder = "../../../../Test/RSI/Sketches/GT";
 
 
+	auto names_graphs_images = get_all_images(input_folder);
+	auto gt = get_gt(gt_folder, input_folder + "/model_simple.png");
 
-	auto results_base_old_method =  evaluate_all_files(input_folder, gt_folder, false, false, false, true, "base_old");
-	std::cout << "Results base_old_method" << std::endl;
-	print_results(results_base_old_method);
-	export_results("results_base_old_method.dat", results_base_old_method);
+//	auto results_base_old_method =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, true, false, false, "base_old");
+//	std::cout << "Results base_old_method" << std::endl;
+//	print_results(results_base_old_method);
+//	export_results("results_base_old_method.dat", results_base_old_method);
 
-	auto results_anchors_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, false, true, "anchors_old");
-	std::cout << "Results Anchors_old_method" << std::endl;
-	print_results(results_anchors_old_method);
-	export_results("results_anchors_old_method.dat", results_anchors_old_method);
-
-	auto results_anchors_uniqueness_old_method =  evaluate_all_files(input_folder, gt_folder, true, true, false, true, "anchors_unique_old");
-	auto results_anchors_relative_size_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, true, true, "anchors_relative_size_old");
-
-	std::cout << "Results Anchors Uniqueness_old_method" << std::endl;
-	print_results(results_anchors_uniqueness_old_method);
-	export_results("results_anchors_uniqueness_old_method.dat", results_anchors_uniqueness_old_method);
-	std::cout << "Results Anchors Relative size_old_method" << std::endl;
-	print_results(results_anchors_relative_size_old_method);
-	export_results("results_anchors_relative_size_old_method.dat", results_anchors_relative_size_old_method);
-
-
-	auto results_base =  evaluate_all_files(input_folder, gt_folder, false, false, false, false, "base");
-	std::cout << "Results base" << std::endl;
-	print_results(results_base);
-	export_results("results_base.dat", results_base);
-
-	auto results_anchors =  evaluate_all_files(input_folder, gt_folder, true, false, false, false, "anchors");
-	auto results_anchors_uniqueness =  evaluate_all_files(input_folder, gt_folder, true, true, false, false, "anchors_unique");
-	auto results_anchors_relative_size =  evaluate_all_files(input_folder, gt_folder, true, false, true, false, "anchors_relative_size");
-
-	std::cout << "Results Anchors" << std::endl;
-	print_results(results_anchors);
-	export_results("results_anchors.dat", results_anchors);
-	std::cout << "Results Anchors Uniqueness" << std::endl;
-	print_results(results_anchors_uniqueness);
-	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
-	std::cout << "Results Anchors Relative size" << std::endl;
-	print_results(results_anchors_relative_size);
-	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
+//	auto results_anchors_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, false, true, "anchors_old");
+//	std::cout << "Results Anchors_old_method" << std::endl;
+//	print_results(results_anchors_old_method);
+//	export_results("results_anchors_old_method.dat", results_anchors_old_method);
+//
+//	auto results_anchors_uniqueness_old_method =  evaluate_all_files(input_folder, gt_folder, true, true, false, true, "anchors_unique_old");
+//	auto results_anchors_relative_size_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, true, true, "anchors_relative_size_old");
+//
+//	std::cout << "Results Anchors Uniqueness_old_method" << std::endl;
+//	print_results(results_anchors_uniqueness_old_method);
+//	export_results("results_anchors_uniqueness_old_method.dat", results_anchors_uniqueness_old_method);
+//	std::cout << "Results Anchors Relative size_old_method" << std::endl;
+//	print_results(results_anchors_relative_size_old_method);
+//	export_results("results_anchors_relative_size_old_method.dat", results_anchors_relative_size_old_method);
 
 
+//	auto results_base =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, "base");
+//	auto results_anchors =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, "anchors");
+//	auto results_anchors_uniqueness =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, true, false, false, false, false, "anchors_unique");
+//	auto results_anchors_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, "anchors_relative_size");
+	auto results_anchors_relative_size_haus =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, "anchors_relative_size_hausdorff");
+	auto results_anchors_relative_size_l2 =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, "anchors_relative_size_l2");
+
+//	std::cout << "Results base" << std::endl;
+//	print_results(results_base);
+//	export_results("results_base.dat", results_base);
+//	std::cout << "Results Anchors" << std::endl;
+//	print_results(results_anchors);
+//	export_results("results_anchors.dat", results_anchors);
+//	std::cout << "Results Anchors Uniqueness" << std::endl;
+//	print_results(results_anchors_uniqueness);
+//	export_results("results_anchors_uniqueness.dat", results_anchors_uniqueness);
+//	std::cout << "Results Anchors Relative size" << std::endl;
+//	print_results(results_anchors_relative_size);
+//	export_results("results_anchors_relative_size.dat", results_anchors_relative_size);
+	std::cout << "Results Anchors Relative size haus" << std::endl;
+	print_results(results_anchors_relative_size_haus);
+	export_results("results_anchors_relative_size_haus.dat", results_anchors_relative_size_haus);
+	std::cout << "Results Anchors Relative size l2" << std::endl;
+	print_results(results_anchors_relative_size_l2);
+	export_results("results_anchors_relative_size_l2.dat", results_anchors_relative_size_l2);
 
 
-	auto results_base_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, false, false, false, false, "base");
-	auto results_anchors_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, false, false, "anchors");
-	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, true, false, false, "anchors_unique");
-	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true, false, "anchors_relative_size");
-	auto results_old_method_hungarian =  evaluate_all_files_hungarian(input_folder, gt_folder, true, false, true, true, "old_method");
+	auto results_base_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, "base");
+	auto results_anchors_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, "anchors");
+	auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, true, false, false, false, false, "anchors_unique");
+	auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, "anchors_relative_size");
+	auto results_anchors_relative_size_hungarian_haus =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, "anchors_relative_size_hausdorff");
+	auto results_anchors_relative_size_hungarian_l2 =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, "anchors_relative_size_l2");
+	auto results_old_method_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, true, false, false, "old_method");
 
 	std::cout << "Results base_hungarian" << std::endl;
 	print_results(results_base_hungarian);
@@ -972,15 +1108,23 @@ int main(int argc, char** argv){
 	std::cout << "Results Anchors Relative size_hungarian" << std::endl;
 	print_results(results_anchors_relative_size_hungarian);
 	export_results("results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
+	std::cout << "Results Anchors Relative size_hungarian_haus" << std::endl;
+	print_results(results_anchors_relative_size_hungarian_haus);
+	export_results("results_anchors_relative_size_hungarian_haus.dat", results_anchors_relative_size_hungarian_haus);
+	std::cout << "Results Anchors Relative size_hungarian_l2" << std::endl;
+	print_results(results_anchors_relative_size_hungarian_l2);
+	export_results("results_anchors_relative_size_hungarian_l2.dat", results_anchors_relative_size_hungarian_l2);
 	std::cout << "Results Old Method hungarian" << std::endl;
 	print_results(results_old_method_hungarian);
 	export_results("results_old_method_hungarian.dat", results_old_method_hungarian);
 
-	auto results_base_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, false, false, false, false, "base");
-	auto results_anchors_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, false, false, "anchors");
-	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, true, false, false, "anchors_unique");
-	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true, false, "anchors_relative_size");
-	auto results_old_method_vfl =  evaluate_all_files_vfl(input_folder, gt_folder, true, false, true, true, "old_method");
+	auto results_base_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, "base");
+	auto results_anchors_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, "anchors");
+	auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, true, false, false, false, false, "anchors_unique");
+	auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, "anchors_relative_size");
+	auto results_anchors_relative_size_vfl_haus =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, "anchors_relative_size_hausdorff");
+	auto results_anchors_relative_size_vfl_l2 =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, "anchors_relative_size_l2");
+	auto results_old_method_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, true, false, false, "old_method");
 
 
 	std::cout << "Results base_vfl" << std::endl;
@@ -995,6 +1139,12 @@ int main(int argc, char** argv){
 	std::cout << "Results Anchors Relative size_vfl" << std::endl;
 	print_results(results_anchors_relative_size_vfl);
 	export_results("results_anchors_relative_size_vfl.dat", results_anchors_relative_size_vfl);
+	std::cout << "Results Anchors Relative size_vfl_haus" << std::endl;
+	print_results(results_anchors_relative_size_vfl_haus);
+	export_results("results_anchors_relative_size_vfl_haus.dat", results_anchors_relative_size_vfl_haus);
+	std::cout << "Results Anchors Relative size_vfl_l2" << std::endl;
+	print_results(results_anchors_relative_size_vfl_l2);
+	export_results("results_anchors_relative_size_vfl_l2.dat", results_anchors_relative_size_vfl_l2);
 	std::cout << "Results Old Method vfl" << std::endl;
 	print_results(results_old_method_vfl);
 	export_results("results_old_method_vfl.dat", results_old_method_vfl);
