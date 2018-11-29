@@ -85,6 +85,11 @@ BOOST_AUTO_TEST_CASE(trying) {
 
 
 	std::cout << "SImilarity:\n" << graph.getSimilarity(graph2) << std::endl;
+
+	std::cout << "Chi square:\n" << graph.getChiSquare(graph) << std::endl;
+	std::cout << "Bhattacha:\n" << graph.getBhattacharyyaDistance(graph) << std::endl;
+
+
 	std::cout << "Chi square:\n" << graph.getChiSquare(graph2) << std::endl;
 	std::cout << "Bhattacha:\n" << graph.getBhattacharyyaDistance(graph2) << std::endl;
 	std::cout << "mAHALANOBIS:\n" << graph.getMahalanobisDistance(graph2) << std::endl;

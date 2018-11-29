@@ -432,7 +432,7 @@ namespace AASS {
 
 				cv::Mat hist;
 				/// Establish the number of bins
-				int histSize = 3;
+				int histSize = 50;
 				/// Set the ranges ( for B,G,R) )
 				float range[] = { 0, histSize } ;
 				const float* histRange = { range };
