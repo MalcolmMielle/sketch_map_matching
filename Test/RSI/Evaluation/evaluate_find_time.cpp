@@ -52,6 +52,22 @@ cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 	AASS::maoris::Segmentor segmenteur;
 	AASS::maoris::GraphZone graph_segmented;
 
+
+	if(is_sketch) {
+		graph_segmented.setThreshold(0.30);
+	}
+	else{
+		graph_segmented.setThreshold(0.50);
+	}
+	graph_segmented.setMargin(0.1);
+	graph_segmented.setThresholdFusionRipples(40);
+	if(is_sketch) {
+		graph_segmented.setThresholdFusionDoors(60);
+	}
+	else{
+		graph_segmented.setThresholdFusionDoors(40);
+	}
+
 	double time = 0;
 // 	makeGraph(slam, graph_slam, time);
 	time = segmenteur.segmentImage(slam1, graph_segmented);
