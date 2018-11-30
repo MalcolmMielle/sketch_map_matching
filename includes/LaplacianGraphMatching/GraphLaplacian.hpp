@@ -337,15 +337,55 @@ namespace AASS {
 			//***** DISTANCES *****//
 
 
+			double getEMD(const GraphLaplacian& graph_model) {
+				auto hist = getHistogramEdges();
+				auto hist_model = graph_model.getHistogramEdges();
+//				cv::normalize(hist, hist);
+//				cv::normalize(hist_model, hist_model);
+				//make signature
+				cv::Mat sig1(hist.rows, 2, CV_32FC1);
+				cv::Mat sig2(hist_model.rows, 2, CV_32FC1);
+
+				//fill value into signature
+				for (int i=0; i< hist.rows; i++) {
+
+					float binval = hist.at< float>(i);
+					sig1.at< float>( i, 0) = binval;
+					sig1.at< float>( i, 1) = i;
+
+					binval = hist_model.at< float>(i);
+					sig2.at< float>( i, 0) = binval;
+					sig2.at< float>( i, 1) = i;
+
+				}
+
+				std::cout << "SIG1 " << sig1 << std::endl;
+				std::cout << "SIG2 " << sig2 << std::endl;
+
+
+				cv::EMD(sig1, sig2, CV_DIST_L2);
+
+			}
+
 			//Better Mahalanobis https://stackoverflow.com/questions/18083486/compare-histograms-in-opencv-and-normalize-similarity-index
 			double getBhattacharyyaDistance(const GraphLaplacian& graph_model){
 				auto hist = getHistogramEdges();
 				auto hist_model = graph_model.getHistogramEdges();
-				cv::normalize(hist, hist);
-				cv::normalize(hist_model, hist_model);
+//				cv::normalize(hist, hist);
+//				cv::normalize(hist_model, hist_model);
+				//"Normalizing"
+				double min_h, max_h;
+				cv::minMaxLoc(hist, &min_h, &max_h);
+				double min_model, max_model;
+				cv::minMaxLoc(hist_model, &min_model, &max_model);
+				double max = std::max(max_h, max_model);
+				hist = hist / max;
+				hist_model = hist_model / max;
+
 				double l = cv::compareHist(hist, hist_model, CV_COMP_BHATTACHARYYA);
 				assert(l >= 0);
 				assert(l <= 1);
+				std::cout << "Bah " << l << std::endl;
 				return l;
 			}
 
@@ -357,7 +397,7 @@ namespace AASS {
 				double factor = 1 / std::sqrt(2 * 3.1415 * cv::determinant(similarity) ) ;
 				double l =  factor * std::exp(-0.5 * dist);
 
-				std::cout << "Likelihood " << factor << " " << std::exp(-0.5 * dist) << " " << l << " det " << cv::determinant(similarity) << std::endl;
+//				std::cout << "Likelihood " << factor << " " << std::exp(-0.5 * dist) << " " << l << " det " << cv::determinant(similarity) << std::endl;
 
 				assert(l >= 0);
 //				assert(l <= 1);
@@ -371,8 +411,8 @@ namespace AASS {
 				auto hist_model = graph_model.getHistogramEdges();
 				cv::Mat similarity = getSimilarity(hist, hist_model);
 				cv::Mat dst = hist - hist_model;
-				std::cout << "dst" << dst << std::endl;
-				std::cout << "dst" << similarity << std::endl;
+//				std::cout << "dst" << dst << std::endl;
+//				std::cout << "dst" << similarity << std::endl;
 				cv::MatExpr res = (dst.t() * similarity * dst);
 				cv::Mat res_mat = res;
 				if (res_mat.rows != 1 || res_mat.cols != 1) throw "Matrix is not 1 by 1!";
@@ -409,11 +449,22 @@ namespace AASS {
 			double getChiSquare(const GraphLaplacian& graph_model){
 				auto hist = getHistogramEdges();
 				auto hist_model = graph_model.getHistogramEdges();
-				cv::normalize(hist, hist);
-				cv::normalize(hist_model, hist_model);
+//				cv::normalize(hist, hist);
+//				cv::normalize(hist_model, hist_model);
+
+				//"Normalizing"
+				double min_h, max_h;
+				cv::minMaxLoc(hist, &min_h, &max_h);
+				double min_model, max_model;
+				cv::minMaxLoc(hist_model, &min_model, &max_model);
+				double max = std::max(max_h, max_model);
+				hist = hist / max;
+				hist_model = hist_model / max;
+
 				double l = cv::compareHist(hist, hist_model, CV_COMP_CHISQR);
 				assert(l >= 0);
 				assert(l <= 1);
+				std::cout << "Chi " << l << std::endl;
 				return l;
 			}
 
@@ -432,7 +483,7 @@ namespace AASS {
 
 				cv::Mat hist;
 				/// Establish the number of bins
-				int histSize = 50;
+				int histSize = 5;
 				/// Set the ranges ( for B,G,R) )
 				float range[] = { 0, histSize } ;
 				const float* histRange = { range };
@@ -441,7 +492,7 @@ namespace AASS {
 
 //				cv::normalize(hist, hist);
 
-//				std::cout << "Histogram " << hist << std::endl;
+				std::cout << "Histogram " << hist << std::endl;
 				return hist;
 			}
 
@@ -587,17 +638,31 @@ namespace AASS {
 						lowest_value = size_class;
 					}
 				}
+
+				double max_val = 0;
 				for (vp3 = boost::vertices(*this); vp3.first != vp3.second; ++vp3.first) {
 					v = *vp3.first;
 					double size_class = (*this)[v].zone.getSizeClassification();
 
-					double value_region = (std::exp(-factor) * (size_class - lowest_value));
-
-					std::cout << "From " << size_class - lowest_value << " to " <<value_region << std::endl;
-					(*this)[v].setValue(value_region);
+					double k = 1;
+//					double value_region = ( 1 / factor ) +  (factor * (size_class - lowest_value) );
+					double value_region = (k * factor) + ( (size_class - lowest_value) * (1 - (k * factor)) );
+					if(max_val < value_region){
+						max_val = value_region;
+					}
+//					std::cout << "From " << size_class - lowest_value << " to " <<value_region << std::endl;
+//					(*this)[v].setValue(value_region);
 				}
-				int aaaa;
-				std::cin >> aaaa;
+
+				//Equalizing to 1
+//				for (vp3 = boost::vertices(*this); vp3.first != vp3.second; ++vp3.first) {
+//					v = *vp3.first;
+//					double value = (*this)[v].getValue();
+//					std::cout << "Final value " << value << " TO " << value / max_val << std::endl;
+//					(*this)[v].setValue(value / max_val);
+//				}
+//				int aaaa;
+//				std::cin >> aaaa;
 			}
 
 			/**

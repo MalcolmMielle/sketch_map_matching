@@ -8,9 +8,9 @@ int main(){
 
 	//	std::string file;
 	//std::experimental::filesystem::path p;
-	std::string path = "../../../../Test/RSI/Sketches";
+	std::string path = "../../../../Test/RSI/RobotMaps";
 
-	std::string model = "../../../../Test/RSI/Sketches/model_simple.png";
+	std::string model = "../../../../Test/RSI/RobotMaps/model_simple.png";
 
 	//HACK because can't copy iterator
 //	int count = 0;
