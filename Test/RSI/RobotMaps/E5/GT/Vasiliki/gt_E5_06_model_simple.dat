@@ -1,84 +1,79 @@
-# /home/malcolm/AASS/sketch_algorithms/Test/RSI/RobotMaps/E5/E5_11.png ../../../../Test/RSI/RobotMaps/E5/model_simple.png
+# /home/malcolm/AASS/sketch_algorithms/Test/RSI/RobotMaps/E5/E5_06.png ../../../../Test/RSI/RobotMaps/E5/model_simple.png
 # 0match set
 # map1
-50 634
+263 507
+326 412
 # map2
-708 425
+233 372
+246 510
 
 # 1match set
 # map1
-127 612
+125 469
 # map2
-690 367
+85 474
 
 # 2match set
 # map1
-193 603
-263 608
+136 556
 # map2
-671 296
+108 537
 
 # 3match set
 # map1
-350 659
+156 620
 # map2
-688 169
+125 646
 
 # 4match set
 # map1
-329 577
+233 680
 # map2
-626 169
+213 704
 
 # 5match set
 # map1
-246 426
+166 690
 # map2
-536 270
+152 704
 
 # 6match set
 # map1
-372 483
+305 621
 # map2
-576 169
+246 660
 
 # 7match set
 # map1
-402 392
+413 75
 # map2
-492 146
+349 173
 
 # 8match set
 # map1
-389 317
+319 33
 # map2
-435 150
+271 172
 
 # 9match set
 # map1
-400 267
+162 94
 # map2
-379 156
+128 157
 
 # 10match set
 # map1
-423 178
+97 147
 # map2
-312 157
+60 268
 
 # 11match set
 # map1
-228 201
+313 737
 # map2
-353 270
+264 728
 
 # 12match set
-# map1
-184 50
-# map2
-182 343
-
-# 13match set
 # map1
 # map2
 
