@@ -860,6 +860,53 @@ namespace AASS {
 
 			void createMatch(const std::string& operation, const std::deque< std::pair< AASS::graphmatch::GraphLaplacian::EdgeLaplacian, AASS::graphmatch::GraphLaplacian::VertexLaplacian > >& all_edge, const std::deque< std::pair< AASS::graphmatch::GraphLaplacian::EdgeLaplacian, AASS::graphmatch::GraphLaplacian::VertexLaplacian > >& all_edge_other_graph, std::pair< int, int > start, std::deque< graphmatch::MatchLaplacian >& out);
 
+            
+            AASS::graphmatch::GraphLaplacian::VertexLaplacian getVertex(const cv::Point2i& map_point) const {
+                    
+                    
+                    AASS::graphmatch::GraphLaplacian::VertexLaplacian v_closest_if_not_found;
+                    double smallest_dist = -1;
+                    
+                    for(auto vp = boost::vertices(*this); vp.first != vp.second; ++vp.first) {
+                        AASS::graphmatch::GraphLaplacian::VertexLaplacian v = *vp.first;
+                        auto zone = (*this)[v].zone.getZone();
+                        
+//                         cv::Scalar scal(255);
+//                         cv::Scalar color(150);
+//                         cv::Mat zone_img = cv::Mat::zeros(500, 500, CV_8UC1);
+//                         (graph)[v].drawZone(zone_img, scal);
+//                         cv::circle(zone_img, cv::Point2i(map_point.y, map_point.x), 5, color, -1);
+//                         cv::imshow ("zone test", zone_img);
+//                         cv::waitKey(0);
+                        
+                        
+//                         auto region = graph[v];
+//                         auto zone = region.getZone();
+                        for(auto point : zone ){
+                            
+                            double dist = cv::norm(map_point - point);
+                            if(map_point == point){
+//                                 std::cout << "FOUND: " << v << std::endl;
+                                return v;
+                            }
+                            else{
+                                if(dist <= smallest_dist || smallest_dist == -1){
+                                    smallest_dist = dist;
+                                    v_closest_if_not_found = v;
+                                }
+                            }
+                        }
+                    }
+                    
+//                     std::cout << map_point << " at point " << std::endl;
+                    if(smallest_dist <= 10){
+                        return v_closest_if_not_found;
+                    }
+                    std::cout << "Smallest distance " << smallest_dist << std::endl;
+                    throw std::runtime_error("Zone not found");
+// 					std::cout << "Not found" << std::endl;
+				}
+				
 
 		};
 
