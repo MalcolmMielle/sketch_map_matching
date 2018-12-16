@@ -163,8 +163,8 @@ auto match_maps(const std::string& map_input, const std::string& map_model) {
 	int aninput = 0;
 	for(double time = 0 ; time < 10 && aninput == 0; time =  time + 0.5) {
 
-		gp_laplacian->propagateHeatKernel(time);
-		gp_laplacian_model->propagateHeatKernel(time);
+		gp_laplacian->propagateHeatKernel(time, time, 0);
+		gp_laplacian_model->propagateHeatKernel(time, time, 0);
 
 		/********** GRAPH MATCHING ****************************/
 

@@ -283,8 +283,8 @@ auto match_maps_vfl(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::M
 	double tp_good = -1, fp_good = -1, fn_good = -1;
 	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
 
-		gp_laplacian->propagateHeatKernel(time);
-		gp_laplacian_model->propagateHeatKernel(time);
+		gp_laplacian->propagateHeatKernel(time, time, 0.5);
+		gp_laplacian_model->propagateHeatKernel(time, time, 0.5);
 		/****************************************************************************
 	 * Conversion
 	 *
@@ -447,8 +447,8 @@ auto match_maps_hungarian(const std::tuple<std::string, AASS::RSI::GraphZoneRI*,
 
 	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
 
-		gp_laplacian->propagateHeatKernel(time);
-		gp_laplacian_model->propagateHeatKernel(time);
+		gp_laplacian->propagateHeatKernel(time, time, 0.5);
+		gp_laplacian_model->propagateHeatKernel(time, time, 0.5);
 
 		/********** GRAPH MATCHING ****************************/
 
@@ -594,8 +594,8 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 	double tp_good = -1, fp_good = -1, fn_good = -1;
 	for(double time = 0 ; time <= 10 && aninput == 0; time = time + 0.5) {
 
-		gp_laplacian->propagateHeatKernel(time);
-		gp_laplacian_model->propagateHeatKernel(time);
+		gp_laplacian->propagateHeatKernel(time, time, 0.5);
+		gp_laplacian_model->propagateHeatKernel(time, time, 0.5);
 
 		/********** GRAPH MATCHING ****************************/
 
@@ -1285,8 +1285,8 @@ int main(int argc, char** argv){
                 
                 std::cout << "Name " << name << " Gts input : " << gt_file_input << "\ngot file model " << gt_file_model << std::endl;
                 
-                gp_laplacian->propagateHeatKernel(5);
-                gp_laplacian_model->propagateHeatKernel(5);
+                gp_laplacian->propagateHeatKernel(5, 5, 0);
+                gp_laplacian_model->propagateHeatKernel(5, 5, 0);
                 
 //                 cv::Mat zone_img = cv::Mat::zeros(1500, 1500, CV_8UC1);
 //                 gp_laplacian->drawSpecial(zone_img);

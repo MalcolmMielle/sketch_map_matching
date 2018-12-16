@@ -193,8 +193,8 @@ void match_maps(const std::string& map_input, const std::string& map_model, cons
 
 	/********** LAPLACIAN FAMILY SIGNATURES ****************/
 
-	gp_laplacian->propagateHeatKernel(time);
-	gp_laplacian_model->propagateHeatKernel(time);
+	gp_laplacian->propagateHeatKernel(time, time, 0.5);
+	gp_laplacian_model->propagateHeatKernel(time, time, 0.5);
 
 	/********** GRAPH MATCHING ****************************/
 

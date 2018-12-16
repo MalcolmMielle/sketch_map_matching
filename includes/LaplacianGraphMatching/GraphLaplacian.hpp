@@ -17,6 +17,15 @@ namespace AASS {
 		class MatchLaplacian;
 		class HypotheseLaplacian;
 
+        class HeatPair{
+        public:
+            HeatPair(double heatt, double heat_anchort) : heat(heatt), heat_anchor(heat_anchort){}
+            double heat = -1;
+            double heat_anchor = -1;
+            
+            double getHeat() const {return heat;}
+            double getHeatAnchor() const {return heat_anchor;}
+        };
 
 		class Region {
 		protected:
@@ -30,10 +39,10 @@ namespace AASS {
 
 			double _value_vertex = -1;
 
-			double _heat = -1;
-			double _time = -1;
-
-			double _heat_anchors = -1;
+			std::map<double, HeatPair > _heats;
+// 			double _time = -1;
+// 			double _heat_anchors = -1;
+            
 			double _threshold_same = 0.05;
 
 //			double _eigenvalue;
@@ -57,9 +66,10 @@ namespace AASS {
 				_contour = r.getContour();
 				_center = r.getCenter();
 				_value_vertex = r.getValue();
-				_heat = r.getHeat();
-				_time = r.getTime();
-				_heat_anchors = r.getHeatAnchors();
+// 				_heat = r.getHeat();
+                _heats = r.getHeats();
+// 				_time = r.getTime();
+// 				_heat_anchors = r.getHeatAnchors();
 				zone = r.zone;
 				type_old_method_testing = r.type_old_method_testing;
 				label = r.label;
@@ -72,7 +82,7 @@ namespace AASS {
 			bool useHeatAnchors() const {return _use_heat_anchors;}
 
 			void print() const {
-				std::cout << "Node " << index << " heat " << _heat << " heat anchors " << _heat_anchors << " time " << _time << std::endl;
+// 				std::cout << "Node " << index << " heat " << _heat << " heat anchors " << _heat_anchors << " time " << _time << std::endl;
 			}
 
 			void setCenter(const cv::Point2f& center){_center = center;}
@@ -84,59 +94,68 @@ namespace AASS {
 			double getValue() const {return _value_vertex;}
 			void setValue(double se){_value_vertex = se;}
 
-			double getHeat() const {return _heat;}
-			double getHeatAnchors() const {return _heat_anchors;}
-			double getTime() const {return _time;}
+			std::map<double, HeatPair> getHeats() {return _heats;}
+			const std::map<double, HeatPair>& getHeats() const {return _heats;}
+// 			double getHeat() const {return _heat;}
+// 			double getHeatAnchors() const {return _heat_anchors;}
+// 			double getTime() const {return _time;}
 
-			double heatKernel( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time) {
-				double score = 0;
-				for (int i = 0; i < eigenvalues.size(); ++i){
-					double eigenvalue = eigenvalues[i];
-					double eigenvectorvalue = eigenvectors.col(i)(index);
-					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue);
-				}
 
-				_heat = score;
-				_time = time;
-				return score;
-			}
+            void heatKernel(const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time_from, double time_to, double time_step){
+                
+                _heats.clear();
+                for(int i = time_from; i <= time_to; i = i + time_step){
+                    double score = heatKernel(eigenvalues, eigenvectors, i);
+                    if(_heats.find( i ) != _heats.end() ) {
+                        throw std::runtime_error("Time added twice");
+                    }
+                    else{
+                        HeatPair hp(score, -1);
+                        _heats.insert(std::pair<double, HeatPair>(i, hp));
+                    }
+                }
+            }
 
-			double heatKernelAnchor( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time, double index_anchor) {
-				double score = 0;
-				for (int i = 0; i < eigenvalues.size(); ++i){
-					double eigenvalue = eigenvalues[i];
-					double eigenvectorvalue = eigenvectors.col(i)(index);
-					double eigenvectorvalue_anchor = eigenvectors.col(i)(index_anchor);
-					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue_anchor);
-				}
-				return score;
-			}
 
-			double heatKernelAnchors( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time, std::deque<int> indexes_anchor) {
-				double score_anchors = 0;
-				for(auto index : indexes_anchor) {
-					score_anchors = score_anchors + heatKernelAnchor(eigenvalues, eigenvectors, time, index);
-				}
-				_heat_anchors = score_anchors;
-				heatKernel(eigenvalues, eigenvectors, time);
-				return score_anchors;
-			}
+			
+			
+			void heatKernelAnchors(const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time_from, double time_to, double time_step, std::deque<int> indexes_anchor){
+                
+                _heats.clear();
+                for(int i = time_from; i <= time_to; i = i + time_step){
+                    
+                    double score = heatKernel(eigenvalues, eigenvectors, i);
+                    double score_anchors = heatKernelAnchors(eigenvalues, eigenvectors, i, indexes_anchor);
+                    
+                    if(_heats.find( i ) != _heats.end() ) {
+                        throw std::runtime_error("Time added twice");
+                    }
+                    else{
+                        HeatPair hp(score, score_anchors);
+                        _heats.insert(std::pair<double, HeatPair>(i, hp));
+                    }
+                }
+            }
+
+			
 
 			double compare(const Region& region) const {
 
 				if(type_old_method_testing.compare("nan") == 0) {
 
 					assert(region.type_old_method_testing.compare("nan") == 0);
-					assert(region.getTime() == _time);
-					assert(_heat_anchors != -1);
+// 					assert(region.getTime() == _time);
+// 					assert(_heat_anchors != -1);
 
 //				std::cout << "Heats : " << region.getHeatAnchors() << " - " << _heat_anchors << std::endl;
 //				return std::abs( region.getHeatAnchors() - _heat_anchors );
-					if (_use_heat_anchors) {
-						return std::abs(region.getHeatAnchors() - _heat_anchors);
-					} else {
-						return std::abs(region.getHeat() - _heat);
-					}
+                    //TODO
+// 					if (_use_heat_anchors) {
+// // 						return std::abs(region.getHeatAnchors() - _heat_anchors);
+// 					} else {
+// // 						return std::abs(region.getHeat() - _heat);
+// 					}
+                    return diffHeat(region);
 				}
 				else{
 
@@ -163,24 +182,31 @@ namespace AASS {
 //				assert(r.type_old_method_testing.compare("nan") == 0);
 
 				if(type_old_method_testing.compare("nan") == 0) {
-					assert(r.getTime() == _time);
-					assert(_heat_anchors != -1);
+// 					assert(r.getTime() == _time);
+// 					assert(_heat_anchors != -1);
 
-					if (_use_heat_anchors) {
-//					std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
-						if (r.getHeatAnchors() <= _heat_anchors + _threshold_same &&
-						    r.getHeatAnchors() >= _heat_anchors - _threshold_same) {
-//						std::cout << "True" << std::endl;
-							return true;
-						}
-					} else {
-						if (r.getHeat() <= _heat + _threshold_same && r.getHeat() >= _heat - _threshold_same) {
-//						std::cout << "True" << std::endl;
-							return true;
-						}
-					}
+                    double diff = diffHeat(r);
+                    if(diff <= _threshold_same){
+                        return true;
+                    }
+                    return false;
+                    
+// 					if (_use_heat_anchors) {
+//                         //TODO
+// //					std::cout << "HEAT " << r.getHeatAnchors() << " " << _heat_anchors << std::endl;
+// // 						if (r.getHeatAnchors() <= _heat_anchors + _threshold_same &&
+// // 						    r.getHeatAnchors() >= _heat_anchors - _threshold_same) {
+// //						std::cout << "True" << std::endl;
+// // 							return true;
+// // 						}
+// 					} else {
+// // 						if (r.getHeat() <= _heat + _threshold_same && r.getHeat() >= _heat - _threshold_same) {
+// //						std::cout << "True" << std::endl;
+// // 							return true;
+// // 						}
+// 					}
 //				std::cout << "False" << std::endl;
-					return false;
+// 					return false;
 				}
 				else{
 					assert(r.type_old_method_testing.compare("nan") != 0);
@@ -190,6 +216,60 @@ namespace AASS {
 					return false;
 				}
 
+			}
+			
+        private:
+            double diffHeat(const Region& r) const {
+                
+                double diff = 0;
+                for(auto el : _heats){
+                    double time = el.first;
+                    auto heatpair_in_r = r.getHeats().find(time);
+                    assert( heatpair_in_r != r.getHeats().end() );
+                    if(!_use_heat_anchors){
+                        diff = diff + std::abs(heatpair_in_r->second.getHeat() - el.second.getHeat());
+                    }
+                    else{
+                        diff = diff + std::abs(heatpair_in_r->second.getHeatAnchor() - el.second.getHeatAnchor());
+                    }
+                }
+                assert(diff >= 0);
+                return diff / (double) _heats.size();
+                
+            }
+            
+            double heatKernelAnchor( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time, double index_anchor) const {
+				double score = 0;
+				for (int i = 0; i < eigenvalues.size(); ++i){
+					double eigenvalue = eigenvalues[i];
+					double eigenvectorvalue = eigenvectors.col(i)(index);
+					double eigenvectorvalue_anchor = eigenvectors.col(i)(index_anchor);
+					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue_anchor);
+				}
+				return score;
+			}
+
+			double heatKernelAnchors( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time, std::deque<int> indexes_anchor) const {
+				double score_anchors = 0;
+				for(auto index : indexes_anchor) {
+					score_anchors = score_anchors + heatKernelAnchor(eigenvalues, eigenvectors, time, index);
+				}
+// 				_heat_anchors = score_anchors;
+// 				heatKernel(eigenvalues, eigenvectors, time);
+				return score_anchors;
+			}
+			
+			double heatKernel( const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time) const {
+				double score = 0;
+				for (int i = 0; i < eigenvalues.size(); ++i){
+					double eigenvalue = eigenvalues[i];
+					double eigenvectorvalue = eigenvectors.col(i)(index);
+					score = score + std::exp(-time * eigenvalue) * (eigenvectorvalue * eigenvectorvalue);
+				}
+
+// 				_heat = score;
+// 				_time = time;
+ 				return score;
 			}
 
 
@@ -206,7 +286,8 @@ namespace AASS {
 
 		inline bool operator==(const Region& in, const Region &p){
 
-			return in.getHeatAnchors() == p.getHeatAnchors();
+            //TODO
+// 			return in.getHeatAnchors() == p.getHeatAnchors();
 
 		}
 
@@ -676,11 +757,11 @@ namespace AASS {
 
 			void laplacianFamilySignatureGeneration(){};
 
-			double getHeatKernelValueNode(const VertexLaplacian& vertex, double time){
-				return (*this)[vertex].heatKernel(_eigenvalues, _eigenvectors, time);
-			}
+// 			double getHeatKernelValueNode(const VertexLaplacian& vertex, double time) const{
+// 				return (*this)[vertex].getHeats();
+// 			}
 
-			void propagateHeatKernel(double time){
+			void propagateHeatKernel(double time_from, double time_to, double time_step){
 
 				std::deque<int> index_anchors;
 				for(auto anchor : _anchors){
@@ -690,7 +771,7 @@ namespace AASS {
 				std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
 				for (vp = boost::vertices(*this); vp.first != vp.second; ++vp.first) {
 					VertexLaplacian vertex_in = *vp.first;
-					(*this)[vertex_in].heatKernelAnchors(_eigenvalues, _eigenvectors, time, index_anchors);
+					(*this)[vertex_in].heatKernelAnchors(_eigenvalues, _eigenvectors, time_from, time_to, time_step, index_anchors);
 				}
 			}
 
@@ -739,11 +820,12 @@ namespace AASS {
 					drawSpecial(m, v, color_all_linked);
 
 					double value = 0;
+                    //TODO
 					if((*this)[v].useHeatAnchors() ){
-						value = (*this)[v].getHeatAnchors();
+// 						value = (*this)[v].getHeatAnchors();
 					}
 					else{
-						value = (*this)[v].getHeat();
+// 						value = (*this)[v].getHeat();
 					}
 					(*this)[v].zone.drawZone(m, cv::Scalar(value * 255) );
 

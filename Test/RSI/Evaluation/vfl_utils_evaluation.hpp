@@ -34,7 +34,11 @@ namespace AASS{
 					AASS::graphmatch::Region *a = (AASS::graphmatch::Region *)pa;
 					AASS::graphmatch::Region *b = (AASS::graphmatch::Region *)pn;
 
-					double dist = std::abs(a->getHeatAnchors() - b->getHeatAnchors());
+                    assert(a->useHeatAnchors());
+                    assert(b->useHeatAnchors());
+                    
+                    double dist = a->compare(*b);
+// 					double dist = std::abs(a->getHeatAnchors() - b->getHeatAnchors());
 					return dist < _threshold;
 
 				}
@@ -49,8 +53,12 @@ namespace AASS{
 				virtual bool compatible(void *pa, void *pn){
 					AASS::graphmatch::Region *a = (AASS::graphmatch::Region *)pa;
 					AASS::graphmatch::Region *b = (AASS::graphmatch::Region *)pn;
-
-					double dist = std::abs(a->getHeat() - b->getHeat());
+                    
+                    assert(!a->useHeatAnchors());
+                    assert(!b->useHeatAnchors());
+                    
+                    double dist = a->compare(*b);
+// 					double dist = std::abs(a->getHeat() - b->getHeat());
 					return dist < _threshold;
 
 				}
