@@ -1073,7 +1073,7 @@ auto get_all_images(const std::string& input_folder){
 //				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
 //				std::string gt_file = gt_folder + "/" + gt_name;
 //
-				std::cout << "Running on :\n" <<input_file_stem.string() << "\nand \n" << input_folder + "model_simple.png"
+				std::cout << "Running on :\n" <<input_file_stem.string() << "\nand \n" << input_folder + "/model_simple.png"
 				          << std::endl;
 
 				AASS::RSI::GraphZoneRI* graph_slam = new AASS::RSI::GraphZoneRI();
@@ -1104,14 +1104,14 @@ auto get_gt(const std::string gt_name){
 int main(int argc, char** argv){
 
 
-    bool use_hungarian = false;
-    bool use_vfl = false;
-    bool use_planar = false;
-    bool use_old_method = false;
-    bool evaluate_human_vs_human = true;
-    bool evaluate_algo_vs_human = false;
+    bool use_hungarian = true;
+    bool use_vfl = true;
+    bool use_planar = true;
+    bool use_old_method = true;
+    bool evaluate_human_vs_human = false;
+    bool evaluate_algo_vs_human = true;
     bool use_sketches = true;
-    bool use_robot_maps = false;
+    bool use_robot_maps = true;
 
 
     std::vector< std::tuple<std::string, std::string, std::string > > input_gt_name;

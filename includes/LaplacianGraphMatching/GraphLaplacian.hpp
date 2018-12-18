@@ -104,9 +104,15 @@ namespace AASS {
             void heatKernel(const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time_from, double time_to, double time_step){
                 
                 _heats.clear();
-                for(int i = time_from; i <= time_to; i = i + time_step){
+                //Just making sure we do it once it case someone says time_step = 0
+                if(time_from == time_to){
+                    time_step = 1;
+                }
+                for(double i = time_from; i <= time_to; i = i + time_step){
+//                     std::cout << " doing time " << i << std::endl;
                     double score = heatKernel(eigenvalues, eigenvectors, i);
                     if(_heats.find( i ) != _heats.end() ) {
+                        std::cout << "time " << i << " with " << time_from << " " << time_to << " " << time_step << std::endl;
                         throw std::runtime_error("Time added twice");
                     }
                     else{
@@ -122,12 +128,16 @@ namespace AASS {
 			void heatKernelAnchors(const Eigen::VectorXd& eigenvalues, const Eigen::MatrixXd& eigenvectors, double time_from, double time_to, double time_step, std::deque<int> indexes_anchor){
                 
                 _heats.clear();
-                for(int i = time_from; i <= time_to; i = i + time_step){
+                if(time_from == time_to){
+                    time_step = 1;
+                }
+                for(double i = time_from; i <= time_to; i = i + time_step){
                     
                     double score = heatKernel(eigenvalues, eigenvectors, i);
                     double score_anchors = heatKernelAnchors(eigenvalues, eigenvectors, i, indexes_anchor);
                     
                     if(_heats.find( i ) != _heats.end() ) {
+                        std::cout << "time " << i << " with " << time_from << " " << time_to << " " << time_step << std::endl;
                         throw std::runtime_error("Time added twice");
                     }
                     else{
