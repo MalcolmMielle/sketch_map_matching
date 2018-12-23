@@ -119,7 +119,7 @@ namespace AASS {
                                 graph.drawSpecial(zone_img);
                                 cv::circle(zone_img, cv::Point2i(point_map1.y, point_map1.x), 5, color, -1);
                                 cv::imshow ("zone test", zone_img);
-                                cv::waitKey(0);
+//                                 cv::waitKey(0);
                             }
                         }
 //                         std::cout << "Searching point 2 " << std::endl;
@@ -138,7 +138,7 @@ namespace AASS {
                                 graph2.drawSpecial(zone_img);
                                 cv::circle(zone_img, cv::Point2i(point_map2.y, point_map2.x), 5, color, -1);
                                 cv::imshow ("zone test", zone_img);
-                                cv::waitKey(0);
+//                                 cv::waitKey(0);
                             }
                         }
                         

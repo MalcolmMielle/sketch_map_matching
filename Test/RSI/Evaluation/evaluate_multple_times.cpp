@@ -131,6 +131,8 @@ auto create_graphs_laplacian(AASS::RSI::GraphZoneRI& graph_slam, AASS::RSI::Grap
 // 	exit(0);
 
 	std::sort(match.begin(), match.end(), [&graph_slam, &graph_slam_model](AASS::RSI::ZoneCompared &match, AASS::RSI::ZoneCompared &match1){
+        assert(match.getSimilarity() != -1);
+        assert(match1.getSimilarity() != -1);
 		return match.getSimilarity() < match1.getSimilarity();
 	} );
 
@@ -154,7 +156,7 @@ auto create_graphs_laplacian(AASS::RSI::GraphZoneRI& graph_slam, AASS::RSI::Grap
 	std::deque < AASS::graphmatch::Match > anchors;
 	std::deque < AASS::graphmatch::MatchLaplacian > anchors_laplacian;
 
-	for(size_t i = 0 ; i < match.size() ; ++i){
+	for(size_t i = 0 ; i <= match.size() / 2 ; ++i){
 
 		auto vertex_anchor1 = match[i].source;
 		auto vertex_anchor2 = match[i].target;
@@ -281,11 +283,17 @@ auto match_maps_vfl(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::M
 	double recall = -1;
 	double good_time = -1;
 	double tp_good = -1, fp_good = -1, fn_good = -1;
-// 	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
-
     double time_from = 0;
-    double time_to = 10;
+    double time_to = 2;
     double time_step = 0.5;
+ 	for(double threshold_m = 0 ; threshold_m <= 0.5 && aninput == 0; threshold_m =  threshold_m + 0.05) {
+
+        gp_laplacian->setThrehsoldSameVertices(threshold_m);
+        gp_laplacian_model->setThrehsoldSameVertices(threshold_m);
+        
+        gp_laplacian->test_check_threshold();
+        gp_laplacian_model->test_check_threshold();
+    
 		gp_laplacian->propagateHeatKernel(time_from, time_to, time_step);
 		gp_laplacian_model->propagateHeatKernel(time_from, time_to, time_step);
 		/****************************************************************************
@@ -385,7 +393,7 @@ auto match_maps_vfl(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::M
 
 			if (F1_good == -1 || F1 > F1_good) {
 				F1_good = F1;
-				good_time = time_from;
+				good_time = threshold_m;
 				precision = prec;
 				recall = rec;
 				tp_good = tp;
@@ -393,21 +401,33 @@ auto match_maps_vfl(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::M
 				fn_good = fn;
 			}
 
-			if(all_results.find( time_from ) != all_results.end() ) {
-				auto data = all_results.find(time_from)->second;
+			if(all_results.find( threshold_m ) != all_results.end() ) {
+				auto data = all_results.find(threshold_m)->second;
 				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
-				all_results.find(time_from)->second = data;
+				all_results.find(threshold_m)->second = data;
 			}
 			else{
-				AASS::graphmatch::evaluation::DataEvaluation data(time_from);
+				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
 				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
-				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(time_from, data));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
 		}
+		else{
+            if(all_results.find( threshold_m ) != all_results.end() ) {
+				auto data = all_results.find(threshold_m)->second;
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				all_results.find(threshold_m)->second = data;
+			}
+			else{
+				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
+			}
+        }
 
 		std::cout << "Running on :\n" << gt_file << " with time " << time_from << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
 
-// 	}
+	}
 
 
 	delete gp_laplacian;
@@ -450,8 +470,16 @@ auto match_maps_hungarian(const std::tuple<std::string, AASS::RSI::GraphZoneRI*,
 
 // 	for(double time = 0 ; time <= 10 && aninput == 0; time =  time + 0.5) {
     double time_from = 0;
-    double time_to = 10;
+    double time_to = 2;
     double time_step = 0.5;
+    for(double threshold_m = 0 ; threshold_m <= 0.5 && aninput == 0; threshold_m =  threshold_m + 0.05) {
+
+        gp_laplacian->setThrehsoldSameVertices(threshold_m);
+        gp_laplacian_model->setThrehsoldSameVertices(threshold_m);
+        
+        gp_laplacian->test_check_threshold();
+        gp_laplacian_model->test_check_threshold();
+        
 		gp_laplacian->propagateHeatKernel(time_from, time_to, time_step);
 		gp_laplacian_model->propagateHeatKernel(time_from, time_to, time_step);
 // 		gp_laplacian->propagateHeatKernel(time, time, 0.5);
@@ -531,33 +559,45 @@ auto match_maps_hungarian(const std::tuple<std::string, AASS::RSI::GraphZoneRI*,
 
 			if (F1_good == -1 || F1 > F1_good) {
 				F1_good = F1;
-				good_time = time_from;
+				good_time = threshold_m;
 				precision = prec;
 				recall = rec;
 				tp_good = tp;
 				fp_good = fp;
 				fn_good = fn;
 			}
-			if(all_results.find( time_from ) != all_results.end() ) {
-				auto data = all_results.find(time_from)->second;
+			if(all_results.find( threshold_m ) != all_results.end() ) {
+				auto data = all_results.find(threshold_m)->second;
 				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
-				all_results.find(time_from)->second = data;
+				all_results.find(threshold_m)->second = data;
 			}
 			else{
-				AASS::graphmatch::evaluation::DataEvaluation data(time_from);
+				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
 				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
-				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(time_from, data));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
 		}
+		else{
+            if(all_results.find( threshold_m ) != all_results.end() ) {
+				auto data = all_results.find(threshold_m)->second;
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				all_results.find(threshold_m)->second = data;
+			}
+			else{
+				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
+			}
+        }
 //		else{
 //
 //			all_results.push_back( std::make_tuple(tp, fp, fn, prec, rec, F1) );
 //		}
 
 
-		std::cout << "Running on :\n" << gt_file << " with time " << time_from << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
+		std::cout << "Running on :\n" << gt_file << " with time " << threshold_m << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
 
-// 	}
+	}
 
 
 	delete gp_laplacian;
@@ -581,7 +621,7 @@ auto match_maps_hungarian(const std::tuple<std::string, AASS::RSI::GraphZoneRI*,
 
 
 
-auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_input, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
+auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_input, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_model, const std::string& gt_file, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, bool init_with_anchors, std::map< double, AASS::graphmatch::evaluation::DataEvaluation >& all_results) {
 
 
 	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(*(std::get<1>(graph_input)), *(std::get<1>(graph_model)), use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, use_chi_square_distance, use_bachhatrya_distance, std::get<2>(graph_input), std::get<2>(graph_model));
@@ -601,10 +641,21 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 	double tp_good = -1, fp_good = -1, fn_good = -1;
 // 	for(double time = 0 ; time <= 10 && aninput == 0; time = time + 0.5) {
     double time_from = 0;
-    double time_to = 10;
+    double time_to = 2;
     double time_step = 0.5;
+    
+    for(double threshold_m = 0 ; threshold_m <= 0.5 && aninput == 0; threshold_m =  threshold_m + 0.025) {
+
+        gp_laplacian->setThrehsoldSameVertices(threshold_m);
+        gp_laplacian_model->setThrehsoldSameVertices(threshold_m);
+        
+        gp_laplacian->test_check_threshold();
+        gp_laplacian_model->test_check_threshold();
+    
 		gp_laplacian->propagateHeatKernel(time_from, time_to, time_step);
-		gp_laplacian_model->propagateHeatKernel(time_from, time_to, time_step);
+		gp_laplacian_model->propagateHeatKernel(time_from, time_to, time_step);        
+        
+        
 // 		gp_laplacian->propagateHeatKernel(time, time, 0.5);
 // 		gp_laplacian_model->propagateHeatKernel(time, time, 0.5);
 
@@ -622,7 +673,22 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 
 		//MY THING
 //		graphmatch_evg.planarEditDistanceAlgorithm(gp, gp_model);
-		graphmatch_custom.planarEditDistanceAlgorithm(*gp_laplacian, *gp_laplacian_model);
+        
+        if(init_with_anchors){
+            auto gp_anchors = gp_laplacian->getAnchors();
+            auto gp_anchors_model = gp_laplacian_model->getAnchors();
+            
+            AASS::graphmatch::HypotheseLaplacian starting_seeds;
+            for(int  i = 0 ; i < gp_anchors.size() ; ++i){
+                starting_seeds.push_back(AASS::graphmatch::MatchLaplacian(gp_anchors[i], gp_anchors_model[i]) );
+            }
+            
+            graphmatch_custom.planarEditDistanceAlgorithm(starting_seeds, *gp_laplacian, *gp_laplacian_model);
+            
+        }
+        else{
+            graphmatch_custom.planarEditDistanceAlgorithm(*gp_laplacian, *gp_laplacian_model);
+        }
 		std::cout << "DONE" << std::endl;
 
 //		int rows = 0;
@@ -696,7 +762,7 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 
 			if (F1_good == -1 || F1 > F1_good) {
 				F1_good = F1;
-// 				good_time = time;
+				good_time = threshold_m;
 				precision = prec;
 				recall = rec;
 				tp_good = tp;
@@ -704,21 +770,33 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 				fn_good = fn;
 			}
 
-			if(all_results.find( time_from ) != all_results.end() ) {
-				auto data = all_results.find(time_from)->second;
+			if(all_results.find( threshold_m ) != all_results.end() ) {
+				auto data = all_results.find(threshold_m)->second;
 				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
-				all_results.find(time_from)->second = data;
+				all_results.find(threshold_m)->second = data;
 			}
 			else{
-				AASS::graphmatch::evaluation::DataEvaluation data(time_from);
+				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
 				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
-				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(time_from, data));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
 		}
+		else{
+            if(all_results.find( threshold_m ) != all_results.end() ) {
+				auto data = all_results.find(threshold_m)->second;
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				all_results.find(threshold_m)->second = data;
+			}
+			else{
+				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
+			}
+        }
 
-		std::cout << "Running on :\n" << gt_file << " with time " << time_from << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
+		std::cout << "Running on :\n" << gt_file << " with time " << threshold_m << " res " << tp_good << " " << F1_good << ".\nThe graph sizes " << gp_laplacian->getNumVertices() << " " << gp_laplacian_model->getNumVertices() << std::endl;
 
-// 	}
+	}
 
 
 	delete gp_laplacian;
@@ -762,7 +840,7 @@ auto export_mean_std_detailed_results_mean(const std::map< double, AASS::graphma
 	std::ofstream myfile;
 	if (!AASS::graphmatch::evaluation::exists_test3(result_file)) {
 		myfile.open(result_file);
-		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
+		myfile << "# threshold_m meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
 	} else {
 		myfile.open(result_file, std::ios::out | std::ios::app);
 //		myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
@@ -785,25 +863,37 @@ auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::
 	std::ofstream myfile;
 	if (!AASS::graphmatch::evaluation::exists_test3(result_file)) {
 		myfile.open(result_file);
-		myfile << "# map tp fp fn precision recall F1 time\n";
+		myfile << "# map tp fp fn precision recall F1 threshold_m\n";
 	} else {
 		myfile.open(result_file, std::ios::out | std::ios::app);
-		myfile << "# map tp fp fn precision recall F1 time\n";
+		myfile << "# map tp fp fn precision recall F1 threshold_m\n";
 	}
 
 	if (myfile.is_open()) {
+        int count = 0;
 		for(auto element : all_results_out) {
-			if( element.first == static_cast<int>(element.first)){
-				myfile << "# element " << element.first << "\n";
+            double eee = element.first * 10;
+			if( count == 0 ){
+				myfile << "# element " << eee << " " << (int)(eee + 0.75) << "\n";
 				element.second.export_detailed_data(myfile);
+                count ++;
 			}
+			else{
+                count = 0;
+            }
 		}
 		myfile << "\n\n\n";
+        count = 0;
 		for(auto element : all_results_out) {
-			if( element.first != static_cast<int>(element.first)){
-				myfile << "# element " << element.first << "\n";
+            double eee = element.first * 10;
+			if( count == 1 ){
+				myfile << "# element " << eee << " " << (int)(eee + 0.75) << "\n";
 				element.second.export_detailed_data(myfile);
+			count ++;
 			}
+			else{
+                count = 1;
+            }
 		}
 	}
 
@@ -811,7 +901,7 @@ auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::
 }
 
 
-auto evaluate_all_files(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, const std::string gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, const std::string& prefix_details){
+auto evaluate_all_files(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, const std::string gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, bool init_with_anchors, const std::string& prefix_details){
 
 
 	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
@@ -826,7 +916,7 @@ auto evaluate_all_files(const std::vector<std::tuple<std::string, AASS::RSI::Gra
 //		std::cout << "Running on :\n" << map_name << "\nand \n" << input_folder + "/model_simple.png" << std::endl;
 
 		auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(element, gt,
-		                                                                 gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, use_chi_square_distance, use_bachhatrya_distance, all_results_detailed);
+		                                                                 gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, use_chi_square_distance, use_bachhatrya_distance, init_with_anchors, all_results_detailed);
 
 		results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, time));
 	}
@@ -1104,14 +1194,14 @@ auto get_gt(const std::string gt_name){
 int main(int argc, char** argv){
 
 
-    bool use_hungarian = true;
-    bool use_vfl = true;
+    bool use_hungarian = false;
+    bool use_vfl = false;
     bool use_planar = true;
     bool use_old_method = true;
     bool evaluate_human_vs_human = false;
     bool evaluate_algo_vs_human = true;
     bool use_sketches = true;
-    bool use_robot_maps = true;
+    bool use_robot_maps = false;
 
 
     std::vector< std::tuple<std::string, std::string, std::string > > input_gt_name;
@@ -1139,10 +1229,11 @@ int main(int argc, char** argv){
             auto gt = get_gt(gt_folder + "/model_simple.png");
 
             if(use_old_method){
-                auto results_base_old_method =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, true, false, false, false, false, name + "base_old");
+                auto results_base_old_method =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, true, false, false, false, false, false, name + "base_old");
                 std::cout << "Results base_old_method" << std::endl;
                 print_results(results_base_old_method);
                 export_results("multiple_times_" + name + "results_base_old_method.dat", results_base_old_method);
+                
             }
 
         //	auto results_anchors_old_method =  evaluate_all_files(input_folder, gt_folder, true, false, false, true, "anchors_old");
@@ -1162,10 +1253,11 @@ int main(int argc, char** argv){
 
 
             if(use_planar){
-               auto results_base =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, name +  "base");
-               auto results_anchors =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, false, false, name +  "anchors");
-               auto results_anchors_uniqueness =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, true, false, false, false, false, false, false, name + "anchors_unique");
-               auto results_anchors_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, false, false, name + "anchors_relative_size");
+               auto results_base =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, false, name +  "base");
+//                auto results_base_init_seeds =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, true, name +  "base_init_seeds");
+               auto results_anchors =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, false, false, false, name +  "anchors");
+               auto results_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, true, false, false, false, false, false, false, name + "anchors_relative_size");
+               auto results_anchors_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, false, false, false, name + "anchors_relative_size");
 //                 auto results_anchors_relative_size_haus =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, false, false, "anchors_relative_size_hausdorff");
 //                 auto results_anchors_relative_size_l2 =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, false, false, "anchors_relative_size_l2");
 //                 auto results_anchors_relative_size_chisquare =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, true, false, "anchors_relative_size_chisquare");
@@ -1174,12 +1266,15 @@ int main(int argc, char** argv){
                std::cout << "Results base" << std::endl;
                print_results(results_base);
                export_results("multiple_times_" +name + "results_base.dat", results_base);
+               std::cout << "Results base" << std::endl;
+//                print_results(results_base_init_seeds);
+//                export_results("multiple_times_" +name + "results_base_init_seeds.dat", results_base_init_seeds);
                std::cout << "Results Anchors" << std::endl;
                print_results(results_anchors);
                export_results("multiple_times_" +name + "results_anchors.dat", results_anchors);
                std::cout << "Results Anchors Uniqueness" << std::endl;
-               print_results(results_anchors_uniqueness);
-               export_results("multiple_times_" +name + "results_anchors_uniqueness.dat", results_anchors_uniqueness);
+               print_results(results_relative_size);
+               export_results("multiple_times_" +name + "results_relative_size.dat", results_relative_size);
                std::cout << "Results Anchors Relative size" << std::endl;
                print_results(results_anchors_relative_size);
               export_results("multiple_times_" + name + "results_anchors_relative_size.dat", results_anchors_relative_size);
@@ -1201,8 +1296,8 @@ int main(int argc, char** argv){
             if(use_hungarian){
                 auto results_base_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, false, false, false, false, false, false,name +  "base");
                 auto results_anchors_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, name + "anchors");
-                auto results_anchors_uniqueness_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, true, false, false, false, false, name + "anchors_unique");
-                auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, name + "anchors_relative_size");
+                auto results_anchors_relative_size_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, name + "anchors_unique");
+                auto results_relative_size_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, false, false, true, false, false, false, name + "anchors_relative_size");
         //     auto results_anchors_relative_size_hungarian_haus =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, name + "anchors_relative_size_hausdorff");
         //     auto results_anchors_relative_size_hungarian_l2 =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, name + "anchors_relative_size_l2");
                 auto results_old_method_hungarian =  evaluate_all_files_hungarian(names_graphs_images, gt, gt_folder, true, false, true, true, false, false, name + "old_method");
@@ -1214,8 +1309,8 @@ int main(int argc, char** argv){
                 print_results(results_anchors_hungarian);
                 export_results("multiple_times_" + name + "results_anchors_hungarian.dat", results_anchors_hungarian);
                 std::cout << "Results Anchors Uniqueness_hungarian" << std::endl;
-                print_results(results_anchors_uniqueness_hungarian);
-                export_results("multiple_times_" + name + "results_anchors_uniqueness_hungarian.dat", results_anchors_uniqueness_hungarian);
+                print_results(results_anchors_results_relative_size_hungarian);
+                export_results("multiple_times_" + name + "results_anchors_results_relative_size_hungarian.dat", results_anchors_results_relative_size_hungarian);
                 std::cout << "Results Anchors Relative size_hungarian" << std::endl;
                 print_results(results_anchors_relative_size_hungarian);
                 export_results("multiple_times_" + name + "results_anchors_relative_size_hungarian.dat", results_anchors_relative_size_hungarian);
@@ -1233,7 +1328,7 @@ int main(int argc, char** argv){
             if(use_vfl){
                 auto results_base_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, name + "base");
                 auto results_anchors_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, name + "anchors");
-                auto results_anchors_uniqueness_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, true, false, false, false, false, name + "anchors_unique");
+                auto results_anchors_results_relative_size_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, false, false, true, false, false, false, name + "anchors_unique");
                 auto results_anchors_relative_size_vfl =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, name + "anchors_relative_size");
     //	        auto results_anchors_relative_size_vfl_haus =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, name + "anchors_relative_size_hausdorff");
     //	        auto results_anchors_relative_size_vfl_l2 =  evaluate_all_files_vfl(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, name + "anchors_relative_size_l2");
@@ -1247,8 +1342,8 @@ int main(int argc, char** argv){
                 print_results(results_anchors_vfl);
                 export_results("multiple_times_" + name + "results_anchors_vfl.dat", results_anchors_vfl);
                 std::cout << "Results Anchors Uniqueness_vfl" << std::endl;
-                print_results(results_anchors_uniqueness_vfl);
-                export_results("multiple_times_" + name + "results_anchors_uniqueness_vfl.dat", results_anchors_uniqueness_vfl);
+                print_results(results_anchors_results_relative_size_vfl);
+                export_results("multiple_times_" + name + "results_anchors_results_relative_size_vfl.dat", results_anchors_results_relative_size_vfl);
                 std::cout << "Results Anchors Relative size_vfl" << std::endl;
                 print_results(results_anchors_relative_size_vfl);
                 export_results("multiple_times_" + name + "results_anchors_relative_size_vfl.dat", results_anchors_relative_size_vfl);

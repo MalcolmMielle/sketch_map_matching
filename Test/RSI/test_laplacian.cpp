@@ -54,21 +54,29 @@ BOOST_AUTO_TEST_CASE(trying) {
 	graph.addAnchor(vertex2);
 
 	//** Heat kernel **/
-	for (int i = 0; i < 10; ++i) {
-		graph.propagateHeatKernel(i);
+// 	for (int i = 0; i < 10; ++i) {
+		graph.propagateHeatKernel(0, 5, 1);
 
-		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph.getHeatKernelValueNode(vertex, i) << std::endl;
-		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeat() << std::endl;
-		std::cout << "Anchor heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeatAnchors() << std::endl;
-		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex2, i) << std::endl;
-		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeat() << std::endl;
-		std::cout << "Anchor heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeatAnchors() << std::endl;
-		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph.getHeatKernelValueNode(vertex3, i) << std::endl;
-		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeat() << std::endl;
-		std::cout << "Anchor heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeatAnchors() << "\n" << std::endl;
-	}
+		std::cout << "Heat kernel value of node 0";  graph.printHeatKernelValueNode(vertex) ;
+        std::cout << "\nHeat kernel value of node 0";  graph.printHeatKernelValueNode(vertex2) ;
+        std::cout << "\nHeat kernel value of node 0";  graph.printHeatKernelValueNode(vertex3) ;
+        
+// 		std::cout << "Heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeat() << std::endl;
+// 		std::cout << "Anchor heat kernel value of node 0 at time " << i << " : " << graph[vertex].getHeatAnchors() << std::endl;
+// 		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph.getHeatKernelValueNode(vertex2, i) << std::endl;
+// 		std::cout << "Heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeat() << std::endl;
+// 		std::cout << "Anchor heat kernel value of node 1 at time " << i << " : " << graph[vertex2].getHeatAnchors() << std::endl;
+// 		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph.getHeatKernelValueNode(vertex3, i) << std::endl;
+// 		std::cout << "Heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeat() << std::endl;
+// 		std::cout << "Anchor heat kernel value of node 2 at time " << i << " : " << graph[vertex3].getHeatAnchors() << "\n" << std::endl;
+// 	}
 
 
+        
+    std::cout << "DIFF v v2 " <<graph[vertex].compare(graph[vertex2]) << " bool " << graph[vertex].compareBool(graph[vertex2]) << std::endl;
+    std::cout << "DIFF v v3 " <<graph[vertex].compare(graph[vertex3]) << " bool " << graph[vertex].compareBool(graph[vertex3]) << std::endl;
+    std::cout << "DIFF v v " <<graph[vertex].compare(graph[vertex]) << " bool " << graph[vertex].compareBool(graph[vertex]) << "\n\n" << std::endl;
+    
 
 	AASS::graphmatch::GraphLaplacian graph2;
 

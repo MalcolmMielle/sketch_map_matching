@@ -54,6 +54,7 @@ namespace AASS {
 
 			///JUST FOR TESTING OF ALL METHOD
 			std::string type_old_method_testing = "nan";
+			bool use_old_method_testing = false;
 
 			AASS::RSI::ZoneRI zone;
 
@@ -72,6 +73,7 @@ namespace AASS {
 // 				_heat_anchors = r.getHeatAnchors();
 				zone = r.zone;
 				type_old_method_testing = r.type_old_method_testing;
+				use_old_method_testing = r.use_old_method_testing;
 				label = r.label;
 				_threshold_same = r.getThresholdSame();
 			}
@@ -82,7 +84,10 @@ namespace AASS {
 			bool useHeatAnchors() const {return _use_heat_anchors;}
 
 			void print() const {
-// 				std::cout << "Node " << index << " heat " << _heat << " heat anchors " << _heat_anchors << " time " << _time << std::endl;
+				std::cout << "Node " << index << std::endl;
+                for (auto el : _heats){
+                    std::cout << "Time " << el.first << " : heat -> " << el.second.getHeat() << " heat anchor " << el.second.getHeatAnchor() << std::endl;
+                }
 			}
 
 			void setCenter(const cv::Point2f& center){_center = center;}
@@ -133,27 +138,32 @@ namespace AASS {
                 }
                 for(double i = time_from; i <= time_to; i = i + time_step){
                     
-                    double score = heatKernel(eigenvalues, eigenvectors, i);
-                    double score_anchors = heatKernelAnchors(eigenvalues, eigenvectors, i, indexes_anchor);
+                    double i_log_scale = std::log10(i - time_from + 1);
+                    
+                    double score = heatKernel(eigenvalues, eigenvectors, i_log_scale);
+                    double score_anchors = heatKernelAnchors(eigenvalues, eigenvectors, i_log_scale, indexes_anchor);
                     
                     if(_heats.find( i ) != _heats.end() ) {
-                        std::cout << "time " << i << " with " << time_from << " " << time_to << " " << time_step << std::endl;
+                        std::cout << "time " << i_log_scale << " with " << time_from << " " << time_to << " " << time_step << std::endl;
                         throw std::runtime_error("Time added twice");
                     }
                     else{
                         HeatPair hp(score, score_anchors);
-                        _heats.insert(std::pair<double, HeatPair>(i, hp));
+                        _heats.insert(std::pair<double, HeatPair>(i_log_scale, hp));
                     }
                 }
+                
+//                 std::cout << time_to << " - " << time_from  << " " << " / " << time_step << " = " << (time_to  - time_from) / time_step << " == " << _heats.size() << std::endl;
+// 				assert( (time_to - time_from) / time_step == _heats.size() - 1 );
             }
 
 			
 
 			double compare(const Region& region) const {
 
-				if(type_old_method_testing.compare("nan") == 0) {
+				if(use_old_method_testing == false) {
 
-					assert(region.type_old_method_testing.compare("nan") == 0);
+// 					assert(region.type_old_method_testing.compare("nan") == 0);
 // 					assert(region.getTime() == _time);
 // 					assert(_heat_anchors != -1);
 
@@ -191,7 +201,10 @@ namespace AASS {
 //				assert(type_old_method_testing.compare("nan") == 0);
 //				assert(r.type_old_method_testing.compare("nan") == 0);
 
-				if(type_old_method_testing.compare("nan") == 0) {
+				if(use_old_method_testing == false) {
+                    
+                    assert(type_old_method_testing.compare("nan") != 0);
+                    assert(r.type_old_method_testing.compare("nan") != 0);
 // 					assert(r.getTime() == _time);
 // 					assert(_heat_anchors != -1);
 
@@ -199,7 +212,10 @@ namespace AASS {
                     if(diff <= _threshold_same){
                         return true;
                     }
-                    return false;
+//                     else if(r.type_old_method_testing.compare(type_old_method_testing) == 0){
+// 						return true;
+// 					}
+					return false;
                     
 // 					if (_use_heat_anchors) {
 //                         //TODO
@@ -244,6 +260,7 @@ namespace AASS {
                     }
                 }
                 assert(diff >= 0);
+                assert( (diff / (double) _heats.size() ) <= 1);
                 return diff / (double) _heats.size();
                 
             }
@@ -294,16 +311,16 @@ namespace AASS {
 
 		}
 
-		inline bool operator==(const Region& in, const Region &p){
+// 		inline bool operator==(const Region& in, const Region &p){
 
             //TODO
 // 			return in.getHeatAnchors() == p.getHeatAnchors();
 
-		}
+// 		}
 
 		inline bool compareRegion(const Region& p, const Region& p2){
-			assert(p.type_old_method_testing.compare("nan") == 0);
-			assert(p2.type_old_method_testing.compare("nan") == 0);
+			assert(p.use_old_method_testing == false);
+			assert(p2.use_old_method_testing == false);
 //			assert(false);
 			return p.compareBool(p2);
 		}
@@ -312,6 +329,8 @@ namespace AASS {
 //			std::cout << "Wait what ? " <<p.type_old_method_testing << std::endl;
 			assert(p.type_old_method_testing.compare("nan") != 0);
 			assert(p2.type_old_method_testing.compare("nan") != 0);
+			assert(p.use_old_method_testing == true);
+			assert(p2.use_old_method_testing == true);
 			if(p.type_old_method_testing.compare(p2.type_old_method_testing) == 0){
 				return true;
 			}
@@ -348,6 +367,8 @@ namespace AASS {
 			std::deque<VertexLaplacian> _anchors;
 
 			bool _use_old_comparison_method;
+            
+            double check_threshold_test = 0.05;
 
 		public:
 
@@ -358,12 +379,24 @@ namespace AASS {
 
 
 			void setThrehsoldSameVertices(double n_t){
+                
+                check_threshold_test = n_t;
 				for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
 					auto v = *vp.first;
 					(*this)[v].setThresholdSame(n_t);
 				}
 			}
 
+			
+			bool test_check_threshold() const {
+                for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+					auto v = *vp.first;
+					assert( (*this)[v].getThresholdSame() == check_threshold_test);
+				}
+				return true;
+                
+            }
+			
 //			double getThrehsoldSame(){
 //				double thres = -1;
 //				for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
@@ -379,35 +412,28 @@ namespace AASS {
 			void useOldComparisonMethod(bool b){
 
 				_use_old_comparison_method = b;
-				if(_use_old_comparison_method) {
-					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
-						auto v = *vp.first;
-						int num_edges = this->getNumEdges(v);
+                for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+                    auto v = *vp.first;
+                    int num_edges = this->getNumEdges(v);
 
-						//Crossings
-						if (num_edges > 1) {
-							std::cout << "Changing TYPE" << std::endl;
-							(*this)[v].type_old_method_testing = "c";
-						}
-							//Dead ends
-						else {
-							std::cout << "Changing TYPE" << std::endl;
-							(*this)[v].type_old_method_testing = "d";
-						}
-					}
-					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
-						auto v = *vp.first;
-						assert((*this)[v].type_old_method_testing.compare("nan") != 0);
-					}
-					std::cout << "Check passed " << std::endl;
-				}
-				else{
-					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
-						auto v = *vp.first;
-						(*this)[v].type_old_method_testing = "nan";
-
-					}
-				}
+                    //Crossings
+                    if (num_edges > 1) {
+                        std::cout << "Changing TYPE" << std::endl;
+                        (*this)[v].type_old_method_testing = "c";
+                    }
+                        //Dead ends
+                    else {
+                        std::cout << "Changing TYPE" << std::endl;
+                        (*this)[v].type_old_method_testing = "d";
+                    }
+                    (*this)[v].use_old_method_testing = b;
+                }
+                for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+                    auto v = *vp.first;
+                    assert((*this)[v].use_old_method_testing == b);
+                }
+                std::cout << "Check passed " << std::endl;
+				
 
 			}
 
@@ -416,6 +442,7 @@ namespace AASS {
 					for (auto vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
 						auto v = *vp.first;
 						assert((*this)[v].type_old_method_testing.compare("nan") != 0);
+						assert((*this)[v].use_old_method_testing);
 					}
 				}
 				std::cout << "Check passed " << std::endl;
@@ -692,7 +719,8 @@ namespace AASS {
 			}
 
 			void addAnchor(const VertexLaplacian& anch){_anchors.push_back(anch);}
-
+            std::deque<VertexLaplacian>& getAnchors(){return _anchors;}
+            const std::deque<VertexLaplacian>& getAnchors() const {return _anchors;}
 
 			void noWeightForVertices(){
 				std::pair<AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian, AASS::graphmatch::GraphLaplacian::VertexIteratorLaplacian> vp3;
@@ -767,9 +795,9 @@ namespace AASS {
 
 			void laplacianFamilySignatureGeneration(){};
 
-// 			double getHeatKernelValueNode(const VertexLaplacian& vertex, double time) const{
-// 				return (*this)[vertex].getHeats();
-// 			}
+			void printHeatKernelValueNode(const VertexLaplacian& vertex) const{
+				(*this)[vertex].print();
+			}
 
 			void propagateHeatKernel(double time_from, double time_to, double time_step){
 
@@ -783,6 +811,7 @@ namespace AASS {
 					VertexLaplacian vertex_in = *vp.first;
 					(*this)[vertex_in].heatKernelAnchors(_eigenvalues, _eigenvectors, time_from, time_to, time_step, index_anchors);
 				}
+				
 			}
 
 			std::vector<AASS::graphmatch::MatchLaplacian> compare(const GraphLaplacian& gl) const ;
