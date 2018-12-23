@@ -139,6 +139,7 @@ namespace AASS {
                 for(double i = time_from; i <= time_to; i = i + time_step){
                     
                     double i_log_scale = std::log10(i - time_from + 1);
+//                     double i_log_scale = i;
                     
                     double score = heatKernel(eigenvalues, eigenvectors, i_log_scale);
                     double score_anchors = heatKernelAnchors(eigenvalues, eigenvectors, i_log_scale, indexes_anchor);
@@ -260,7 +261,8 @@ namespace AASS {
                     }
                 }
                 assert(diff >= 0);
-                assert( (diff / (double) _heats.size() ) <= 1);
+//                 std::cout << "Diff " << diff << " / " << (double) _heats.size() << " == " << diff / (double) _heats.size() << std::endl;
+                assert( (diff / (double) _heats.size() ) <= 1.1);
                 return diff / (double) _heats.size();
                 
             }

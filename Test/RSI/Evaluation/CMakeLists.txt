@@ -20,5 +20,8 @@ target_link_libraries(evaluate_find_time ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc+
 add_executable(evaluate_multiple_times evaluate_multple_times.cpp)
 target_link_libraries(evaluate_multiple_times ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)
 
+add_executable(evaluate_final_strategy evaluate_final_strategy.cpp)
+target_link_libraries(evaluate_final_strategy ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)
+
 add_executable(evaluate_threshold evaluate_threshold.cpp)
 target_link_libraries(evaluate_threshold ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)
