@@ -138,8 +138,8 @@ namespace AASS {
                 }
                 for(double i = time_from; i <= time_to; i = i + time_step){
                     
-                    double i_log_scale = std::log10(i - time_from + 1);
-//                     double i_log_scale = i;
+//                     double i_log_scale = std::log10(i - time_from + 1);
+                    double i_log_scale = i;
                     
                     double score = heatKernel(eigenvalues, eigenvectors, i_log_scale);
                     double score_anchors = heatKernelAnchors(eigenvalues, eigenvectors, i_log_scale, indexes_anchor);
