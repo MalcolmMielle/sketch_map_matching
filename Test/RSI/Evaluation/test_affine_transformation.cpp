@@ -93,6 +93,8 @@ int main(int argc, char** argv) {
 	dstTri[1] = cv::Point2f( img1.cols*0.85, img1.rows*0.25 );
 	dstTri[2] = cv::Point2f( img1.cols*0.15, img1.rows*0.7 );
 
+
+
 	/// Get the Affine Transform
 	cv::Mat warp_mat = getAffineTransform( srcTri, srcTri );
 
