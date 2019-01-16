@@ -25,3 +25,7 @@ target_link_libraries(evaluate_final_strategy ${OpenCV_LIBS} ${RSI_LIBRARIES} -l
 
 add_executable(evaluate_threshold evaluate_threshold.cpp)
 target_link_libraries(evaluate_threshold ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)
+
+
+add_executable(test_affine_transformation test_affine_transformation.cpp)
+target_link_libraries(test_affine_transformation ${OpenCV_LIBS} ${RSI_LIBRARIES} -lstdc++fs  GraphLaplacianLib Comparatorlib VFLib)
