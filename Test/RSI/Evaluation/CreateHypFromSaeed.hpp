@@ -46,6 +46,7 @@ namespace AASS {
 
 				int communPixels(const AASS::graphmatch::Region& first, const AASS::graphmatch::Region& second){
 
+					std::cout << "Commun pixels : " << first.zone.getZone().size() << " " << second.zone.getZone().size() << std::endl;
 					auto point_zone1 = first.zone.getZone();
 					auto point_zone2 = second.zone.getZone();
 					int count = 0;
@@ -54,17 +55,42 @@ namespace AASS {
 							++count;
 						}
 					}
+//
+//					std::sort(point_zone1.begin(), point_zone1.end());
+//					std::sort(point_zone2.begin(), point_zone2.end());
+//
+//					std::deque<cv::Point2i> v3;
+//					set_intersection(point_zone1.begin(), point_zone1.end(), point_zone2.begin(), point_zone2.end(), back_inserter(v3));
+
+					auto first_mat = first.zone.getZoneMat();
+					auto second_mat = second.zone.getZoneMat();
+
+					std::cout << first_mat.size() << std::endl;
+					std::cout << second_mat.size() << std::endl;
+					cv::imshow("Zone ", first_mat);
+					cv::imshow("Zone second", second_mat);
+					cv::waitKey(0);
+
+					cv::Mat compared;
+					cv::compare(first_mat, second_mat, compared, cv::CMP_EQ);
+					cv::imshow("Zone compared", compared);
+					cv::waitKey(0);
+					int count_mat = cv::countNonZero(compared);
+
+
+					std::cout << count << " " << count_mat << std::endl;
 					return count;
 
 				}
 
 				std::vector<MatchLaplacian> getMatchesResults(AASS::graphmatch::GraphLaplacian& graph_input, AASS::graphmatch::GraphLaplacian& graph_model){
 
+					std::cout << "Get matches results" << std::endl;
 					std::vector<MatchLaplacian> ret;
 					for (auto vp = boost::vertices(graph_input); vp.first != vp.second; ++vp.first) {
 						auto v = *vp.first;
 						for(auto vp_model = boost::vertices(graph_model); vp_model.first != vp_model.second; ++vp_model.first){
-							auto v2 = *vp.first;
+							auto v2 = *vp_model.first;
 							MatchLaplacian match;
 							match.setFirst(v);
 							match.setSecond(v2);

@@ -105,6 +105,25 @@ cv::Mat get_affine_from_file(const std::string& file){
 	affine_tmp.reshape(0,2).copyTo(affine);
 	std::cout << "Affine in function " << affine << std::endl;
 
+
+	cv::Point2f srcTri[3];
+	cv::Point2f dstTri[3];
+	/// Set your 3 points to calculate the  Affine Transform
+	srcTri[0] = cv::Point2f( -0.5,-0.5 );
+	srcTri[1] = cv::Point2f( 1584, -0.5 );
+	srcTri[2] = cv::Point2f( 1584, 1584 );
+
+	dstTri[0] = cv::Point2f( 263, 363 );
+	dstTri[1] = cv::Point2f( 1915, 671 );
+	dstTri[2] = cv::Point2f( 1771, 1541 );
+
+	/// Get the Affine Transform
+	affine = getAffineTransform( srcTri, dstTri );
+	std::cout << "Actually Affine in function " << affine << std::endl;
+
+
+
+
 //	affine_out = affine;
 //	std::cout << "Affine_out in function " << affine << std::endl;
 	return affine;
@@ -115,7 +134,8 @@ cv::Mat transformFromFile(const std::string& file, const cv::Mat& mat_input){
 
 	cv::Mat affine = get_affine_from_file(file);
 	cv::Mat warp_dst = cv::Mat::zeros( mat_input.rows, mat_input.cols, mat_input.type() );
-	warpAffine( mat_input, warp_dst, affine, mat_input.size() );
+//	warpAffine( mat_input, warp_dst, affine, mat_input.size() );
+	warpAffine( mat_input, warp_dst, affine, mat_input.size(), cv::WARP_INVERSE_MAP );
 
 	return warp_dst;
 
@@ -1263,9 +1283,9 @@ auto get_all_images(const std::string& input_folder){
 	return names_graphs_images;
 }
 
-auto get_all_images_saeed(const std::string& input_folder, const std::string& folder_transformations){
+auto get_all_images_saeed(const std::string& input_folder, const std::string& folder_transformations, const cv::Mat& gt_mat){
 
-	std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> > names_graphs_images;
+	std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, AASS::RSI::GraphZoneRI*, cv::Mat, cv::Mat> > names_graphs_images_gt;
 
 	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
 	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
@@ -1285,19 +1305,45 @@ auto get_all_images_saeed(const std::string& input_folder, const std::string& fo
 				//Find transformation
 				std::cout << "Actual map file " << p_canon.string() << std::endl;
 				cv::Mat original_mat = cv::imread(p_canon.string(), CV_LOAD_IMAGE_GRAYSCALE);
+
+				auto gt_size_rows = gt_mat.rows;
+				auto gt_size_cols = gt_mat.cols;
+				auto original_size_cols = original_mat.cols;
+				auto original_size_rows = original_mat.rows;
+
+				int max_rows = std::max(gt_size_rows, original_size_rows);
+				int max_cols = std::max(gt_size_cols, original_size_cols);
+
+				cv::Mat gt_padded;
+				cv::Mat original_mat_padded;
+				copyMakeBorder(original_mat, original_mat_padded, 0, max_rows - original_mat.rows, 0, max_cols - original_mat.cols, cv::BORDER_CONSTANT, cv::Scalar(0));
+				copyMakeBorder(gt_mat, gt_padded, 0,  max_rows - gt_mat.rows, 0, max_cols - gt_mat.cols, cv::BORDER_CONSTANT, cv::Scalar(0));
+
+				assert(gt_padded.size() == original_mat_padded.size());
+
 				std::string file_transformation = folder_transformations + p_canon.stem().string() + ".txt";
 				std::cout << "Transformation file " << file_transformation << std::endl;
 
-				cv::imshow("Original img", original_mat);
+				cv::imshow("Original img", original_mat_padded);
 				//Apply to image
-				cv::Mat transformed_mat = transformFromFile(file_transformation, original_mat);
+				cv::Mat transformed_mat = transformFromFile(file_transformation, original_mat_padded);
 
 				cv::imshow("Warp img", transformed_mat);
+				cv::imshow("Gt map", gt_padded);
 				cv::waitKey(0);
+
+				cv::Mat merged;
+				cv::addWeighted(transformed_mat, 0.5, gt_padded, 0.5, 0.0, merged);
+				cv::imshow("Merged", merged);
+				cv::waitKey(0);
+
 
 				AASS::RSI::GraphZoneRI* graph_slam = new AASS::RSI::GraphZoneRI();
 				cv::Mat graph_slam_segmented = makeGraph(transformed_mat, *graph_slam);
-				names_graphs_images.push_back( std::make_tuple(p_canon.stem().string(), graph_slam, graph_slam_segmented) );
+				AASS::RSI::GraphZoneRI* graph_gt = new AASS::RSI::GraphZoneRI();
+				cv::Mat graph_gt_segmented = makeGraph(gt_padded, *graph_gt);
+
+				names_graphs_images_gt.push_back( std::make_tuple(p_canon.stem().string(), graph_slam, graph_gt, graph_slam_segmented, graph_gt_segmented) );
 //				AASS::RSI::GraphZoneRI graph_slam_model;
 //				cv::Mat graph_slam_segmented_model = makeGraph(map_model, graph_slam_model);
 
@@ -1305,7 +1351,7 @@ auto get_all_images_saeed(const std::string& input_folder, const std::string& fo
 			}
 		}
 	}
-	return names_graphs_images;
+	return names_graphs_images_gt;
 }
 
 
@@ -1563,13 +1609,16 @@ int main(int argc, char** argv){
 		for(auto element : input_gt_name_transformation_saeed){
 
 			const auto&[input_folder, gt_folder_input, name, transformation] = element;
-			auto names_graphs_images = get_all_images_saeed(input_folder, transformation);
+
 			auto gt = get_gt(gt_folder_input + "/model_simple.png");
 			std::cout << "out of gt" << std::endl;
+
+			auto names_graphs_graphgt_images_gt = get_all_images_saeed(input_folder, transformation, std::get<2>(gt));
+
 			std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
 
 			std::cout << "out of gt" << std::endl;
-			for(auto element_name : names_graphs_images){
+			for(auto element_name : names_graphs_graphgt_images_gt){
 
 				std::cout << "out of gt" << std::endl;
 				cv::Mat graph_slam_segmented, graph_slam_segmented_model;
@@ -1577,7 +1626,7 @@ int main(int argc, char** argv){
 				std::cout << "Getting graph RI" << std::endl;
 				AASS::RSI::GraphZoneRI* gz = std::get<1>(element_name);
 				std::cout << "Getting graph RI 2" << std::endl;
-				AASS::RSI::GraphZoneRI* gz_gt = std::get<1>(gt);
+				AASS::RSI::GraphZoneRI* gz_gt = std::get<2>(element_name);
 
 				std::cout << "Create laplacian" << std::endl;
 				auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented2, graph_slam_segmented_model2] = create_graphs_laplacian(*gz, *gz_gt, false, false, false, false, false, false, false, false, graph_slam_segmented, graph_slam_segmented_model);
