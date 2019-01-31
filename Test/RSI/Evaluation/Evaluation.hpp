@@ -35,13 +35,13 @@ namespace AASS{
 
 				double time;
 
-				std::vector<std::array<double, 6> > tp_fp_fn_precision_recall_F1;
+				std::vector<std::array<double, 7> > tp_fp_fn_precision_recall_F1_seeds;
 
 				DataEvaluation(double time_t) : time(time_t){};
 
-				void push_back(const std::tuple<double, double, double, double, double, double>& input){
-					auto array = std::experimental::make_array(std::get<0>(input), std::get<1>(input), std::get<2>(input), std::get<3>(input), std::get<4>(input), std::get<5>(input));
-					tp_fp_fn_precision_recall_F1.push_back(array);
+				void push_back(const std::tuple<double, double, double, double, double, double, double>& input){
+					auto array = std::experimental::make_array(std::get<0>(input), std::get<1>(input), std::get<2>(input), std::get<3>(input), std::get<4>(input), std::get<5>(input), std::get<6>(input));
+					tp_fp_fn_precision_recall_F1_seeds.push_back(array);
 				}
 
 				auto getMeanStdTp() const {
@@ -62,6 +62,9 @@ namespace AASS{
 				auto getMeanStdF1() const {
 					return std::make_tuple(getMean(5), getStd(5) );
 				}
+				auto getMeanStdSeeds() const {
+					return std::make_tuple(getMean(6), getStd(6) );
+				}
 
 				void export_mean_data(std::ofstream& myfile) const {
 
@@ -71,17 +74,18 @@ namespace AASS{
 					auto meanstdprecision = getMeanStdPrecision();
 					auto meanstdrecall = getMeanStdRecall();
 					auto meanstdF1 = getMeanStdF1();
-					myfile << time << " " << std::get<0>(meanstdtp) << " " << std::get<1>(meanstdtp) << " " << std::get<0>(meanstdfp) << " " << std::get<1>(meanstdfp) << " " << std::get<0>(meanstdfn) << " " << std::get<1>(meanstdfn) << " " << std::get<0>(meanstdprecision) << " " << std::get<1>(meanstdprecision) << " " << std::get<0>(meanstdrecall) << " " << std::get<1>(meanstdrecall) << " " << std::get<0>(meanstdF1) << " " << std::get<1>(meanstdF1) << "\n" ;
+					auto meanstdSeeds = getMeanStdSeeds();
+					myfile << time << " " << std::get<0>(meanstdtp) << " " << std::get<1>(meanstdtp) << " " << std::get<0>(meanstdfp) << " " << std::get<1>(meanstdfp) << " " << std::get<0>(meanstdfn) << " " << std::get<1>(meanstdfn) << " " << std::get<0>(meanstdprecision) << " " << std::get<1>(meanstdprecision) << " " << std::get<0>(meanstdrecall) << " " << std::get<1>(meanstdrecall) << " " << std::get<0>(meanstdF1) << " " << std::get<1>(meanstdF1) << " " << std::get<0>(meanstdSeeds) << " " << std::get<1>(meanstdSeeds) << "\n" ;
 
 
 				}
 
 				void export_detailed_data(std::ofstream& myfile) const {
 
-					myfile << "#time tp fp fn precision recall F1\n";
-					for (auto element : tp_fp_fn_precision_recall_F1) {
+					myfile << "#time tp fp fn precision recall F1 Seeds\n";
+					for (auto element : tp_fp_fn_precision_recall_F1_seeds) {
 						myfile << time << " " << element[0] << " " << element[1] << " " << element[2] << " "
-						       << element[3] << " " << element[4] << " " << element[5] << "\n";
+						       << element[3] << " " << element[4] << " " << element[5] << " " << element[6] << "\n";
 					}
 				}
 
@@ -90,7 +94,7 @@ namespace AASS{
 					export_detailed_data(myfile);
 					myfile << "\n";
 
-					myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std\n";
+					myfile << "# time meantp std meanfp std meanfn std meanprecision std meanrecall std meanF1 std Seeds std\n";
 					export_mean_data(myfile);
 
 					myfile << "\n\n";
@@ -102,19 +106,19 @@ namespace AASS{
 
 				double getMean(int index) const {
 					double sum = 0;
-					for(auto element : tp_fp_fn_precision_recall_F1){
+					for(auto element : tp_fp_fn_precision_recall_F1_seeds){
 						sum += element[index];
 					}
-					return sum / (double) tp_fp_fn_precision_recall_F1.size();
+					return sum / (double) tp_fp_fn_precision_recall_F1_seeds.size();
 				}
 
 				double getStd(int index) const {
 					double mean_t = getMean(index);
 					double std_sum = 0;
-					for (auto element : tp_fp_fn_precision_recall_F1) {
+					for (auto element : tp_fp_fn_precision_recall_F1_seeds) {
 						std_sum += (element[index] - mean_t) * (element[index] - mean_t);
 					}
-					return std::sqrt(std_sum / (tp_fp_fn_precision_recall_F1.size() - 1 ) );
+					return std::sqrt(std_sum / (tp_fp_fn_precision_recall_F1_seeds.size() - 1 ) );
 				}
 
 			};

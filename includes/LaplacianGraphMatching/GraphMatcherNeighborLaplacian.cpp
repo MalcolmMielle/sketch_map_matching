@@ -42,7 +42,7 @@ int AASS::graphmatch::GraphMatcherNeighborLaplacian::initPlanar(const AASS::grap
 }
 
 
-bool AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorithm(graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model)
+std::tuple<bool, int> AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorithm(graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model)
 {
 //	std::cout << "Beging planar matching" << std::endl;
 //	assert(gp.isUsingOldMethod());
@@ -59,7 +59,7 @@ bool AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEditDistanceAlgorith
 // 	drawHypoSlow(gp, gp_model, mat_in, mat_in, starting_seeds.getMatches(), "Starting Seeds", 2);
 
 	bool res = planarEditDistanceAlgorithm(starting_seeds, gp, gp_model);
-	return res;
+	return std::make_tuple(res, starting_seeds.size() );
 
 }
 

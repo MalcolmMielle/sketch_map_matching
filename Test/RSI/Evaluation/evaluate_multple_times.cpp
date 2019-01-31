@@ -188,6 +188,18 @@ auto create_graphs_laplacian(AASS::RSI::GraphZoneRI& graph_slam, AASS::RSI::Grap
 	gp_laplacian->useHeatAnchors(use_anchor_heat);
 	gp_laplacian_model->useHeatAnchors(use_anchor_heat);
 
+    
+    cv::Mat draw;
+    graph_slam_segmented.copyTo(draw);
+    gp_laplacian->drawAnchors(draw);
+    
+    cv::Mat draw_model;
+    graph_slam_segmented_model.copyTo(draw_model);
+    gp_laplacian_model->drawAnchors(draw_model);
+    
+    cv::imshow("input map unique zones", draw);
+    cv::imshow("model map unique zones", draw_model);
+    cv::waitKey(0);
 
 	/********** GRAPH LAPLACIAN ****************************/
 
@@ -403,24 +415,24 @@ auto match_maps_vfl(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::M
 
 			if(all_results.find( threshold_m ) != all_results.end() ) {
 				auto data = all_results.find(threshold_m)->second;
-				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1, 0));
 				all_results.find(threshold_m)->second = data;
 			}
 			else{
 				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
-				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1, 0));
 				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
 		}
 		else{
             if(all_results.find( threshold_m ) != all_results.end() ) {
 				auto data = all_results.find(threshold_m)->second;
-				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0, 0));
 				all_results.find(threshold_m)->second = data;
 			}
 			else{
 				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
-				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0, 0));
 				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
         }
@@ -568,24 +580,24 @@ auto match_maps_hungarian(const std::tuple<std::string, AASS::RSI::GraphZoneRI*,
 			}
 			if(all_results.find( threshold_m ) != all_results.end() ) {
 				auto data = all_results.find(threshold_m)->second;
-				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1, 0));
 				all_results.find(threshold_m)->second = data;
 			}
 			else{
 				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
-				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1, 0));
 				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
 		}
 		else{
             if(all_results.find( threshold_m ) != all_results.end() ) {
 				auto data = all_results.find(threshold_m)->second;
-				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0, 0));
 				all_results.find(threshold_m)->second = data;
 			}
 			else{
 				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
-				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0, 0));
 				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
         }
@@ -643,6 +655,7 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
     double time_from = 0;
     double time_to = 3;
     double time_step = 0.2;
+    double final_seeds = 0;
     
     for(double threshold_m = 0 ; threshold_m <= 0.5 && aninput == 0; threshold_m =  threshold_m + 0.025) {
 
@@ -674,6 +687,8 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 		//MY THING
 //		graphmatch_evg.planarEditDistanceAlgorithm(gp, gp_model);
         
+        int seed_number = 0;
+        bool worked = false;
         if(init_with_anchors){
             auto gp_anchors = gp_laplacian->getAnchors();
             auto gp_anchors_model = gp_laplacian_model->getAnchors();
@@ -683,11 +698,12 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
                 starting_seeds.push_back(AASS::graphmatch::MatchLaplacian(gp_anchors[i], gp_anchors_model[i]) );
             }
             
+            seed_number = starting_seeds.size();
             graphmatch_custom.planarEditDistanceAlgorithm(starting_seeds, *gp_laplacian, *gp_laplacian_model);
             
         }
         else{
-            graphmatch_custom.planarEditDistanceAlgorithm(*gp_laplacian, *gp_laplacian_model);
+            std::tie(worked, seed_number) = graphmatch_custom.planarEditDistanceAlgorithm(*gp_laplacian, *gp_laplacian_model);
         }
 		std::cout << "DONE" << std::endl;
 
@@ -768,28 +784,29 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 				tp_good = tp;
 				fp_good = fp;
 				fn_good = fn;
+                final_seeds = seed_number;
 			}
 
 			if(all_results.find( threshold_m ) != all_results.end() ) {
 				auto data = all_results.find(threshold_m)->second;
-				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1, seed_number));
 				all_results.find(threshold_m)->second = data;
 			}
 			else{
 				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
-				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1));
+				data.push_back(std::make_tuple(tp, fp, fn, prec, rec, F1, seed_number));
 				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
 		}
 		else{
             if(all_results.find( threshold_m ) != all_results.end() ) {
 				auto data = all_results.find(threshold_m)->second;
-				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0, 0));
 				all_results.find(threshold_m)->second = data;
 			}
 			else{
 				AASS::graphmatch::evaluation::DataEvaluation data(threshold_m);
-				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0));
+				data.push_back(std::make_tuple(0, 0, 0, 0, 0, 0, 0));
 				all_results.insert(std::pair<double, AASS::graphmatch::evaluation::DataEvaluation>(threshold_m, data));
 			}
         }
@@ -810,7 +827,7 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 		tp_good = fp_good = fn_good = 0;
 	}
 
-	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time);
+	return std::make_tuple(tp_good, fp_good, fn_good, precision, recall, F1_good, good_time, final_seeds, gp_laplacian->getNumVertices(), gp_laplacian_model->getNumVertices());
 
 }
 
@@ -904,7 +921,7 @@ auto export_mean_std_detailed_results(const std::map< double, AASS::graphmatch::
 auto evaluate_all_files(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, const std::string gt_folder, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, bool init_with_anchors, const std::string& prefix_details){
 
 
-	std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+	std::vector<std::tuple<std::string, double, double, double, double, double, double, double, double, double, double > > results;
 	std::map< double, AASS::graphmatch::evaluation::DataEvaluation > all_results_detailed;
 
 	for(auto element : names_maps_images){
@@ -915,10 +932,10 @@ auto evaluate_all_files(const std::vector<std::tuple<std::string, AASS::RSI::Gra
 		std::string gt_file = gt_folder + "/" + gt_name;
 //		std::cout << "Running on :\n" << map_name << "\nand \n" << input_folder + "/model_simple.png" << std::endl;
 
-		auto[tp, fp, fn, prec, rec, F1, time] = match_maps_and_find_time(element, gt,
+		auto[tp, fp, fn, prec, rec, F1, time, seeds_number, gp_laplacian_nb_vertices, gp_laplacian_model_nb_vertices] = match_maps_and_find_time(element, gt,
 		                                                                 gt_file, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, use_chi_square_distance, use_bachhatrya_distance, init_with_anchors, all_results_detailed);
 
-		results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, time));
+		results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, time, seeds_number, gp_laplacian_nb_vertices, gp_laplacian_model_nb_vertices));
 	}
 
 
@@ -1102,6 +1119,8 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 	double sum = 0;
 	double sum_precision = 0;
 	double sum_recall = 0;
+    
+    std::vector<double> vec_for_median;
 
 	std::string result_file = file_out;
 	std::ofstream myfile;
@@ -1120,6 +1139,8 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 			sum +=  std::get<6>(result);
 			sum_precision +=  std::get<4>(result);
 			sum_recall +=  std::get<5>(result);
+            
+            vec_for_median.push_back(std::get<6>(result));
 		}
 	}
 
@@ -1139,11 +1160,91 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 	std_mean_precision = std::sqrt(std_mean_precision / (results.size() - 1 ) );
 	std_mean_recall = std::sqrt(std_mean_recall / (results.size() - 1 ) );
 
+    
+    std::sort(vec_for_median.begin(), vec_for_median.end());
 
-	myfile << "\n\n# F1mean std precisionmean std recallmean std \n";
-	myfile << mean << " " << std_sum << " " << mean_precision << " " << std_mean_precision << " " << mean_recall << " " << std_mean_recall << "\n";
+    
+    double median = vec_for_median[vec_for_median.size()/2];
+    if ( vec_for_median.size() % 2 == 0){
+//         cout << n << " is even.";
+        double half = vec_for_median.size()/2;
+        median = (vec_for_median[half] + vec_for_median[half - 1]) / 2;
+    }
+    
+	myfile << "\n\n# F1mean std precisionmean std recallmean std median  \n";
+	myfile << mean << " " << std_sum << " " << mean_precision << " " << std_mean_precision << " " << mean_recall << " " << std_mean_recall << " " << median  << "\n";
 
 }
+
+
+void print_results(const std::vector<std::tuple<std::string, double, double, double, double, double, double, double, double, double, double > >& results){
+	double sum = 0;
+
+	for (auto result : results){
+		std::cout << std::get<0>(result) << " -> tp, " << std::get<1>(result) << " fp, " << std::get<2>(result) << " fn " << std::get<3>(result) << " precision " << std::get<4>(result) << " recall " << std::get<5>(result) << " F1 " << std::get<6>(result) << " at time " << std::get<7>(result)  << " with seeds " << std::get<8>(result) << " graph_node " << std::get<9>(result) << " with graph model nodes " << std::get<10>(result) << std::endl;
+		sum +=  std::get<6>(result);
+	}
+
+	std::cout << "Final result : " << sum / results.size() << std::endl;
+	std::cout << "END" << std::endl;
+}
+
+
+void export_results(const std::string& file_out, const std::vector<std::tuple<std::string, double, double, double, double, double, double, double, double, double, double > >& results){
+
+	double sum = 0;
+	double sum_precision = 0;
+	double sum_recall = 0;
+    double sum_seeds = 0;
+
+	std::string result_file = file_out;
+	std::ofstream myfile;
+	if (!AASS::graphmatch::evaluation::exists_test3(result_file)) {
+		myfile.open(result_file);
+		myfile << "# map tp fp fn precision recall F1 time seeds gpnodes gpmodelnodes\n";
+	} else {
+		myfile.open(result_file, std::ios::out | std::ios::app);
+		myfile << "# map tp fp fn precision recall F1 time seeds gpnodes gpmodelnodes\n";
+	}
+
+	if (myfile.is_open()) {
+		for (auto result : results){
+			myfile << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << " " << std::get<4>(result) << " " << std::get<5>(result) << " " << std::get<6>(result) << " " << std::get<7>(result) << " " << std::get<8>(result) << " " << std::get<9>(result) << " " << std::get<10>(result);
+			myfile << "\n";
+			sum +=  std::get<6>(result);
+			sum_precision +=  std::get<4>(result);
+			sum_recall +=  std::get<5>(result);
+			sum_seeds +=  std::get<8>(result) / ( std::get<9>(result) + std::get<10>(result) );
+		}
+	}
+
+	double std_sum = 0;
+	double std_mean_precision = 0;
+	double std_mean_recall = 0;
+	double std_mean_seed = 0;
+	double mean = sum / results.size();
+	double mean_precision = sum_precision / results.size();
+	double mean_recall = sum_recall / results.size();
+	double mean_seeds = sum_seeds / results.size();
+    
+	for (auto result : results) {
+		std_sum += (std::get<6>(result) - mean) * (std::get<6>(result) - mean);
+		std_mean_precision += (std::get<4>(result) - mean_precision) * (std::get<4>(result) - mean_precision);
+		std_mean_recall += (std::get<5>(result) - mean_recall) * (std::get<5>(result) - mean_recall);
+		std_mean_seed += (std::get<8>(result) - mean_seeds) * (std::get<8>(result) - mean_seeds);
+	}
+
+	std_sum = std::sqrt(std_sum / (results.size() - 1 ) );
+	std_mean_precision = std::sqrt(std_mean_precision / (results.size() - 1 ) );
+	std_mean_recall = std::sqrt(std_mean_recall / (results.size() - 1 ) );
+	std_mean_seed = std::sqrt(std_mean_seed / (results.size() - 1 ) );
+
+
+	myfile << "\n\n# F1mean std precisionmean std recallmean std seed_ratio std \n";
+	myfile << mean << " " << std_sum << " " << mean_precision << " " << std_mean_precision << " " << mean_recall << " " << std_mean_recall << " " << mean_seeds << " " << std_mean_seed << "\n";
+
+}
+
 
 
 
@@ -1198,10 +1299,10 @@ int main(int argc, char** argv){
     bool use_vfl = false;
     bool use_planar = true;
     bool use_old_method = false;
-    bool evaluate_human_vs_human = false;
+    bool evaluate_human_vs_human = true;
     bool evaluate_algo_vs_human = true;
     bool use_sketches = true;
-    bool use_robot_maps = true;
+    bool use_robot_maps = false;
 
 
     std::vector< std::tuple<std::string, std::string, std::string > > input_gt_name;

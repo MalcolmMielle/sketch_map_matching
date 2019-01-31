@@ -884,6 +884,69 @@ namespace AASS {
 
 				}
 			}
+			
+			
+			void drawAnchors(cv::Mat& m, const VertexLaplacian& v, const cv::Scalar& color ) const
+			{
+				cv::circle(m, (*this)[v].getCenter(), 15, color, -1);
+			}
+
+			void drawAnchors(cv::Mat& m) const
+			{
+
+				cv::Scalar color_link;
+				if(m.channels() == 1){
+					color_link = 190;
+				}
+				else if(m.channels() == 3){
+					color_link[0] = 0;
+					color_link[1] = 0;
+					color_link[2] = 255;
+				}
+				cv::RNG rrng(12345);
+
+
+				//first is beginning, second is "past the end"
+				std::pair<VertexIteratorLaplacian, VertexIteratorLaplacian> vp;
+				//vertices access all the vertix
+				for (vp = boost::vertices((*this)); vp.first != vp.second; ++vp.first) {
+
+					cv::Scalar color_all_linked;
+
+					if(m.channels() == 1){
+						color_all_linked = rrng.uniform(50, 255);
+					}
+					else if(m.channels() == 3){
+						color_all_linked[1] = rrng.uniform(50, 255);
+						color_all_linked[2] = rrng.uniform(50, 255);
+						color_all_linked[3] = rrng.uniform(50, 255);
+					}
+
+					VertexLaplacian v = *vp.first;
+					drawSpecial(m, v, color_all_linked);
+
+					double value = 50;
+                    //Found it
+					if(std::find(_anchors.begin(), _anchors.end(), v) != _anchors.end() ){
+                        value = 255;
+// 						value = (*this)[v].getHeatAnchors();
+					}
+					(*this)[v].zone.drawZone(m, cv::Scalar(value) );
+
+
+					EdgeIteratorLaplacian out_i, out_end;
+					EdgeLaplacian e;
+
+					for (boost::tie(out_i, out_end) = boost::out_edges(v, (*this));
+					     out_i != out_end; ++out_i) {
+						e = *out_i;
+						VertexLaplacian src = boost::source(e, (*this)), targ = boost::target(e, (*this));
+						cv::line(m, (*this)[src].getCenter(), (*this)[targ].getCenter(), color_link, 5);
+
+					}
+
+				}
+			}
 
 
 			double angle(const GraphLaplacian::VertexLaplacian& center, const GraphLaplacian::VertexLaplacian& v1, const GraphLaplacian::VertexLaplacian& v2) const

@@ -26,12 +26,12 @@ namespace AASS{
 
 			virtual ~GraphMatcherNeighborLaplacian(){}
 			/**
-			* @brief Planar edit distance matching.
+			* @brief Planar edit distance matching. Return true if matched + number of seeds
 			*
 			* Planar edit distance graph matching algorithm using the angle of neighbor vertices as information for the matching - icra 2016
 			*/
 
-			bool planarEditDistanceAlgorithm(graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model);
+			std::tuple<bool, int> planarEditDistanceAlgorithm(graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model);
 			bool planarEditDistanceAlgorithm(graphmatch::HypotheseLaplacian& starting_seeds, graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model);
 			bool match(AASS::graphmatch::GraphLaplacian& gp, AASS::graphmatch::GraphLaplacian& gp_model);
 
@@ -59,7 +59,8 @@ namespace AASS{
 		inline bool GraphMatcherNeighborLaplacian::match(graphmatch::GraphLaplacian& gp, graphmatch::GraphLaplacian& gp_model)
 		{
 // 			init(_map_one.getGraphPlace(), _map_model.getGraphPlace());
-			return planarEditDistanceAlgorithm(gp, gp_model);
+			auto [worked, seeds] = planarEditDistanceAlgorithm(gp, gp_model);
+            return worked;
 		}
 
 
