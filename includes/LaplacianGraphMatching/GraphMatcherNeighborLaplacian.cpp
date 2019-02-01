@@ -54,12 +54,14 @@ std::tuple<bool, int> AASS::graphmatch::GraphMatcherNeighborLaplacian::planarEdi
 
 	graphmatch::HypotheseLaplacian starting_seeds;
 	gp.pairWiseMatch(gp_model, starting_seeds.getMatches());
+    int size = starting_seeds.getMatches().size();
+    std::cout << "Size : " << size << std::endl;
 
 // 	cv::Mat mat_in = cv::imread("../Test/Sequences/missingmap.png");
 // 	drawHypoSlow(gp, gp_model, mat_in, mat_in, starting_seeds.getMatches(), "Starting Seeds", 2);
 
 	bool res = planarEditDistanceAlgorithm(starting_seeds, gp, gp_model);
-	return std::make_tuple(res, starting_seeds.size() );
+	return std::make_tuple(res, size );
 
 }
 

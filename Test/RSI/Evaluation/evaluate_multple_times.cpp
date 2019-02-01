@@ -189,17 +189,17 @@ auto create_graphs_laplacian(AASS::RSI::GraphZoneRI& graph_slam, AASS::RSI::Grap
 	gp_laplacian_model->useHeatAnchors(use_anchor_heat);
 
     
-    cv::Mat draw;
-    graph_slam_segmented.copyTo(draw);
-    gp_laplacian->drawAnchors(draw);
-    
-    cv::Mat draw_model;
-    graph_slam_segmented_model.copyTo(draw_model);
-    gp_laplacian_model->drawAnchors(draw_model);
-    
-    cv::imshow("input map unique zones", draw);
-    cv::imshow("model map unique zones", draw_model);
-    cv::waitKey(0);
+//     cv::Mat draw;
+//     graph_slam_segmented.copyTo(draw);
+//     gp_laplacian->drawAnchors(draw);
+//     
+//     cv::Mat draw_model;
+//     graph_slam_segmented_model.copyTo(draw_model);
+//     gp_laplacian_model->drawAnchors(draw_model);
+//     
+//     cv::imshow("input map unique zones", draw);
+//     cv::imshow("model map unique zones", draw_model);
+//     cv::waitKey(0);
 
 	/********** GRAPH LAPLACIAN ****************************/
 
@@ -687,7 +687,7 @@ auto match_maps_and_find_time(const std::tuple<std::string, AASS::RSI::GraphZone
 		//MY THING
 //		graphmatch_evg.planarEditDistanceAlgorithm(gp, gp_model);
         
-        int seed_number = 0;
+        int seed_number = -1;
         bool worked = false;
         if(init_with_anchors){
             auto gp_anchors = gp_laplacian->getAnchors();
@@ -1214,7 +1214,7 @@ void export_results(const std::string& file_out, const std::vector<std::tuple<st
 			sum +=  std::get<6>(result);
 			sum_precision +=  std::get<4>(result);
 			sum_recall +=  std::get<5>(result);
-			sum_seeds +=  std::get<8>(result) / ( std::get<9>(result) + std::get<10>(result) );
+			sum_seeds +=  std::get<8>(result) / ( std::get<9>(result) * std::get<10>(result) );
 		}
 	}
 
