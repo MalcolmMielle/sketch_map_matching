@@ -40,16 +40,113 @@
 #include "vfl_utils_evaluation.hpp"
 
 #include "CreateHypFromGT.hpp"
-
+#include "CreateHypFromSaeed.hpp"
 
 
 bool is_sketch = false;
 
 
-cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 
-	std::cout << "Loading " << file << std::endl;
-	cv::Mat slam1 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+
+std::string type2str(int type) {
+	std::string r;
+
+	uchar depth = type & CV_MAT_DEPTH_MASK;
+	uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+	switch ( depth ) {
+		case CV_8U:  r = "8U"; break;
+		case CV_8S:  r = "8S"; break;
+		case CV_16U: r = "16U"; break;
+		case CV_16S: r = "16S"; break;
+		case CV_32S: r = "32S"; break;
+		case CV_32F: r = "32F"; break;
+		case CV_64F: r = "64F"; break;
+		default:     r = "User"; break;
+	}
+
+	r += "C";
+	r += (chans+'0');
+
+	return r;
+}
+
+
+std::vector<std::string> getWords(const std::string& line){
+
+	std::istringstream iss(line);
+	char split_char = ' ';
+	std::vector<std::string> tokens;
+	for (std::string each; std::getline(iss, each, split_char); tokens.push_back(each));
+
+	return tokens;
+}
+
+cv::Mat get_affine_from_file(const std::string& file){
+
+	std::cout << "AFFINE FILE " << file << std::endl;
+
+//	cv::Mat affine( 2, 3, CV_32FC1 );
+	std::ifstream infile(file);
+	std::string line;
+	std::vector<float> values;
+	int count = 0;
+	while (std::getline(infile, line) && count < 2) {
+		auto words = getWords(line);
+		for(auto el : words){
+			values.push_back(atof(el.c_str()));
+			std::cout << el << " " << atof(el.c_str()) <<  std::endl;
+		}
+		++count;
+	}
+	cv::Mat affine_tmp( values);
+	cv::Mat affine;
+	std::cout << "Affine in function tmp" << affine_tmp << std::endl;
+	affine_tmp.reshape(0,2).copyTo(affine);
+	std::cout << "Affine in function " << affine << std::endl;
+
+
+	cv::Point2f srcTri[3];
+	cv::Point2f dstTri[3];
+	/// Set your 3 points to calculate the  Affine Transform
+	srcTri[0] = cv::Point2f( -0.5,-0.5 );
+	srcTri[1] = cv::Point2f( 1584, -0.5 );
+	srcTri[2] = cv::Point2f( 1584, 1584 );
+
+	dstTri[0] = cv::Point2f( 263, 363 );
+	dstTri[1] = cv::Point2f( 1915, 671 );
+	dstTri[2] = cv::Point2f( 1771, 1541 );
+
+	/// Get the Affine Transform
+	affine = getAffineTransform( srcTri, dstTri );
+	std::cout << "Actually Affine in function " << affine << std::endl;
+
+
+
+
+//	affine_out = affine;
+//	std::cout << "Affine_out in function " << affine << std::endl;
+	return affine;
+
+}
+
+cv::Mat transformFromFile(const std::string& file, const cv::Mat& mat_input){
+
+	cv::Mat affine = get_affine_from_file(file);
+	cv::Mat warp_dst = cv::Mat::zeros( mat_input.rows, mat_input.cols, mat_input.type() );
+//	warpAffine( mat_input, warp_dst, affine, mat_input.size() );
+	warpAffine( mat_input, warp_dst, affine, mat_input.size(), cv::WARP_INVERSE_MAP );
+
+	return warp_dst;
+
+}
+
+
+
+
+cv::Mat makeGraph(cv::Mat& slam1, AASS::RSI::GraphZoneRI& graph_slam){
+
+
 /** Segmenting the map**/
 	AASS::maoris::Segmentor segmenteur;
 	AASS::maoris::GraphZone graph_segmented;
@@ -85,6 +182,13 @@ cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
 	graph_slam.setSizesClassification();
 
 	return segmented_map;
+}
+
+cv::Mat makeGraph(const std::string& file, AASS::RSI::GraphZoneRI& graph_slam){
+	std::cout << "Loading " << file << std::endl;
+	cv::Mat slam1 = cv::imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+
+	return makeGraph(slam1, graph_slam);
 }
 
 
@@ -1280,14 +1384,91 @@ auto get_all_images(const std::string& input_folder){
 	return names_graphs_images;
 }
 
+auto get_all_images_saeed(const std::string& input_folder, const std::string& folder_transformations, const cv::Mat& gt_mat){
+
+	std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, AASS::RSI::GraphZoneRI*, cv::Mat, cv::Mat> > names_graphs_images_gt;
+
+	auto rec = std::experimental::filesystem::directory_iterator(input_folder);
+	for (auto p = std::experimental::filesystem::begin(rec) ; p != std::experimental::filesystem::end(rec) ; ++p) {
+
+		auto p_canon = std::experimental::filesystem::canonical(*p);
+		if (!std::experimental::filesystem::is_directory(p_canon)) {
+			auto input_file_stem = p_canon.stem();
+
+			if (input_file_stem.string().compare("model_simple") != 0) {
+
+//				std::string gt_name = "gt_" + p_canon.stem().string() + "_model_simple.dat";
+//				std::string gt_file = gt_folder + "/" + gt_name;
+//
+				std::cout << "Running on :\n" <<input_file_stem.string() << "\nand \n" << input_folder + "/model_simple.png"
+				          << std::endl;
+
+				//Find transformation
+				std::cout << "Actual map file " << p_canon.string() << std::endl;
+				cv::Mat original_mat = cv::imread(p_canon.string(), CV_LOAD_IMAGE_GRAYSCALE);
+
+				auto gt_size_rows = gt_mat.rows;
+				auto gt_size_cols = gt_mat.cols;
+				auto original_size_cols = original_mat.cols;
+				auto original_size_rows = original_mat.rows;
+
+				int max_rows = std::max(gt_size_rows, original_size_rows);
+				int max_cols = std::max(gt_size_cols, original_size_cols);
+
+				cv::Mat gt_padded;
+				cv::Mat original_mat_padded;
+				copyMakeBorder(original_mat, original_mat_padded, 0, max_rows - original_mat.rows, 0, max_cols - original_mat.cols, cv::BORDER_CONSTANT, cv::Scalar(0));
+				copyMakeBorder(gt_mat, gt_padded, 0,  max_rows - gt_mat.rows, 0, max_cols - gt_mat.cols, cv::BORDER_CONSTANT, cv::Scalar(0));
+
+				assert(gt_padded.size() == original_mat_padded.size());
+
+				std::string file_transformation = folder_transformations + p_canon.stem().string() + ".txt";
+				std::cout << "Transformation file " << file_transformation << std::endl;
+
+				cv::imshow("Original img", original_mat_padded);
+				//Apply to image
+				cv::Mat transformed_mat = transformFromFile(file_transformation, original_mat_padded);
+
+				cv::imshow("Warp img", transformed_mat);
+				cv::imshow("Gt map", gt_padded);
+				cv::waitKey(0);
+
+				cv::Mat merged;
+				cv::addWeighted(transformed_mat, 0.5, gt_padded, 0.5, 0.0, merged);
+				cv::imshow("Merged", merged);
+				cv::waitKey(0);
+
+
+				AASS::RSI::GraphZoneRI* graph_slam = new AASS::RSI::GraphZoneRI();
+				cv::Mat graph_slam_segmented = makeGraph(transformed_mat, *graph_slam);
+				AASS::RSI::GraphZoneRI* graph_gt = new AASS::RSI::GraphZoneRI();
+				cv::Mat graph_gt_segmented = makeGraph(gt_padded, *graph_gt);
+
+				names_graphs_images_gt.push_back( std::make_tuple(p_canon.stem().string(), graph_slam, graph_gt, graph_slam_segmented, graph_gt_segmented) );
+//				AASS::RSI::GraphZoneRI graph_slam_model;
+//				cv::Mat graph_slam_segmented_model = makeGraph(map_model, graph_slam_model);
+
+
+			}
+		}
+	}
+	return names_graphs_images_gt;
+}
+
 
 
 auto get_gt(const std::string gt_name){
+
+
+	std::cout << "Getting gt from " << gt_name << std::endl;
 
 //	std::string gt_file = gt_folder + "/" + gt_name;
 	AASS::RSI::GraphZoneRI* graph_slam = new AASS::RSI::GraphZoneRI();
 	cv::Mat graph_slam_segmented = makeGraph(gt_name, *graph_slam);
 
+	std::cout << "make tuple" << std::endl;
+	auto tuple = std::make_tuple(gt_name, graph_slam, graph_slam_segmented);
+	std::cout << "Done gt" << std::endl;
 	return std::make_tuple(gt_name, graph_slam, graph_slam_segmented);
 
 }
@@ -1297,7 +1478,7 @@ int main(int argc, char** argv){
 
     bool use_hungarian = false;
     bool use_vfl = false;
-    bool use_planar = true;
+    bool use_planar = false;
     bool use_old_method = false;
     bool evaluate_human_vs_human = true;
     bool evaluate_algo_vs_human = true;
@@ -1306,11 +1487,14 @@ int main(int argc, char** argv){
 
 
     std::vector< std::tuple<std::string, std::string, std::string > > input_gt_name;
-    std::vector< std::tuple<std::string, std::string, std::string, std::string > > human_vs_human;
+	std::vector< std::tuple<std::string, std::string, std::string, std::string > > human_vs_human;
+	std::vector< std::tuple<std::string, std::string, std::string, std::string > > input_gt_name_transformation_saeed;
     
     if(use_robot_maps){
         input_gt_name.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Malcolm" , "../../../../Test/RSI/RobotMaps/E5/Malcolm/GT", "E5_malcolm_") );
         input_gt_name.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Vasiliki" , "../../../../Test/RSI/RobotMaps/E5/Vasiliki/GT", "E5_vasiliki_") );
+	    input_gt_name_transformation_saeed.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Test" , "../../../../Test/RSI/RobotMaps/E5/Test/GT", "E5_test_saeed_", "../../../../Test/RSI/RobotMaps/E5/transformations_saeed/") );
+//	    input_gt_name_transformation_saeed.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Vasiliki" , "../../../../Test/RSI/RobotMaps/E5/Vasiliki/GT", "E5_vasiliki_saeed_", "../../../../Test/RSI/RobotMaps/E5/transformations_saeed/") );
         //NOT THE SAME GT MAP SO NOT COMPARABLE
 //         human_vs_human.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Vasiliki", "../../../../Test/RSI/RobotMaps/E5/Malcolm/GT", "../../../../Test/RSI/RobotMaps/E5/Vasiliki/GT", "E5_") );
     }
@@ -1318,7 +1502,10 @@ int main(int argc, char** argv){
         input_gt_name.push_back( std::make_tuple("../../../../Test/RSI/Sketches/" , "../../../../Test/RSI/Sketches/GT/Malcolm", "sketches_malcolm_") );
         input_gt_name.push_back( std::make_tuple("../../../../Test/RSI/Sketches/" , "../../../../Test/RSI/Sketches/GT/Vasiliki", "sketches_vasiliki_") );
         human_vs_human.push_back( std::make_tuple("../../../../Test/RSI/Sketches/" , "../../../../Test/RSI/Sketches/GT/Malcolm", "../../../../Test/RSI/Sketches/GT/Vasiliki", "sketches_") );
+//	    input_gt_name_transformation_saeed.push_back( std::make_tuple("../../../../Test/RSI/Sketches/" , "../../../../Test/RSI/Sketches/GT/Malcolm", "sketches_malcolm_saeed_", "../../../../Test/RSI/Sketches/transformations_saeed/") );
+//	    input_gt_name_transformation_saeed.push_back( std::make_tuple("../../../../Test/RSI/Sketches/" , "../../../../Test/RSI/Sketches/GT/Vasiliki", "sketches_vasiliki_saeed_", "../../../../Test/RSI/Sketches/transformations_saeed/") );
     }
+
 
 
     if(evaluate_algo_vs_human){
@@ -1464,37 +1651,37 @@ int main(int argc, char** argv){
             
         }
     }
-    
-    if( evaluate_human_vs_human == true){
-        for(auto element : human_vs_human){
-        
-            auto [input_folder, gt_folder_input, gt_folder_model, name] = element;
-            auto names_graphs_images = get_all_images(input_folder);
-            auto gt = get_gt(gt_folder_model + "/model_simple.png");
-            
-            
-            std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
-            
-            for(auto element_name : names_graphs_images){
-                
-                cv::Mat graph_slam_segmented, graph_slam_segmented_model;
-                
-                AASS::RSI::GraphZoneRI* gz = std::get<1>(element_name);
-                AASS::RSI::GraphZoneRI* gz_gt = std::get<1>(gt);
-                
-                auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented2, graph_slam_segmented_model2] = create_graphs_laplacian(*gz, *gz_gt, false, false, false, false, false, false, false, false, graph_slam_segmented, graph_slam_segmented_model);
-                
-                std::string map_name = std::get<0>(element_name);
-                std::string gt_name = "gt_" + map_name + "_model_simple.dat";
-                
-                std::string gt_file_input = gt_folder_input + "/" + gt_name;
-                std::string gt_file_model = gt_folder_model + "/" + gt_name;
-                
-                std::cout << "Name " << name << " Gts input : " << gt_file_input << "\ngot file model " << gt_file_model << std::endl;
-                
-                gp_laplacian->propagateHeatKernel(5, 5, 0);
-                gp_laplacian_model->propagateHeatKernel(5, 5, 0);
-                
+
+	if( evaluate_human_vs_human == true){
+		for(auto element : human_vs_human){
+
+			auto [input_folder, gt_folder_input, gt_folder_model, name] = element;
+			auto names_graphs_images = get_all_images(input_folder);
+			auto gt = get_gt(gt_folder_model + "/model_simple.png");
+
+
+			std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+
+			for(auto element_name : names_graphs_images){
+
+				cv::Mat graph_slam_segmented, graph_slam_segmented_model;
+
+				AASS::RSI::GraphZoneRI* gz = std::get<1>(element_name);
+				AASS::RSI::GraphZoneRI* gz_gt = std::get<1>(gt);
+
+				auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented2, graph_slam_segmented_model2] = create_graphs_laplacian(*gz, *gz_gt, false, false, false, false, false, false, false, false, graph_slam_segmented, graph_slam_segmented_model);
+
+				std::string map_name = std::get<0>(element_name);
+				std::string gt_name = "gt_" + map_name + "_model_simple.dat";
+
+				std::string gt_file_input = gt_folder_input + "/" + gt_name;
+				std::string gt_file_model = gt_folder_model + "/" + gt_name;
+
+				std::cout << "Name " << name << " Gts input : " << gt_file_input << "\ngot file model " << gt_file_model << std::endl;
+
+				gp_laplacian->propagateHeatKernel(5, 5, 0);
+				gp_laplacian_model->propagateHeatKernel(5, 5, 0);
+
 //                 cv::Mat zone_img = cv::Mat::zeros(1500, 1500, CV_8UC1);
 //                 gp_laplacian->drawSpecial(zone_img);
 //                 cv::imshow ("GP laplacian", zone_img);
@@ -1502,17 +1689,121 @@ int main(int argc, char** argv){
 //                 gp_laplacian_model->drawSpecial(zone_imgm);
 //                 cv::imshow ("GP laplacian Model", zone_imgm);
 //                 cv::waitKey(0);
-                
-                AASS::graphmatch::evaluation::CreateHypFromGT createhypgt;
-                auto [tp, fp, fn, precision, recall, F1] = createhypgt.compare(gt_file_input, gt_file_model, *gp_laplacian, *gp_laplacian_model );
-                
-                results.push_back(std::make_tuple(map_name, tp, fp, fn, precision, recall, F1, 0) );
-            
-            }
-            export_results("multiple_times_" + name + "results_human_vs_human.dat", results);
-        }
- 
-    }
+
+				AASS::graphmatch::evaluation::CreateHypFromGT createhypgt;
+				auto [tp, fp, fn, precision, recall, F1] = createhypgt.compare(gt_file_input, gt_file_model, *gp_laplacian, *gp_laplacian_model );
+
+				results.push_back(std::make_tuple(map_name, tp, fp, fn, precision, recall, F1, 0) );
+
+			}
+			export_results("multiple_times_" + name + "results_human_vs_human.dat", results);
+		}
+
+	}
+
+
+	if( saeed_method == true){
+
+		std::cout << "Saeed method" << std::endl;
+
+		for(auto element : input_gt_name_transformation_saeed){
+
+			const auto&[input_folder, gt_folder_input, name, transformation] = element;
+
+			auto gt = get_gt(gt_folder_input + "/model_simple.png");
+			std::cout << "out of gt" << std::endl;
+
+			auto names_graphs_graphgt_images_gt = get_all_images_saeed(input_folder, transformation, std::get<2>(gt));
+
+			std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
+
+			std::cout << "out of gt" << std::endl;
+			for(auto element_name : names_graphs_graphgt_images_gt){
+
+				std::cout << "out of gt" << std::endl;
+				cv::Mat graph_slam_segmented, graph_slam_segmented_model;
+
+				std::cout << "Getting graph RI" << std::endl;
+				AASS::RSI::GraphZoneRI* gz = std::get<1>(element_name);
+				std::cout << "Getting graph RI 2" << std::endl;
+				AASS::RSI::GraphZoneRI* gz_gt = std::get<2>(element_name);
+
+				std::cout << "Create laplacian" << std::endl;
+				auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented2, graph_slam_segmented_model2] = create_graphs_laplacian(*gz, *gz_gt, false, false, false, false, false, false, false, false, graph_slam_segmented, graph_slam_segmented_model);
+
+				std::string map_name = std::get<0>(element_name);
+				std::string gt_name = "gt_" + map_name + "_model_simple.dat";
+
+				std::string gt_file_input = gt_folder_input + "/" + gt_name;
+
+				//TODO !! Comparison method
+
+
+//				std::string gt_file_model = gt_folder_model + "/" + gt_name;
+
+				std::cout << "Name " << name << " Gts input : " << gt_file_input << "\ngot file model " << gt_file_input << std::endl;
+
+				std::cout << "Propagate kernel" << std::endl;
+				gp_laplacian->propagateHeatKernel(5, 5, 0);
+				gp_laplacian_model->propagateHeatKernel(5, 5, 0);
+
+//                 cv::Mat zone_img = cv::Mat::zeros(1500, 1500, CV_8UC1);
+//                 gp_laplacian->drawSpecial(zone_img);
+//                 cv::imshow ("GP laplacian", zone_img);
+//                 cv::Mat zone_imgm = cv::Mat::zeros(1500, 1500, CV_8UC1);
+//                 gp_laplacian_model->drawSpecial(zone_imgm);
+//                 cv::imshow ("GP laplacian Model", zone_imgm);
+//                 cv::waitKey(0);
+
+				AASS::graphmatch::evaluation::CreateHypFromSaeed createhypgt;
+
+				std::cout << "Do hungarian" << std::endl;
+				auto hypothese_saeed = createhypgt.hungarian(*gp_laplacian, *gp_laplacian_model );
+
+
+				std::cout << "Draw stuff" << std::endl;
+				cv::Mat draw_tmp;
+				graph_slam_segmented.copyTo(draw_tmp);
+				gp_laplacian->drawSpecial(draw_tmp);
+
+				cv::Mat draw_tmp_model;
+				graph_slam_segmented_model.copyTo(draw_tmp_model);
+				gp_laplacian_model->drawSpecial(draw_tmp_model);
+		//
+				hypothese_saeed.drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM ", 1);
+		//// 					std::string na = name + "_partial";
+		//// 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
+		//
+		//		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
+		//
+		//		//EXPORT
+		////		cv::Mat drawing_out;
+		////		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
+		////		cv::imshow("Final", drawing_out);
+		//
+		////		cv::imwrite("RESULT.jpg", drawing_out);
+		//
+				std::cout << "Time : " << time << std::endl;
+	//			cv::waitKey(0);
+
+
+
+
+
+
+				std::cout << "Read file" << std::endl;
+				AASS::graphmatch::evaluation::Evaluation ev;
+				ev.read_file(gt_file_input);
+				std::cout << "Read file" << std::endl;
+				auto [tp, fp, fn, prec, rec, F1] = ev.evaluate(hypothese_saeed, *gp_laplacian, *gp_laplacian_model);
+
+				results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, 0) );
+
+			}
+			export_results("multiple_times_" + name + "results_human_vs_human.dat", results);
+		}
+
+	}
 
 
 }
