@@ -868,7 +868,7 @@ namespace AASS {
 					else{
 // 						value = (*this)[v].getHeat();
 					}
-					(*this)[v].zone.drawZone(m, cv::Scalar(value * 255) );
+					(*this)[v].zone.drawZone(m, color_all_linked );
 
 
 					EdgeIteratorLaplacian out_i, out_end;

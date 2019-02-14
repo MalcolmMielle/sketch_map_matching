@@ -1473,27 +1473,205 @@ auto get_gt(const std::string gt_name){
 
 }
 
+
+
+auto match_maps_simple(const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_input, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& graph_model, double threshold_m, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, bool init_with_anchors) {
+
+
+	auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented, graph_slam_segmented_model] = create_graphs_laplacian(*(std::get<1>(graph_input)), *(std::get<1>(graph_model)), use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, use_chi_square_distance, use_bachhatrya_distance, std::get<2>(graph_input), std::get<2>(graph_model));
+
+	if(use_old_matching_scheme == true) {
+		assert(gp_laplacian->isUsingOldMethod());
+		assert(gp_laplacian_model->isUsingOldMethod());
+	}
+
+	/********** LAPLACIAN FAMILY SIGNATURES ****************/
+
+// 	int aninput = 0;
+// 	double F1_good = -1;
+// 	double precision = -1;
+// 	double recall = -1;
+// 	double good_time = -1;
+// 	double tp_good = -1, fp_good = -1, fn_good = -1;
+// // 	for(double time = 0 ; time <= 10 && aninput == 0; time = time + 0.5) {
+    double time_from = 0;
+    double time_to = 3;
+    double time_step = 0.2;
+//     double final_seeds = 0;
+    
+
+    gp_laplacian->setThrehsoldSameVertices(threshold_m);
+    gp_laplacian_model->setThrehsoldSameVertices(threshold_m);
+    
+    gp_laplacian->test_check_threshold();
+    gp_laplacian_model->test_check_threshold();
+
+    gp_laplacian->propagateHeatKernel(time_from, time_to, time_step);
+    gp_laplacian_model->propagateHeatKernel(time_from, time_to, time_step);        
+        
+        
+// 		gp_laplacian->propagateHeatKernel(time, time, 0.5);
+// 		gp_laplacian_model->propagateHeatKernel(time, time, 0.5);
+
+		/********** GRAPH MATCHING ****************************/
+
+//		auto hungarian_matches = gp_laplacian.hungarian_matching(gp2_laplacian);
+//		std::cout << "TIME " << time << std::endl;
+//		gp_laplacian.print();
+//		seeHungarianLaplacian(hungarian_matches, gp_laplacian, gp2_laplacian, g**raph_slam_segmented, graph_slam2_segmented);
+
+
+//		AASS::graphmatch::GraphMatcherNeighborLaplacian graphmatch_evg;
+    AASS::graphmatch::GraphMatcherNeighborLaplacian graphmatch_custom;
+		// 	AASS::graphmatch::GraphMatcherClusterFiltered graphmatchold;
+
+		//MY THING
+//		graphmatch_evg.planarEditDistanceAlgorithm(gp, gp_model);
+        
+    int seed_number = -1;
+    bool worked = false;
+    if(init_with_anchors){
+        auto gp_anchors = gp_laplacian->getAnchors();
+        auto gp_anchors_model = gp_laplacian_model->getAnchors();
+        
+        AASS::graphmatch::HypotheseLaplacian starting_seeds;
+        for(int  i = 0 ; i < gp_anchors.size() ; ++i){
+            starting_seeds.push_back(AASS::graphmatch::MatchLaplacian(gp_anchors[i], gp_anchors_model[i]) );
+        }
+        
+        seed_number = starting_seeds.size();
+        graphmatch_custom.planarEditDistanceAlgorithm(starting_seeds, *gp_laplacian, *gp_laplacian_model);
+        
+    }
+    else{
+        std::tie(worked, seed_number) = graphmatch_custom.planarEditDistanceAlgorithm(*gp_laplacian, *gp_laplacian_model);
+    }
+    std::cout << "DONE" << std::endl;
+
+//		int rows = 0;
+//		if(graph_slam_segmented.rows > graph_slam_segmented_model.rows){
+//			rows = graph_slam_segmented.rows;
+//		}
+//		else{
+//			rows = graph_slam_segmented_model.rows;
+//		}
+//		int cols = 0;
+//		if(graph_slam_segmented.cols > graph_slam_segmented_model.cols){
+//			cols = graph_slam_segmented.cols;
+//		}
+//		else{
+//			cols = graph_slam_segmented_model.cols;
+//		}
+
+//		cv::Mat drawing = cv::Mat::zeros(rows , cols, CV_8UC3);
+
+//		double perc = 0;
+    std::deque<
+            AASS::graphmatch::HypotheseLaplacian
+    > hypothesis_final_custom = graphmatch_custom.getResult();
+
+    if(hypothesis_final_custom.size() > 0) {
+        std::cout << "Sorting" << std::endl;
+
+        graphmatch_custom.sort(hypothesis_final_custom);
+        std::cout << "Sorted" << std::endl;
+	// 					hypothesis_final_custom[0].drawMoved(gp_voro, gp_voro_model, drawing, drawing, "ALL FINAL CUSTOM Moved", 1);
+	//		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1);
+
+
+
+			//TODO SWicth grpah_slam_segmented to heat map
+
+			cv::Mat draw_tmp;
+			graph_slam_segmented.copyTo(draw_tmp);
+			gp_laplacian->drawSpecial(draw_tmp);
+// 
+			cv::Mat draw_tmp_model;
+			graph_slam_segmented_model.copyTo(draw_tmp_model);
+			gp_laplacian_model->drawSpecial(draw_tmp_model);
+// 	//
+// 			hypothesis_final_custom[0].drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM ", 1);
+	//// 					std::string na = name + "_partial";
+	//// 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
+	//
+	//		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
+	//
+	//		//EXPORT
+        
+			cv::Mat drawing_out;
+			hypothesis_final_custom[0].drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM", 1, drawing_out);
+			cv::imshow("Final", drawing_out);
+	        std::string file_export = "links_" + std::get<0>(graph_input) + ".png";
+			cv::imwrite(file_export, drawing_out);
+	//
+			
+// 			cv::waitKey(0);
+
+
+    }
+
+	delete gp_laplacian;
+	delete gp_laplacian_model;
+
+	
+}
+
+
+
+
+
+
+
+
+auto export_images_all(const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, std::vector<std::tuple<std::string, double, double, double, double, double, double, double, double, double, double > >& results, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, bool init_with_anchors){
+
+
+    int count = 0;
+	for(auto element : names_maps_images){
+        
+
+		std::string map_name = std::get<0>(element);
+        
+        std::cout << "Exporting " << map_name << " == " << std::get<0>(results[count]) << std::endl;
+        assert(map_name == std::get<0>(results[count]));
+        
+		std::string gt_name = "gt_" + map_name + "_model_simple.dat";
+//		std::cout << "Running on :\n" << map_name << "\nand \n" << input_folder + "/model_simple.png" << std::endl;
+        double threhsold_m = std::get<7>(results[count]);
+        count++;
+        
+		match_maps_simple(element, gt, threhsold_m, use_anchor_heat, use_uniqueness_score, use_relative_size_as_weight, use_old_matching_scheme, use_hausdorff_distance, use_l2_norm, use_chi_square_distance, use_bachhatrya_distance, init_with_anchors);
+        
+    }
+}
+
 int main(int argc, char** argv){
 
 
     bool use_hungarian = false;
     bool use_vfl = false;
-    bool use_planar = false;
+    bool use_planar = true;
     bool use_old_method = false;
-    bool evaluate_human_vs_human = true;
+    bool evaluate_human_vs_human = false;
     bool evaluate_algo_vs_human = true;
-    bool use_sketches = true;
-    bool use_robot_maps = false;
+    bool use_sketches = false;
+    bool use_robot_maps = true;
+    bool saeed_method = false;
+    
+    bool export_images = true;
 
 
     std::vector< std::tuple<std::string, std::string, std::string > > input_gt_name;
 	std::vector< std::tuple<std::string, std::string, std::string, std::string > > human_vs_human;
+	std::vector< std::tuple<std::string, std::string, std::string, std::string > > input_gt_saeed;
 	std::vector< std::tuple<std::string, std::string, std::string, std::string > > input_gt_name_transformation_saeed;
     
     if(use_robot_maps){
         input_gt_name.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Malcolm" , "../../../../Test/RSI/RobotMaps/E5/Malcolm/GT", "E5_malcolm_") );
         input_gt_name.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Vasiliki" , "../../../../Test/RSI/RobotMaps/E5/Vasiliki/GT", "E5_vasiliki_") );
 	    input_gt_name_transformation_saeed.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Test" , "../../../../Test/RSI/RobotMaps/E5/Test/GT", "E5_test_saeed_", "../../../../Test/RSI/RobotMaps/E5/transformations_saeed/") );
+        
+        input_gt_saeed.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Malcolm/" , "../../../../Test/RSI/RobotMaps/E5/Malcolm/GT", "../../../../Test/RSI/RobotMaps/E5/Malcolm/GT/Saeed", "E5_malcolm_saeed_") );
 //	    input_gt_name_transformation_saeed.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Vasiliki" , "../../../../Test/RSI/RobotMaps/E5/Vasiliki/GT", "E5_vasiliki_saeed_", "../../../../Test/RSI/RobotMaps/E5/transformations_saeed/") );
         //NOT THE SAME GT MAP SO NOT COMPARABLE
 //         human_vs_human.push_back( std::make_tuple("../../../../Test/RSI/RobotMaps/E5/Vasiliki", "../../../../Test/RSI/RobotMaps/E5/Malcolm/GT", "../../../../Test/RSI/RobotMaps/E5/Vasiliki/GT", "E5_") );
@@ -1541,29 +1719,34 @@ int main(int argc, char** argv){
 
 
             if(use_planar){
-//                auto results_base =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, false, name +  "base");
-//                auto results_base_init_seeds =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, true, name +  "base_init_seeds");
-//                auto results_anchors =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, false, false, false, name +  "anchors");
-               auto results_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, true, false, false, false, false, false, false, name + "relative_size");
+// //                auto results_base =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, false, name +  "base");
+// //                auto results_base_init_seeds =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, false, false, false, false, false, false, true, name +  "base_init_seeds");
+// //                auto results_anchors =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, false, false, false, false, false, false, false, name +  "anchors");
+//                 
+//                 
+//                auto results_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, false, false, true, false, false, false, false, false, false, name + "relative_size");
+               
                auto results_anchors_relative_size =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, false, false, false, name + "anchors_relative_size");
-//                 auto results_anchors_relative_size_haus =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, false, false, "anchors_relative_size_hausdorff");
-//                 auto results_anchors_relative_size_l2 =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, false, false, "anchors_relative_size_l2");
-//                 auto results_anchors_relative_size_chisquare =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, true, false, "anchors_relative_size_chisquare");
-//                 auto results_anchors_relative_size_chadist =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, false, true, "anchors_relative_size_chadist");
 
-//                std::cout << "Results base" << std::endl;
-//                print_results(results_base);
-//                export_results("multiple_times_" +name + "results_base.dat", results_base);
-//                std::cout << "Results base" << std::endl;
-// //                print_results(results_base_init_seeds);
-// //                export_results("multiple_times_" +name + "results_base_init_seeds.dat", results_base_init_seeds);
-//                std::cout << "Results Anchors" << std::endl;
-//                print_results(results_anchors);
-//                export_results("multiple_times_" +name + "results_anchors.dat", results_anchors);
-//                std::cout << "Results Anchors Uniqueness" << std::endl;
-               print_results(results_relative_size);
-               export_results("multiple_times_" +name + "results_relative_size.dat", results_relative_size);
-               std::cout << "Results Anchors Relative size" << std::endl;
+               
+//                //                 auto results_anchors_relative_size_haus =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, true, false, false, false, "anchors_relative_size_hausdorff");
+// //                 auto results_anchors_relative_size_l2 =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, true, false, false, "anchors_relative_size_l2");
+// //                 auto results_anchors_relative_size_chisquare =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, true, false, "anchors_relative_size_chisquare");
+// //                 auto results_anchors_relative_size_chadist =  evaluate_all_files(names_graphs_images, gt, gt_folder, true, false, true, false, false, false, false, true, "anchors_relative_size_chadist");
+// 
+// //                std::cout << "Results base" << std::endl;
+// //                print_results(results_base);
+// //                export_results("multiple_times_" +name + "results_base.dat", results_base);
+// //                std::cout << "Results base" << std::endl;
+// // //                print_results(results_base_init_seeds);
+// // //                export_results("multiple_times_" +name + "results_base_init_seeds.dat", results_base_init_seeds);
+// //                std::cout << "Results Anchors" << std::endl;
+// //                print_results(results_anchors);
+// //                export_results("multiple_times_" +name + "results_anchors.dat", results_anchors);
+// //                std::cout << "Results Anchors Uniqueness" << std::endl;
+//                print_results(results_relative_size);
+//                export_results("multiple_times_" +name + "results_relative_size.dat", results_relative_size);
+//                std::cout << "Results Anchors Relative size" << std::endl;
                print_results(results_anchors_relative_size);
               export_results("multiple_times_" + name + "results_anchors_relative_size.dat", results_anchors_relative_size);
 //                 std::cout << "Results Anchors Relative size haus" << std::endl;
@@ -1579,6 +1762,15 @@ int main(int argc, char** argv){
 //                 print_results(results_anchors_relative_size_chadist);
 //                 export_results("results_anchors_relative_size_chadist.dat", results_anchors_relative_size_chadist);
             
+                if(export_images){
+                    
+//                     const std::vector<std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat> >& names_maps_images, const std::tuple<std::string, AASS::RSI::GraphZoneRI*, cv::Mat>& gt, std::vector<std::tuple<std::string, double, double, double, double, double, double, double, double, double, double > >& results, bool use_anchor_heat, bool use_uniqueness_score, bool use_relative_size_as_weight, bool use_old_matching_scheme, bool use_hausdorff_distance, bool use_l2_norm, bool use_chi_square_distance, bool use_bachhatrya_distance, bool init_with_anchors
+                    
+                    export_images_all(names_graphs_images, gt, results_anchors_relative_size, true, false, true, false, false, false, false, false, false);
+                  
+                }
+              
+              
             }
 
             if(use_hungarian){
@@ -1706,44 +1898,32 @@ int main(int argc, char** argv){
 
 		std::cout << "Saeed method" << std::endl;
 
-		for(auto element : input_gt_name_transformation_saeed){
+		for(auto element : input_gt_saeed){
 
-			const auto&[input_folder, gt_folder_input, name, transformation] = element;
+			auto [input_folder, gt_folder_input, gt_folder_model, name] = element;
+			auto names_graphs_images = get_all_images(input_folder);
+			auto gt = get_gt(gt_folder_model + "/model_simple.png");
 
-			auto gt = get_gt(gt_folder_input + "/model_simple.png");
-			std::cout << "out of gt" << std::endl;
-
-			auto names_graphs_graphgt_images_gt = get_all_images_saeed(input_folder, transformation, std::get<2>(gt));
 
 			std::vector<std::tuple<std::string, double, double, double, double, double, double, double > > results;
 
-			std::cout << "out of gt" << std::endl;
-			for(auto element_name : names_graphs_graphgt_images_gt){
+			for(auto element_name : names_graphs_images){
 
-				std::cout << "out of gt" << std::endl;
 				cv::Mat graph_slam_segmented, graph_slam_segmented_model;
 
-				std::cout << "Getting graph RI" << std::endl;
 				AASS::RSI::GraphZoneRI* gz = std::get<1>(element_name);
-				std::cout << "Getting graph RI 2" << std::endl;
-				AASS::RSI::GraphZoneRI* gz_gt = std::get<2>(element_name);
+				AASS::RSI::GraphZoneRI* gz_gt = std::get<1>(gt);
 
-				std::cout << "Create laplacian" << std::endl;
 				auto [gp_laplacian, gp_laplacian_model, graph_slam_segmented2, graph_slam_segmented_model2] = create_graphs_laplacian(*gz, *gz_gt, false, false, false, false, false, false, false, false, graph_slam_segmented, graph_slam_segmented_model);
 
 				std::string map_name = std::get<0>(element_name);
 				std::string gt_name = "gt_" + map_name + "_model_simple.dat";
 
 				std::string gt_file_input = gt_folder_input + "/" + gt_name;
+				std::string gt_file_model = gt_folder_model + "/" + gt_name;
 
-				//TODO !! Comparison method
+				std::cout << "Name " << name << " Gts input : " << gt_file_input << "\ngot file model " << gt_file_model << std::endl;
 
-
-//				std::string gt_file_model = gt_folder_model + "/" + gt_name;
-
-				std::cout << "Name " << name << " Gts input : " << gt_file_input << "\ngot file model " << gt_file_input << std::endl;
-
-				std::cout << "Propagate kernel" << std::endl;
 				gp_laplacian->propagateHeatKernel(5, 5, 0);
 				gp_laplacian_model->propagateHeatKernel(5, 5, 0);
 
@@ -1755,49 +1935,10 @@ int main(int argc, char** argv){
 //                 cv::imshow ("GP laplacian Model", zone_imgm);
 //                 cv::waitKey(0);
 
-				AASS::graphmatch::evaluation::CreateHypFromSaeed createhypgt;
+				AASS::graphmatch::evaluation::CreateHypFromGT createhypgt;
+				auto [tp, fp, fn, precision, recall, F1] = createhypgt.compare(gt_file_input, gt_file_model, *gp_laplacian, *gp_laplacian_model );
 
-				std::cout << "Do hungarian" << std::endl;
-				auto hypothese_saeed = createhypgt.hungarian(*gp_laplacian, *gp_laplacian_model );
-
-
-				std::cout << "Draw stuff" << std::endl;
-				cv::Mat draw_tmp;
-				graph_slam_segmented.copyTo(draw_tmp);
-				gp_laplacian->drawSpecial(draw_tmp);
-
-				cv::Mat draw_tmp_model;
-				graph_slam_segmented_model.copyTo(draw_tmp_model);
-				gp_laplacian_model->drawSpecial(draw_tmp_model);
-		//
-				hypothese_saeed.drawLinks(*gp_laplacian, *gp_laplacian_model, draw_tmp, draw_tmp_model, "ALL FINAL CUSTOM ", 1);
-		//// 					std::string na = name + "_partial";
-		//// 					hypothesis_final_custom[0].drawPartialGraphs(gp_voro, gp_voro_model, input, test_model, na, 1, true);
-		//
-		//		std::cout << "Distance custom " << hypothesis_final_custom[0].getDist() << std::endl;
-		//
-		//		//EXPORT
-		////		cv::Mat drawing_out;
-		////		hypothesis_final_custom[0].drawHypo(*gp_laplacian, *gp_laplacian_model, drawing, drawing, "ALL FINAL CUSTOM", 1, drawing_out);
-		////		cv::imshow("Final", drawing_out);
-		//
-		////		cv::imwrite("RESULT.jpg", drawing_out);
-		//
-				std::cout << "Time : " << time << std::endl;
-	//			cv::waitKey(0);
-
-
-
-
-
-
-				std::cout << "Read file" << std::endl;
-				AASS::graphmatch::evaluation::Evaluation ev;
-				ev.read_file(gt_file_input);
-				std::cout << "Read file" << std::endl;
-				auto [tp, fp, fn, prec, rec, F1] = ev.evaluate(hypothese_saeed, *gp_laplacian, *gp_laplacian_model);
-
-				results.push_back(std::make_tuple(map_name, tp, fp, fn, prec, rec, F1, 0) );
+				results.push_back(std::make_tuple(map_name, tp, fp, fn, precision, recall, F1, 0) );
 
 			}
 			export_results("multiple_times_" + name + "results_human_vs_human.dat", results);
