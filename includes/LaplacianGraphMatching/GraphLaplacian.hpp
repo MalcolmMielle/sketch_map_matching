@@ -76,6 +76,7 @@ namespace AASS {
 				use_old_method_testing = r.use_old_method_testing;
 				label = r.label;
 				_threshold_same = r.getThresholdSame();
+                index = r.index;
 			}
 
 			double getThresholdSame() const {return _threshold_same;}

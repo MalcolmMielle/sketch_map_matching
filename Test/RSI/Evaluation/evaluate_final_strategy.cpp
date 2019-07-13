@@ -1266,8 +1266,8 @@ int main(int argc, char** argv){
 //                print_results(results_relative_size);
 //                export_results("multiple_times_" +name + "results_relative_size.dat", results_relative_size);
 //                std::cout << "Results Anchors Relative size" << std::endl;
-               print_results(results_anchors_relative_size);
-              export_results("final_strategy_" + name + "results_anchors_relative_size.dat", results_anchors_relative_size);
+//               print_results(results_anchors_relative_size);
+//              export_results("final_strategy_" + name + "results_anchors_relative_size.dat", results_anchors_relative_size);
 //                 std::cout << "Results Anchors Relative size haus" << std::endl;
 //                 print_results(results_anchors_relative_size_haus);
 //                 export_results("results_anchors_relative_size_haus.dat", results_anchors_relative_size_haus);
