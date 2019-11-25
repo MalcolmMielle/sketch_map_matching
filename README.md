@@ -1,10 +1,28 @@
-# Sketch Map Matching algorithms
+# URSIM: Unique Region for Sketch map Interpretation and Matching (previously: Sketch Map Matching algorithms)
 
-Hello to you who stumbled upon the Sketch Map Matching program !
+This programm is based from this [paper](https://www.mdpi.com/2218-6581/8/2/43) to match sketch maps to equivalent metric maps.
+A previous method on this topic is also implemented in this repo ([paper](http://ieeexplore.ieee.org/abstract/document/7784307/) available [here](https://mro.oru.se/wp-content/material/pdf/1054805.pdf)).
 
-This programm is based from the [paper](http://ieeexplore.ieee.org/abstract/document/7784307/) available [here](https://mro.oru.se/wp-content/material/pdf/1054805.pdf) also.
+If you use this, please cite the URSIM method:
 
-If you use this, please cite
+```
+@article{Mielle_2019, 
+	title={URSIM: Unique Regions for Sketch Map Interpretation and Matching}, 
+	volume={8}, 
+	ISSN={2218-6581}, 
+	url={http://dx.doi.org/10.3390/robotics8020043}, 
+	DOI={10.3390/robotics8020043}, 
+	number={2}, 
+	journal={Robotics}, 
+	publisher={MDPI AG}, 
+	author={Mielle, Malcolm and Magnusson, Martin and Lilienthal, Achim}, 
+	year={2019}, 
+	month={Jun}, 
+	pages={43}}
+```
+
+and the previous study:
+
 
 ```
 @inproceedings{mielle_using_2016,
@@ -22,21 +40,32 @@ If you use this, please cite
 }
 ```
 
-# What is the Sketch Map Matching ?
+# Dependencies:
+
+* Opencv3
+* [BetterGraph](https://github.com/MalcolmMielle/BetterGraph)
+* [VoDiGrEx](https://github.com/MalcolmMielle/VoDiGrEx)
+* [Edit distance](https://github.com/MalcolmMielle/edit_distance_cpp)
+* [RSI](https://github.com/MalcolmMielle/RSI)
+
+
+# Old README for previous method:
+
+## What is the Sketch Map Matching ?
 
 The Sketch Maker is a method to interpret sketches i.e transcription from drawing to topological map
 
-# What are sketch maps ?
+## What are sketch maps ?
 
 Drawing that represent an indoor places. They are often innacurate and simplified version of the real environment. You can see some in the folder `Test/GraphDB/Sketches/KTH`.
 
-# How do I use the Sketch Maker ?
+## How do I use the Sketch Maker ?
 
 The simplest way to use this package is to use [this UI](https://github.com/MalcolmMielle/sketch_ui). You only have to draw the sketch and to give it the model to see the result :D.
 
 To use the sketch maker you need to compile using `cmake ..` in a build directory and then `make`. Then install the package with `sudo make install`
 
-# What are the dependencies of Sketch Maker ?
+## What are the dependencies of Sketch Maker ?
 
 Sketch maker is based on _OpenCV_ (v : 2.4.9) and Boost.
 
@@ -59,7 +88,7 @@ It also depends on:
 * [VoDiGrEx](https://github.com/MalcolmMielle/VoDiGrEx)
 * [Edit distance](https://github.com/MalcolmMielle/edit_distance_cpp)
 	
-# Install
+## Install
 
 git clone the repo.
 
@@ -81,9 +110,9 @@ For debugging
 	make
 
 
-# Questions you might have
+## Questions you might have
 
-## I don't like the build in interpretor what can I do ?
+### I don't like the build in interpretor what can I do ?
 
 Well, you could code your own. Every interpretor is based out of two abstract classes : 
 
@@ -120,9 +149,9 @@ It's stored in lists, it's undirected, the vertices are `Place` objects and the 
 
 `Place` is an important object since they include an element named `Keypoint` which is used for the comparison. It's easy to had new types of Place and different comparison methods thanks to their Keypoint elements.
 
-### The Keypoint class :
+#### The Keypoint class :
 
-#### Create the Keypoints
+##### Create the Keypoints
 
 The Keypoint class is the object used for every comparison between two graph places. It's fairly easy to had new type of keypoints and comparison method. Just follow those steps :
  
@@ -153,7 +182,7 @@ For every keypoint you want to use :
 See `JunctionAndDeadEnds.hpp` for an example.
 
 
-#### Create a Place extractor :
+##### Create a Place extractor :
 
 You then have to implement a class that inheritate from PlaceExtractorBase. The function that extract a GraphPlace with your keypoints from a GraphList is name `extract` and is the only function that you must implement. The results are stored in `graphmatch::GraphPlace _graph`.
 
@@ -164,7 +193,7 @@ This class is used during the place extraction. Mainly, the function `compare` i
 Now all this must seem complicated and a lot of work __but__ If you only want to use an existing extraction method with your custom keypoints, it's really easy. All you have to doo is declare your keypoints and then change the `AllKeypoints` element in the place extractor you want to use. Simple as that ! :)
 
 
-## How does the interpretor works ?
+### How does the interpretor works ?
 
 For now the interpretation is made like this : 
 
@@ -178,11 +207,11 @@ The main advantage of doing all of this graphically is the possibility to proces
 
 * Finally a GraphMatcher compare to SketchMap to figure out the best matching.
 
-## How are the voronoi lines extracted ?
+### How are the voronoi lines extracted ?
 
 I use the Voronoi extraction from [VoDiGrEx](https://github.com/MalcolmMielle/VoDiGrEx). Although, several method to extract Voronoi Lines exists as the [EVG Thin](http://openslam.informatik.uni-freiburg.de/evg-thin.html), I found this method to be more efficient and faster, for all the reasons listed in this [blog post](https://malcolmmielle.wordpress.com/2017/03/10/voronoi-diagram/). Plus, it does not remove some of the lines that are removed by EVG.
 
-### If you have a perfect building map :
+#### If you have a perfect building map :
 
 By perfect, we consider all building map with straight corridors. The method is as such :
 
@@ -192,7 +221,7 @@ By perfect, we consider all building map with straight corridors. The method is 
 
 * The negative values in the resulting image correspond to local maximas in the distance image and are the voronoi lines.
 
-### If the map is a sketch :
+#### If the map is a sketch :
 
 * Compute the pixel distance of every point in the image.
 
